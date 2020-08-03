@@ -21,7 +21,7 @@ import pandas as pd
 import os
 from bokeh.plotting import figure, output_file, save
 from bokeh.layouts import gridplot
-from bokeh.models import FactorRange, ColumnDataSource, HoverTool
+from bokeh.models import FactorRange, ColumnDataSource, Legend
 from bokeh.transform import factor_cmap
 from bokeh.io import show
 from bokeh.io import export_png
@@ -32,7 +32,7 @@ import json
 # %% Load in match data
 
 #Navigate to data directory
-os.chdir('..\\Data\\SuperNetball2020')
+os.chdir('..\\..\\..\\Data\\SuperNetball2020')
 
 #Identify list of .json files
 jsonFileList = list()
@@ -190,9 +190,10 @@ colourDict = {'Fever': '#00953b',
               'Vixens': '#00a68e'}
 
 #Set bokeh figure options
-bokehOptions = dict(tools = 'wheel_zoom,box_zoom')
+bokehOptions = dict(tools = ['wheel_zoom,box_zoom'])
 
-#Test out creating a bokeh bar plot for points from round 1, game 1 form one vs. two point shot
+# %% Total one vs. two point shots
+
 #See for sample: https://nbviewer.jupyter.org/github/bokeh/bokeh-notebooks/blob/master/tutorial/07%20-%20Bar%20and%20Categorical%20Data%20Plots.ipynb
 
 #Loop through the four games from round 1
@@ -214,6 +215,24 @@ for gg in range(0,4):
     teamName1 = teamInfo['squadNickname'][teamInd1[0]]
     teamInd2 = [i for i,x in enumerate(teamInfo['squadId']) if x == teamId2]
     teamName2 = teamInfo['squadNickname'][teamInd2[0]]
+    
+    #Get match result for title
+    team1Score = df_scoreFlow.loc[(df_scoreFlow['matchNo'] == gg+1) & 
+                                  (df_scoreFlow['scoreName'] == 'goal') & 
+                                  (df_scoreFlow['squadId'] == teamId1),
+                                  ['scorePoints']].sum()[0] + \
+        df_scoreFlow.loc[(df_scoreFlow['matchNo'] == gg+1) & 
+                         (df_scoreFlow['scoreName'] == '2pt Goal') & 
+                         (df_scoreFlow['squadId'] == teamId1),
+                         ['scorePoints']].sum()[0]
+    team2Score = df_scoreFlow.loc[(df_scoreFlow['matchNo'] == gg+1) & 
+                                  (df_scoreFlow['scoreName'] == 'goal') & 
+                                  (df_scoreFlow['squadId'] == teamId2),
+                                  ['scorePoints']].sum()[0] + \
+        df_scoreFlow.loc[(df_scoreFlow['matchNo'] == gg+1) & 
+                         (df_scoreFlow['scoreName'] == '2pt Goal') & 
+                         (df_scoreFlow['squadId'] == teamId2),
+                         ['scorePoints']].sum()[0]
     
     #Set colour palette based on team names
     palette = tuple([colourDict[teamName1],
@@ -260,7 +279,7 @@ for gg in range(0,4):
     #Create figure
     figPlot.append(figure(x_range = FactorRange(*x),
                           plot_height = 300, plot_width = 300,
-                          title = teamName1+' vs. '+teamName2,
+                          title = teamName1+' ('+str(team1Score)+') vs. '+teamName2+' ('+str(team2Score)+')',
                           **bokehOptions))
     
     #Set the bar glyphs
@@ -292,16 +311,175 @@ show(grid)
 
 #Export grid as both .png and .html
 
-##### TODO: set better location for figures
+#Navigate to relevant figure directory
+##### TODO: better navigation set
+os.chdir('..\\..\\Figures\\TwoPointAnalysis\\RoundByRound')
+
+##### TODO: set better naming strings for figures with looping
 
 #PNG
-export_png(grid, filename = 'Round1_Points.png')
+export_png(grid, filename = 'Round1_TotalTeamPoints_OneVsTwo.png')
 
 #HTML
-output_file('Round1_Points.html')
+output_file('Round1_TotalTeamPoints_OneVsTwo.html')
 save(grid)
 
-##### FIGURE OUT HOW TO SHARE --- GITHUB MAyBE???
+##### TODO: figure out effective method to copy to github pages?
+
+# %% Quarter by quarter one vs. two point shots
+
+#Loop through the four games from round 1
+##### TODO: This won't work for matches above round 1
+
+#Set blank lists to fill with plots and source
+figPlot = list()
+figSource = list()
+
+#Run loop to create plots
+for gg in range(0,4):
+    
+    #Get team ID's for this match
+    teamId1 = matchInfo['homeSquadId'][gg]
+    teamId2 = matchInfo['awaySquadId'][gg]
+    
+    #Get team names for these ID's
+    teamInd1 = [i for i,x in enumerate(teamInfo['squadId']) if x == teamId1]
+    teamName1 = teamInfo['squadNickname'][teamInd1[0]]
+    teamInd2 = [i for i,x in enumerate(teamInfo['squadId']) if x == teamId2]
+    teamName2 = teamInfo['squadNickname'][teamInd2[0]]
+    
+    #Get match result for title
+    team1Score = df_scoreFlow.loc[(df_scoreFlow['matchNo'] == gg+1) & 
+                                  (df_scoreFlow['scoreName'] == 'goal') & 
+                                  (df_scoreFlow['squadId'] == teamId1),
+                                  ['scorePoints']].sum()[0] + \
+        df_scoreFlow.loc[(df_scoreFlow['matchNo'] == gg+1) & 
+                         (df_scoreFlow['scoreName'] == '2pt Goal') & 
+                         (df_scoreFlow['squadId'] == teamId1),
+                         ['scorePoints']].sum()[0]
+    team2Score = df_scoreFlow.loc[(df_scoreFlow['matchNo'] == gg+1) & 
+                                  (df_scoreFlow['scoreName'] == 'goal') & 
+                                  (df_scoreFlow['squadId'] == teamId2),
+                                  ['scorePoints']].sum()[0] + \
+        df_scoreFlow.loc[(df_scoreFlow['matchNo'] == gg+1) & 
+                         (df_scoreFlow['scoreName'] == '2pt Goal') & 
+                         (df_scoreFlow['squadId'] == teamId2),
+                         ['scorePoints']].sum()[0]
+    
+    #Set colour palette based on team names
+    palette = tuple([colourDict[teamName1],
+                      colourDict[teamName2]])
+    
+    #Set teams for factors
+    teams = [teamName1, teamName2]
+    
+    #Set up factors
+    factors = [
+        ('One Point Shots',teamName1),('Two Point Shots',teamName1),
+        ('One Point Shots',teamName2),('Two Point Shots',teamName2),
+        ]
+    
+    #Set up quarter list
+    quarters = ['Q1','Q2','Q3','Q4']
+    
+    #Extract total points scored by the two teams in each category & quarter
+    
+    #Team 1
+    standardTeam1 = list()
+    twoPointTeam1 = list()
+    for qq in range(0,4):
+        standardTeam1.append(df_scoreFlow.loc[(df_scoreFlow['matchNo'] == gg+1) & 
+                                              (df_scoreFlow['scoreName'] == 'goal') & 
+                                              (df_scoreFlow['squadId'] == teamId1) & 
+                                              (df_scoreFlow['period'] == qq+1),
+                                              ['scorePoints']].sum()[0])
+        twoPointTeam1.append(df_scoreFlow.loc[(df_scoreFlow['matchNo'] == gg+1) & 
+                                              (df_scoreFlow['scoreName'] == '2pt Goal') & 
+                                              (df_scoreFlow['squadId'] == teamId1) & 
+                                              (df_scoreFlow['period'] == qq+1),
+                                              ['scorePoints']].sum()[0])
+        
+    #Team 2
+    standardTeam2 = list()
+    twoPointTeam2 = list()
+    for qq in range(0,4):
+        standardTeam2.append(df_scoreFlow.loc[(df_scoreFlow['matchNo'] == gg+1) & 
+                                              (df_scoreFlow['scoreName'] == 'goal') & 
+                                              (df_scoreFlow['squadId'] == teamId2) & 
+                                              (df_scoreFlow['period'] == qq+1),
+                                              ['scorePoints']].sum()[0])
+        twoPointTeam2.append(df_scoreFlow.loc[(df_scoreFlow['matchNo'] == gg+1) & 
+                                              (df_scoreFlow['scoreName'] == '2pt Goal') & 
+                                              (df_scoreFlow['squadId'] == teamId2) & 
+                                              (df_scoreFlow['period'] == qq+1),
+                                              ['scorePoints']].sum()[0])
+     
+    #Set up data source
+    figSource.append(ColumnDataSource(data = dict(
+        x = factors,
+        Q1 = [standardTeam1[0],twoPointTeam1[0],standardTeam2[0],twoPointTeam2[0]],
+        Q2 = [standardTeam1[1],twoPointTeam1[1],standardTeam2[1],twoPointTeam2[1]],
+        Q3 = [standardTeam1[2],twoPointTeam1[2],standardTeam2[2],twoPointTeam2[2]],
+        Q4 = [standardTeam1[3],twoPointTeam1[3],standardTeam2[3],twoPointTeam2[3]],
+        )))
+    
+    #Create figure
+    figPlot.append(figure(x_range = FactorRange(*factors),
+                          plot_height = 400, plot_width = 500,
+                          title = teamName1+' ('+str(team1Score)+') vs. '+teamName2+' ('+str(team2Score)+')',
+                          toolbar_location = None,
+                          tools = 'hover', 
+                          tooltips = [("Cateogry", "@x"),("Quarter", "$name"),("Points Scored", "@$name")]))
+    
+    #Add the vbar stack
+    f = figPlot[gg].vbar_stack(quarters, x = 'x', width = 1.0,
+                               #color = ["blue", "red", "green", "yellow"],
+                               fill_color = 'white', #white setting for hatches;#factor_cmap('x', palette = palette, factors = teams, start = 1, end = 2),
+                               line_color = factor_cmap('x', palette = palette, factors = teams, start = 1, end = 2),
+                               hatch_pattern = ['/','/','blank','\\'], #scale setting for the / is a hack to get solid
+                               hatch_color = factor_cmap('x', palette = palette, factors = teams, start = 1, end = 2),
+                               hatch_scale = [1.0,10,10,10],
+                               #legend_label = quarters,
+                               source = figSource[gg])
+    
+    #Add legend
+    legend = Legend(items = [(x,[f[i]]) for i,x in enumerate(quarters)], location=(10, 0))
+    figPlot[gg].add_layout(legend,'right')
+    
+    #Set figure parameters
+    figPlot[gg].y_range.start = 0
+    figPlot[gg].x_range.range_padding = 0.1
+    figPlot[gg].xaxis.major_label_orientation = 1
+    figPlot[gg].xgrid.grid_line_color = None
+    figPlot[gg].title.align = 'center'
+    figPlot[gg].yaxis.axis_label = 'Points Scored'
+    
+    # #Show figure
+    # show(figPlot[gg])
+ 
+#Create the gridplot
+grid = gridplot([[figPlot[0], figPlot[1]],
+                 [figPlot[2], figPlot[3]]],
+                plot_width = 400, plot_height = 350)
+
+#Show grid
+show(grid)
+
+#Export grid as both .png and .html
+
+##### TODO: set better naming strings for figures with looping
+
+#PNG
+export_png(grid, filename = 'Round1_QuarterTeamPoints_OneVsTwo.png')
+
+#HTML
+output_file('Round1_QuarterTeamPoints_OneVsTwo.html')
+save(grid)
+
+##### TODO: figure out effective method to copy to github pages?
+
+
+
 
 # %%
 
