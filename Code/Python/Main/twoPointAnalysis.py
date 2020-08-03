@@ -21,7 +21,7 @@ import pandas as pd
 import os
 from bokeh.plotting import figure, output_file, save
 from bokeh.layouts import gridplot
-from bokeh.models import FactorRange, ColumnDataSource, Legend
+from bokeh.models import FactorRange, ColumnDataSource, Legend, HoverTool
 from bokeh.transform import factor_cmap
 from bokeh.io import show
 from bokeh.io import export_png
@@ -92,7 +92,7 @@ for ff in range(0,len(jsonFileList)):
         teamInfo['squadNickname'].append(data['teamInfo']['team'][1]['squadNickname'][0])
     
     #Extract player details from each team   
-    for pp in range(1,len(data['playerInfo']['player'])):
+    for pp in range(0,len(data['playerInfo']['player'])):
         #First, check if the player ID is in the current id list
         currPlayerId = playerInfo['playerId']
         if data['playerInfo']['player'][pp]['playerId'][0] not in currPlayerId:
@@ -109,7 +109,7 @@ for ff in range(0,len(jsonFileList)):
                 playerInfo['squadId'].append(data['teamInfo']['team'][1]['squadId'][0])
     
     #Extract score flow data
-    for ss in range(1,len(data['scoreFlow']['score'])):
+    for ss in range(0,len(data['scoreFlow']['score'])):
         scoreFlowData['roundNo'].append(data['matchInfo']['roundNumber'][0])
         scoreFlowData['matchNo'].append(data['matchInfo']['matchNumber'][0])
         scoreFlowData['period'].append(data['scoreFlow']['score'][ss]['period'][0])
@@ -318,10 +318,10 @@ os.chdir('..\\..\\Figures\\TwoPointAnalysis\\RoundByRound')
 ##### TODO: set better naming strings for figures with looping
 
 #PNG
-export_png(grid, filename = 'Round1_TotalTeamPoints_OneVsTwo.png')
+export_png(grid, filename = 'round1-totalteampoints-onevstwo.png')
 
 #HTML
-output_file('Round1_TotalTeamPoints_OneVsTwo.html')
+output_file('round1-totalteampoints-onevstwo.html')
 save(grid)
 
 ##### TODO: figure out effective method to copy to github pages?
@@ -429,7 +429,7 @@ for gg in range(0,4):
                           title = teamName1+' ('+str(team1Score)+') vs. '+teamName2+' ('+str(team2Score)+')',
                           toolbar_location = None,
                           tools = 'hover', 
-                          tooltips = [("Cateogry", "@x"),("Quarter", "$name"),("Points Scored", "@$name")]))
+                          tooltips = [("Category", "@x"),("Quarter", "$name"),("Points Scored", "@$name")]))
     
     #Add the vbar stack
     f = figPlot[gg].vbar_stack(quarters, x = 'x', width = 1.0,
@@ -470,10 +470,10 @@ show(grid)
 ##### TODO: set better naming strings for figures with looping
 
 #PNG
-export_png(grid, filename = 'Round1_QuarterTeamPoints_OneVsTwo.png')
+export_png(grid, filename = 'round1-quarterteampoints-onevstwo.png')
 
 #HTML
-output_file('Round1_QuarterTeamPoints_OneVsTwo.html')
+output_file('round1-quarterteampoints-onevstwo.html')
 save(grid)
 
 ##### TODO: figure out effective method to copy to github pages?
@@ -481,11 +481,298 @@ save(grid)
 
 
 
+# %% Individual player two-point scoring
+
+#Create list to stash 2pt figures
+figPlot_2ptPlayerScoring = list()
+figSource_2ptPlayerScoring = list()
+
+#Setting for current figure index
+ind_2ptPlayerScoring = 0
+
+# %% Total two-point score
+
+#Extract a dataframe of 2pt Goals
+df_2ptGoal = df_scoreFlow.loc[(df_scoreFlow['scoreName'] == '2pt Goal'),]
+
+#Get the unique list of players who scored two-point goals
+playerList_2ptGoal = list(df_2ptGoal['playerId'].unique())
+
+#Loop through and sum the total two point value for each player
+playerList_2ptTotal = list()
+for pp in range(0,len(playerList_2ptGoal)):
+    #Calculate and append total 2 point score
+    playerList_2ptTotal.append(df_2ptGoal.loc[(df_2ptGoal['playerId'] == playerList_2ptGoal[pp]),
+                                              ['scorePoints']].sum()[0])
+    
+#Convert to dataframe and sort
+df_2ptTotals = pd.DataFrame(list(zip(playerList_2ptGoal,playerList_2ptTotal)),
+                            columns = ['playerId','2ptTotal'])
+df_2ptTotals.sort_values(by = '2ptTotal', inplace = True,
+                         ascending = False, ignore_index = True)
+
+#Create bar plot for two point totals
+#Create lists to store the data in
+players = list()
+fullNames = list()
+squadNames = list()
+totals = list()
+twoPointTotalsPalette = list()
+#Loop through the player list and collate the data needed for the plot
+for pp in range(0,len(df_2ptTotals)):
+    #Get the ID of the current player
+    currId = df_2ptTotals.iloc[pp]['playerId']
+    #Get the dataframe ID of the current player
+    currInd = df_playerInfo.index[df_playerInfo['playerId'] == currId].tolist()[0]
+    #Get the current player details
+    players.append(df_playerInfo.iloc[currInd]['displayName'])
+    fullNames.append(df_playerInfo.iloc[currInd]['firstName']+' '+df_playerInfo.iloc[currInd]['surname'])
+    #Get current players total points
+    totals.append(df_2ptTotals.iloc[pp]['2ptTotal'])
+    #Set current colour and name based on squad ID
+    currSquadId = df_playerInfo.iloc[currInd]['squadId']
+    squadInd = df_teamInfo.index[df_teamInfo['squadId'] == currSquadId].tolist()[0]
+    currSquadName = df_teamInfo.iloc[squadInd]['squadNickname']    
+    twoPointTotalsPalette.append(colourDict[currSquadName])
+    squadNames.append(currSquadName)
+    
+#Create source for figure
+figSource_2ptPlayerScoring.append(ColumnDataSource(data = dict(players = players,
+                                                               counts = totals,
+                                                               fullNames = fullNames,
+                                                               squadNames = squadNames,
+                                                               color = tuple(twoPointTotalsPalette))))
+
+#Create figure
+figPlot_2ptPlayerScoring.append(figure(x_range = players, plot_height = 400, plot_width = 800,
+                                       title = 'Total Points from 2-Point Shots',
+                                       toolbar_location = None,
+                                       tools = 'hover', 
+                                       tooltips = [("Player", "@fullNames"), ("Team", "@squadNames"), ("Total Points from Two-Point Shots", "@counts")]))
+
+#Add bars
+figPlot_2ptPlayerScoring[ind_2ptPlayerScoring].vbar(x = 'players', top = 'counts', width=0.6,
+                                                    color = 'color', source = figSource_2ptPlayerScoring[ind_2ptPlayerScoring])
+
+#Set figure parameters
+figPlot_2ptPlayerScoring[ind_2ptPlayerScoring].y_range.start = 0
+figPlot_2ptPlayerScoring[ind_2ptPlayerScoring].x_range.range_padding = 0.1
+figPlot_2ptPlayerScoring[ind_2ptPlayerScoring].xaxis.major_label_orientation = 1
+figPlot_2ptPlayerScoring[ind_2ptPlayerScoring].xgrid.grid_line_color = None
+figPlot_2ptPlayerScoring[ind_2ptPlayerScoring].title.align = 'center'
+figPlot_2ptPlayerScoring[ind_2ptPlayerScoring].yaxis.axis_label = 'Total Points'
+
+#Show figure
+show(figPlot_2ptPlayerScoring[ind_2ptPlayerScoring])
+    
+#Export figure as both .png and .html
+
+##### TODO: set better naming strings for figures with looping
+
+#PNG
+export_png(figPlot_2ptPlayerScoring[ind_2ptPlayerScoring],
+           filename = 'round1-player-twopointtotals.png')
+
+#HTML
+output_file('round1-player-twopointtotals.html')
+save(figPlot_2ptPlayerScoring[ind_2ptPlayerScoring])
+
+#Add to two point figure indexing
+ind_2ptPlayerScoring = ind_2ptPlayerScoring + 1
+
+# %% Differential between two and one point scoring
+
+#Extract a dataframe of 2pt Goals
+df_allGoals = df_scoreFlow.loc[(df_scoreFlow['scoreName'].isin(['goal','2pt Goal'])),]
+
+#Get the unique list of players who scored any goal
+playerList_allGoals = list(df_allGoals['playerId'].unique())
+
+#Loop through and sum the total one and two point value for each player
+#Calculate the differential with +ve reflecting more two point points
+playerList_2ptDifferential = list()
+for pp in range(0,len(playerList_allGoals)):
+    #Calculate and two vs. one point differential
+    #Calculate two point score
+    twoPointVal = df_allGoals.loc[(df_allGoals['playerId'] == playerList_allGoals[pp]) &
+                                  (df_allGoals['scoreName'] == '2pt Goal'),
+                                  ['scorePoints']].sum()[0]
+    #Calculate one point score
+    onePointVal = df_allGoals.loc[(df_allGoals['playerId'] == playerList_allGoals[pp]) &
+                                  (df_allGoals['scoreName'] == 'goal'),
+                                  ['scorePoints']].sum()[0]
+    #Append differential
+    playerList_2ptDifferential.append(twoPointVal - onePointVal)
+    
+#Convert to dataframe and sort
+df_2ptDifferential = pd.DataFrame(list(zip(playerList_allGoals,playerList_2ptDifferential)),
+                                  columns = ['playerId','2ptDifferential'])
+df_2ptDifferential.sort_values(by = '2ptDifferential', inplace = True,
+                               ascending = False, ignore_index = True)
+
+#Create bar plot for two point totals
+#Create lists to store the data in
+players = list()
+fullNames = list()
+squadNames = list()
+differentials = list()
+twoPointDifferentialPalette = list()
+#Loop through the player list and collate the data needed for the plot
+for pp in range(0,len(df_2ptDifferential)):
+    #Get the ID of the current player
+    currId = df_2ptDifferential.iloc[pp]['playerId']
+    #Get the dataframe ID of the current player
+    currInd = df_playerInfo.index[df_playerInfo['playerId'] == currId].tolist()[0]
+    #Get the current player details
+    players.append(df_playerInfo.iloc[currInd]['displayName'])
+    fullNames.append(df_playerInfo.iloc[currInd]['firstName']+' '+df_playerInfo.iloc[currInd]['surname'])
+    #Get current players total points
+    differentials.append(df_2ptDifferential.iloc[pp]['2ptDifferential'])
+    #Set current colour and name based on squad ID
+    currSquadId = df_playerInfo.iloc[currInd]['squadId']
+    squadInd = df_teamInfo.index[df_teamInfo['squadId'] == currSquadId].tolist()[0]
+    currSquadName = df_teamInfo.iloc[squadInd]['squadNickname']    
+    twoPointDifferentialPalette.append(colourDict[currSquadName])
+    squadNames.append(currSquadName)
+    
+#Create source for figure
+figSource_2ptPlayerScoring.append(ColumnDataSource(data = dict(players = players,
+                                                               counts = differentials,
+                                                               fullNames = fullNames,
+                                                               squadNames = squadNames,
+                                                               color = tuple(twoPointDifferentialPalette))))
+
+#Create figure
+figPlot_2ptPlayerScoring.append(figure(x_range = players, plot_height = 400, plot_width = 800,
+                                       title = 'Differential in Points from 2- vs. 1-Point Shots',
+                                       toolbar_location = None,
+                                       tools = 'hover', 
+                                       tooltips = [("Player", "@fullNames"), ("Team", "@squadNames"), ("Differential in Points from One- vs. Two-Point Shots", "@counts")]))
+
+#Add bars
+figPlot_2ptPlayerScoring[ind_2ptPlayerScoring].vbar(x = 'players', top = 'counts', width=0.6,
+                                                    color = 'color', source = figSource_2ptPlayerScoring[ind_2ptPlayerScoring])
+
+#Set figure parameters
+figPlot_2ptPlayerScoring[ind_2ptPlayerScoring].x_range.range_padding = 0.1
+figPlot_2ptPlayerScoring[ind_2ptPlayerScoring].xaxis.major_label_orientation = 1
+figPlot_2ptPlayerScoring[ind_2ptPlayerScoring].xgrid.grid_line_color = None
+figPlot_2ptPlayerScoring[ind_2ptPlayerScoring].title.align = 'center'
+figPlot_2ptPlayerScoring[ind_2ptPlayerScoring].yaxis.axis_label = 'Points from Two-Point Shots - Points from One-Point Shots'
+
+#Show figure
+show(figPlot_2ptPlayerScoring[ind_2ptPlayerScoring])
+    
+#Export figure as both .png and .html
+
+##### TODO: set better naming strings for figures with looping
+
+#PNG
+export_png(figPlot_2ptPlayerScoring[ind_2ptPlayerScoring],
+           filename = 'round1-player-twopointdifferentials.png')
+
+#HTML
+output_file('round1-player-twopointdifferentials.html')
+save(figPlot_2ptPlayerScoring[ind_2ptPlayerScoring])
+
+#Add to two point figure indexing
+ind_2ptPlayerScoring = ind_2ptPlayerScoring + 1 
+
+# %% Relative differential for two vs. one point totals
+
+#Loop through and sum the total one and two point value for each player
+#Calculate the relative differential with +ve reflecting more two point points
+playerList_2ptDifferentialRelative = list()
+playerList_bothGoals = list()
+for pp in range(0,len(playerList_allGoals)):
+    #Calculate and two vs. one point differential
+    #Calculate two point score
+    twoPointVal = df_allGoals.loc[(df_allGoals['playerId'] == playerList_allGoals[pp]) &
+                                  (df_allGoals['scoreName'] == '2pt Goal'),
+                                  ['scorePoints']].sum()[0]
+    #Calculate one point score
+    onePointVal = df_allGoals.loc[(df_allGoals['playerId'] == playerList_allGoals[pp]) &
+                                  (df_allGoals['scoreName'] == 'goal'),
+                                  ['scorePoints']].sum()[0]
+    #Append differential
+    #Check if they have at least a score from each
+    if twoPointVal != 0 and onePointVal != 0:
+        playerList_bothGoals.append(playerList_allGoals[pp])
+        playerList_2ptDifferentialRelative.append(twoPointVal / onePointVal)
+    
+#Convert to dataframe and sort
+df_2ptDifferentialRelative = pd.DataFrame(list(zip(playerList_bothGoals,playerList_2ptDifferentialRelative)),
+                                          columns = ['playerId','2ptDifferentialRelative'])
+df_2ptDifferentialRelative.sort_values(by = '2ptDifferentialRelative', inplace = True,
+                                       ascending = False, ignore_index = True)
+
+#Create bar plot for two point totals
+#Create lists to store the data in
+players = list()
+fullNames = list()
+squadNames = list()
+differentials = list()
+twoPointDifferentialPalette = list()
+#Loop through the player list and collate the data needed for the plot
+for pp in range(0,len(df_2ptDifferentialRelative)):
+    #Get the ID of the current player
+    currId = df_2ptDifferentialRelative.iloc[pp]['playerId']
+    #Get the dataframe ID of the current player
+    currInd = df_playerInfo.index[df_playerInfo['playerId'] == currId].tolist()[0]
+    #Get the current player details
+    players.append(df_playerInfo.iloc[currInd]['displayName'])
+    fullNames.append(df_playerInfo.iloc[currInd]['firstName']+' '+df_playerInfo.iloc[currInd]['surname'])
+    #Get current players total points
+    differentials.append(df_2ptDifferentialRelative.iloc[pp]['2ptDifferentialRelative'])
+    #Set current colour and name based on squad ID
+    currSquadId = df_playerInfo.iloc[currInd]['squadId']
+    squadInd = df_teamInfo.index[df_teamInfo['squadId'] == currSquadId].tolist()[0]
+    currSquadName = df_teamInfo.iloc[squadInd]['squadNickname']    
+    twoPointDifferentialPalette.append(colourDict[currSquadName])
+    squadNames.append(currSquadName)
+    
+#Create source for figure
+figSource_2ptPlayerScoring.append(ColumnDataSource(data = dict(players = players,
+                                                               counts = differentials,
+                                                               fullNames = fullNames,
+                                                               squadNames = squadNames,
+                                                               color = tuple(twoPointDifferentialPalette))))
+
+#Create figure
+figPlot_2ptPlayerScoring.append(figure(x_range = players, plot_height = 400, plot_width = 800,
+                                       title = 'Relative Differential in Points from 2- vs. 1-Point Shots',
+                                       toolbar_location = None,
+                                       tools = 'hover', 
+                                       tooltips = [("Player", "@fullNames"), ("Team", "@squadNames"), ("Ratio of Points from Two:One-Point Shots", "@counts")]))
+
+#Add bars
+figPlot_2ptPlayerScoring[ind_2ptPlayerScoring].vbar(x = 'players', top = 'counts', width=0.6,
+                                                    color = 'color', source = figSource_2ptPlayerScoring[ind_2ptPlayerScoring])
+
+#Set figure parameters
+figPlot_2ptPlayerScoring[ind_2ptPlayerScoring].y_range.start = 0
+figPlot_2ptPlayerScoring[ind_2ptPlayerScoring].x_range.range_padding = 0.1
+figPlot_2ptPlayerScoring[ind_2ptPlayerScoring].xaxis.major_label_orientation = 1
+figPlot_2ptPlayerScoring[ind_2ptPlayerScoring].xgrid.grid_line_color = None
+figPlot_2ptPlayerScoring[ind_2ptPlayerScoring].title.align = 'center'
+figPlot_2ptPlayerScoring[ind_2ptPlayerScoring].yaxis.axis_label = 'Points from Two-Point Shots / Points from One-Point Shots'
+
+#Show figure
+show(figPlot_2ptPlayerScoring[ind_2ptPlayerScoring])
+    
+#Export figure as both .png and .html
+
+##### TODO: set better naming strings for figures with looping
+
+#PNG
+export_png(figPlot_2ptPlayerScoring[ind_2ptPlayerScoring],
+           filename = 'round1-player-twopointdifferentialsrelative.png')
+
+#HTML
+output_file('round1-player-twopointdifferentialsrelative.html')
+save(figPlot_2ptPlayerScoring[ind_2ptPlayerScoring])
+
+#Add to two point figure indexing
+ind_2ptPlayerScoring = ind_2ptPlayerScoring + 1 
+
 # %%
-
-
-# p = gridplot([[p1,p2],
-#               [p3,p4]],
-#              toolbar_location = 'right')
-
-show(p)
