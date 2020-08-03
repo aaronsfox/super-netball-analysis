@@ -102,11 +102,19 @@ for ff in range(0,len(jsonFileList)):
             playerInfo['firstName'].append(data['playerInfo']['player'][pp]['firstname'][0])
             playerInfo['surname'].append(data['playerInfo']['player'][pp]['surname'][0])
             playerInfo['shortDisplayName'].append(data['playerInfo']['player'][pp]['shortDisplayName'][0])
-            ##### TODO: check if it is consistent that first 12 players are team0 in data
+            ###### Seems that player order in the list is deemed by the squad ID
+            ###### i.e. whichever squad ID is lower goes first
+            ###### TODO: check if this holds across rounds
             if pp < 12:
-                playerInfo['squadId'].append(data['teamInfo']['team'][0]['squadId'][0])
+                if data['teamInfo']['team'][0]['squadId'][0] < data['teamInfo']['team'][1]['squadId'][0]:
+                    playerInfo['squadId'].append(data['teamInfo']['team'][0]['squadId'][0])
+                else:
+                    playerInfo['squadId'].append(data['teamInfo']['team'][1]['squadId'][0])
             else:
-                playerInfo['squadId'].append(data['teamInfo']['team'][1]['squadId'][0])
+                if data['teamInfo']['team'][0]['squadId'][0] < data['teamInfo']['team'][1]['squadId'][0]:
+                    playerInfo['squadId'].append(data['teamInfo']['team'][1]['squadId'][0])
+                else:
+                    playerInfo['squadId'].append(data['teamInfo']['team'][0]['squadId'][0])
     
     #Extract score flow data
     for ss in range(0,len(data['scoreFlow']['score'])):
@@ -306,8 +314,8 @@ grid = gridplot([[figPlot[0], figPlot[1]],
                 plot_width = 300, plot_height = 300,
                 toolbar_location = 'right')
 
-#Show grid
-show(grid)
+# #Show grid
+# show(grid)
 
 #Export grid as both .png and .html
 
@@ -317,12 +325,20 @@ os.chdir('..\\..\\Figures\\TwoPointAnalysis\\RoundByRound')
 
 ##### TODO: set better naming strings for figures with looping
 
+#Seems like storing html in same folder causes figures to overwrite?
+#Make directory to store
+os.mkdir('round1-totalteampoints-onevstwo')
+os.chdir('round1-totalteampoints-onevstwo')
+
 #PNG
 export_png(grid, filename = 'round1-totalteampoints-onevstwo.png')
 
 #HTML
 output_file('round1-totalteampoints-onevstwo.html')
 save(grid)
+
+#Navigate back up
+os.chdir('..')
 
 ##### TODO: figure out effective method to copy to github pages?
 
@@ -462,12 +478,17 @@ grid = gridplot([[figPlot[0], figPlot[1]],
                  [figPlot[2], figPlot[3]]],
                 plot_width = 400, plot_height = 350)
 
-#Show grid
-show(grid)
+# #Show grid
+# show(grid)
 
 #Export grid as both .png and .html
 
 ##### TODO: set better naming strings for figures with looping
+
+#Seems like storing html in same folder causes figures to overwrite?
+#Make directory to store
+os.mkdir('round1-quarterteampoints-onevstwo')
+os.chdir('round1-quarterteampoints-onevstwo')
 
 #PNG
 export_png(grid, filename = 'round1-quarterteampoints-onevstwo.png')
@@ -475,6 +496,9 @@ export_png(grid, filename = 'round1-quarterteampoints-onevstwo.png')
 #HTML
 output_file('round1-quarterteampoints-onevstwo.html')
 save(grid)
+
+#Navigate back up
+os.chdir('..')
 
 ##### TODO: figure out effective method to copy to github pages?
 
@@ -562,8 +586,13 @@ figPlot_2ptPlayerScoring[ind_2ptPlayerScoring].xgrid.grid_line_color = None
 figPlot_2ptPlayerScoring[ind_2ptPlayerScoring].title.align = 'center'
 figPlot_2ptPlayerScoring[ind_2ptPlayerScoring].yaxis.axis_label = 'Total Points'
 
-#Show figure
-show(figPlot_2ptPlayerScoring[ind_2ptPlayerScoring])
+# #Show figure
+# show(figPlot_2ptPlayerScoring[ind_2ptPlayerScoring])
+
+#Seems like storing html in same folder causes figures to overwrite?
+#Make directory to store
+os.mkdir('round1-player-twopointtotals')
+os.chdir('round1-player-twopointtotals')
     
 #Export figure as both .png and .html
 
@@ -576,6 +605,9 @@ export_png(figPlot_2ptPlayerScoring[ind_2ptPlayerScoring],
 #HTML
 output_file('round1-player-twopointtotals.html')
 save(figPlot_2ptPlayerScoring[ind_2ptPlayerScoring])
+
+#Navigate back up
+os.chdir('..')
 
 #Add to two point figure indexing
 ind_2ptPlayerScoring = ind_2ptPlayerScoring + 1
@@ -660,12 +692,17 @@ figPlot_2ptPlayerScoring[ind_2ptPlayerScoring].xgrid.grid_line_color = None
 figPlot_2ptPlayerScoring[ind_2ptPlayerScoring].title.align = 'center'
 figPlot_2ptPlayerScoring[ind_2ptPlayerScoring].yaxis.axis_label = 'Points from Two-Point Shots - Points from One-Point Shots'
 
-#Show figure
-show(figPlot_2ptPlayerScoring[ind_2ptPlayerScoring])
+# #Show figure
+# show(figPlot_2ptPlayerScoring[ind_2ptPlayerScoring])
     
 #Export figure as both .png and .html
 
 ##### TODO: set better naming strings for figures with looping
+
+#Seems like storing html in same folder causes figures to overwrite?
+#Make directory to store
+os.mkdir('round1-player-twopointdifferentials')
+os.chdir('round1-player-twopointdifferentials')
 
 #PNG
 export_png(figPlot_2ptPlayerScoring[ind_2ptPlayerScoring],
@@ -674,6 +711,9 @@ export_png(figPlot_2ptPlayerScoring[ind_2ptPlayerScoring],
 #HTML
 output_file('round1-player-twopointdifferentials.html')
 save(figPlot_2ptPlayerScoring[ind_2ptPlayerScoring])
+
+#Navigate back up
+os.chdir('..')
 
 #Add to two point figure indexing
 ind_2ptPlayerScoring = ind_2ptPlayerScoring + 1 
@@ -757,12 +797,17 @@ figPlot_2ptPlayerScoring[ind_2ptPlayerScoring].xgrid.grid_line_color = None
 figPlot_2ptPlayerScoring[ind_2ptPlayerScoring].title.align = 'center'
 figPlot_2ptPlayerScoring[ind_2ptPlayerScoring].yaxis.axis_label = 'Points from Two-Point Shots / Points from One-Point Shots'
 
-#Show figure
-show(figPlot_2ptPlayerScoring[ind_2ptPlayerScoring])
+# #Show figure
+# show(figPlot_2ptPlayerScoring[ind_2ptPlayerScoring])
     
 #Export figure as both .png and .html
 
 ##### TODO: set better naming strings for figures with looping
+
+#Seems like storing html in same folder causes figures to overwrite?
+#Make directory to store
+os.mkdir('round1-player-twopointdifferentialsrelative')
+os.chdir('round1-player-twopointdifferentialsrelative')
 
 #PNG
 export_png(figPlot_2ptPlayerScoring[ind_2ptPlayerScoring],
@@ -771,6 +816,9 @@ export_png(figPlot_2ptPlayerScoring[ind_2ptPlayerScoring],
 #HTML
 output_file('round1-player-twopointdifferentialsrelative.html')
 save(figPlot_2ptPlayerScoring[ind_2ptPlayerScoring])
+
+#Navigate back up
+os.chdir('..')
 
 #Add to two point figure indexing
 ind_2ptPlayerScoring = ind_2ptPlayerScoring + 1 
