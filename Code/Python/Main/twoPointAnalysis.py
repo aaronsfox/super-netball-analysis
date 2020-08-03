@@ -12,6 +12,8 @@ This script takes in the .json files grabbed using the superNetballR package and
 collates the data into a Pandas dataframe format to analyse and visualise.
 
 TODO: add more specific notes for script
+
+TODO: convert script for round to round analysis & mean data
     
 """
 
@@ -199,6 +201,8 @@ colourDict = {'Fever': '#00953b',
 
 #Set bokeh figure options
 bokehOptions = dict(tools = ['wheel_zoom,box_zoom'])
+
+# %% Team-based data
 
 # %% Total one vs. two point shots
 
@@ -502,8 +506,175 @@ os.chdir('..')
 
 ##### TODO: figure out effective method to copy to github pages?
 
+# %% Ratio of inner vs. outer shots in different periods
 
+#Set blank lists to fill with plots and source
+figPlot = list()
+figSource = list()
 
+#Run loop to create plots
+for gg in range(0,4):
+    
+    #Get team ID's for this match
+    teamId1 = matchInfo['homeSquadId'][gg]
+    teamId2 = matchInfo['awaySquadId'][gg]
+    
+    #Get team names for these ID's
+    teamInd1 = [i for i,x in enumerate(teamInfo['squadId']) if x == teamId1]
+    teamName1 = teamInfo['squadNickname'][teamInd1[0]]
+    teamInd2 = [i for i,x in enumerate(teamInfo['squadId']) if x == teamId2]
+    teamName2 = teamInfo['squadNickname'][teamInd2[0]]
+    
+    #Get match result for title
+    team1Score = df_scoreFlow.loc[(df_scoreFlow['matchNo'] == gg+1) & 
+                                  (df_scoreFlow['scoreName'] == 'goal') & 
+                                  (df_scoreFlow['squadId'] == teamId1),
+                                  ['scorePoints']].sum()[0] + \
+        df_scoreFlow.loc[(df_scoreFlow['matchNo'] == gg+1) & 
+                         (df_scoreFlow['scoreName'] == '2pt Goal') & 
+                         (df_scoreFlow['squadId'] == teamId1),
+                         ['scorePoints']].sum()[0]
+    team2Score = df_scoreFlow.loc[(df_scoreFlow['matchNo'] == gg+1) & 
+                                  (df_scoreFlow['scoreName'] == 'goal') & 
+                                  (df_scoreFlow['squadId'] == teamId2),
+                                  ['scorePoints']].sum()[0] + \
+        df_scoreFlow.loc[(df_scoreFlow['matchNo'] == gg+1) & 
+                         (df_scoreFlow['scoreName'] == '2pt Goal') & 
+                         (df_scoreFlow['squadId'] == teamId2),
+                         ['scorePoints']].sum()[0]
+    
+    #Set colour palette based on team names
+    palette = tuple([colourDict[teamName1],
+                      colourDict[teamName2]])
+    
+    #Set teams for factors
+    teams = [teamName1, teamName2]
+    
+    #Set up factors
+    factors = [
+        ('Standard Period',teamName1),('Super Shot Period',teamName1),
+        ('Standard Period',teamName2),('Super Shot Period',teamName2),
+        ]
+    
+    #Set up circle and ratios list
+    circle = ['Inner Circle','Outer Circle']
+    ratios = ['standard', 'twoPoint']
+    
+    #Extract total points scored by the two teams in each category & quarter
+    
+    #Extract ratio of shots in inner vs. outer circle in the different periods
+    
+    #Team 1
+    innerTeam1 = list()
+    outerTeam1 = list()
+    for qq in range(0,len(ratios)):
+        innerTeam1.append(df_scoreFlow.loc[(df_scoreFlow['matchNo'] == gg+1) & 
+                                           (df_scoreFlow['squadId'] == teamId1) & 
+                                           (df_scoreFlow['periodCategory'] == ratios[qq]) &
+                                           (df_scoreFlow['shotCircle'] == 'innerCircle'),
+                                           ['shotCircle']].count()[0])
+        outerTeam1.append(df_scoreFlow.loc[(df_scoreFlow['matchNo'] == gg+1) & 
+                                           (df_scoreFlow['squadId'] == teamId1) & 
+                                           (df_scoreFlow['periodCategory'] == ratios[qq]) &
+                                           (df_scoreFlow['shotCircle'] == 'outerCircle'),
+                                           ['shotCircle']].count()[0])
+    
+    #Normalise team 1 data to a ratio
+    innerTeam1Ratio = list()
+    innerTeam1Ratio.append(innerTeam1[0] / (innerTeam1[0]+outerTeam1[0]))
+    innerTeam1Ratio.append(innerTeam1[1] / (innerTeam1[1]+outerTeam1[1]))
+    outerTeam1Ratio = list()
+    outerTeam1Ratio.append(outerTeam1[0] / (innerTeam1[0]+outerTeam1[0]))
+    outerTeam1Ratio.append(outerTeam1[1] / (innerTeam1[1]+outerTeam1[1]))
+        
+    #Team 2
+    innerTeam2 = list()
+    outerTeam2 = list()
+    for qq in range(0,len(ratios)):
+        innerTeam2.append(df_scoreFlow.loc[(df_scoreFlow['matchNo'] == gg+1) & 
+                                           (df_scoreFlow['squadId'] == teamId2) & 
+                                           (df_scoreFlow['periodCategory'] == ratios[qq]) &
+                                           (df_scoreFlow['shotCircle'] == 'innerCircle'),
+                                           ['shotCircle']].count()[0])
+        outerTeam2.append(df_scoreFlow.loc[(df_scoreFlow['matchNo'] == gg+1) & 
+                                           (df_scoreFlow['squadId'] == teamId2) & 
+                                           (df_scoreFlow['periodCategory'] == ratios[qq]) &
+                                           (df_scoreFlow['shotCircle'] == 'outerCircle'),
+                                           ['shotCircle']].count()[0])
+    
+    #Normalise team 2 data to a ratio
+    innerTeam2Ratio = list()
+    innerTeam2Ratio.append(innerTeam2[0] / (innerTeam2[0]+outerTeam2[0]))
+    innerTeam2Ratio.append(innerTeam2[1] / (innerTeam2[1]+outerTeam2[1]))
+    outerTeam2Ratio = list()
+    outerTeam2Ratio.append(outerTeam2[0] / (innerTeam2[0]+outerTeam2[0]))
+    outerTeam2Ratio.append(outerTeam2[1] / (innerTeam2[1]+outerTeam2[1]))
+     
+    #Set up data source
+    figSource.append(ColumnDataSource(data = dict(
+        x = factors,
+        standard = [innerTeam1Ratio[0],innerTeam1Ratio[1],innerTeam2Ratio[0],innerTeam2Ratio[1]],
+        twoPoint = [outerTeam1Ratio[0],outerTeam1Ratio[1],outerTeam2Ratio[0],outerTeam2Ratio[1]],
+        )))
+    
+    #Create figure
+    figPlot.append(figure(x_range = FactorRange(*factors),
+                          plot_height = 450, plot_width = 500,
+                          title = teamName1+' ('+str(team1Score)+') vs. '+teamName2+' ('+str(team2Score)+')',
+                          toolbar_location = None,
+                          tools = 'hover', 
+                          tooltips = [("Category", "@x"),("Shot Ratio", "@$name")]))
+    
+    #Add the vbar stack
+    f = figPlot[gg].vbar_stack(ratios, x = 'x', width = 1.0,
+                               fill_color = 'white', #white setting for hatches;#factor_cmap('x', palette = palette, factors = teams, start = 1, end = 2),
+                               line_color = factor_cmap('x', palette = palette, factors = teams, start = 1, end = 2),
+                               hatch_pattern = ['/','blank'], #scale setting for the / is a hack to get solid
+                               hatch_color = factor_cmap('x', palette = palette, factors = teams, start = 1, end = 2),
+                               hatch_scale = [1,10],
+                               source = figSource[gg])
+    
+    #Add legend
+    legend = Legend(items = [(x,[f[i]]) for i,x in enumerate(circle)], location=(10, 0))
+    figPlot[gg].add_layout(legend,'right')
+    
+    #Set figure parameters
+    figPlot[gg].y_range.start = 0
+    figPlot[gg].x_range.range_padding = 0.1
+    figPlot[gg].xaxis.major_label_orientation = 1
+    figPlot[gg].xgrid.grid_line_color = None
+    figPlot[gg].title.align = 'center'
+    figPlot[gg].yaxis.axis_label = 'Ratio of Shots'
+    
+    # #Show figure
+    # show(figPlot[gg])
+ 
+#Create the gridplot
+grid = gridplot([[figPlot[0], figPlot[1]],
+                 [figPlot[2], figPlot[3]]],
+                plot_width = 450, plot_height = 350)
+
+# #Show grid
+# show(grid)
+
+#Export grid as both .png and .html
+
+##### TODO: set better naming strings for figures with looping
+
+#Seems like storing html in same folder causes figures to overwrite?
+#Make directory to store
+os.mkdir('round1-teamshotratios-innervsouter')
+os.chdir('round1-teamshotratios-innervsouter')
+
+#PNG
+export_png(grid, filename = 'round1-teamshotratios-innervsouter.png')
+
+#HTML
+output_file('round1-teamshotratios-innervsouter.html')
+save(grid)
+
+#Navigate back up
+os.chdir('..')
 
 # %% Individual player two-point scoring
 
