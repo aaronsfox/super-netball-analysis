@@ -1,0 +1,85 @@
+
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+  
+  <head>
+    
+      <meta charset="utf-8">
+      <title>Bokeh Plot</title>
+      
+      
+        
+          
+        
+        
+          
+        <script type="text/javascript" src="https://cdn.bokeh.org/bokeh/release/bokeh-2.1.1.min.js" integrity="sha384-kLr4fYcqcSpbuI95brIH3vnnYCquzzSxHPU6XGQCIkQRGJwhg0StNbj1eegrHs12" crossorigin="anonymous"></script>
+        <script type="text/javascript">
+            Bokeh.set_log_level("info");
+        </script>
+        
+      
+      
+    
+  </head>
+  
+  
+  <body>
+    
+      
+        
+          
+          
+            
+              <div class="bk-root" id="80182441-11ea-4bf4-a578-765808240632" data-root-id="5010"></div>
+            
+          
+        
+      
+      
+        <script type="application/json" id="5214">
+          {"8b583e0a-3de8-4d88-aa62-ebb314e0ac93":{"roots":{"references":[{"attributes":{"below":[{"id":"5021"}],"center":[{"id":"5023"},{"id":"5027"}],"left":[{"id":"5024"}],"plot_height":400,"plot_width":800,"renderers":[{"id":"5034"}],"title":{"id":"5011"},"toolbar":{"id":"5029"},"toolbar_location":null,"x_range":{"id":"5013"},"x_scale":{"id":"5017"},"y_range":{"id":"5015"},"y_scale":{"id":"5019"}},"id":"5010","subtype":"Figure","type":"Plot"},{"attributes":{},"id":"5044","type":"UnionRenderers"},{"attributes":{},"id":"5019","type":"LinearScale"},{"attributes":{"fill_color":{"field":"color"},"line_color":{"field":"color"},"top":{"field":"counts"},"width":{"value":0.6},"x":{"field":"players"}},"id":"5032","type":"VBar"},{"attributes":{"formatter":{"id":"5039"},"major_label_orientation":1,"ticker":{"id":"5022"}},"id":"5021","type":"CategoricalAxis"},{"attributes":{"data":{"color":["#494b4a","#00a68e","#0082cd","#f57921","#4b2c69","#00953b","#e54078","#f57921","#00a68e","#494b4a","#00a68e","#0082cd","#00953b","#e54078"],"counts":[1.0,0.9230769230769231,0.9230769230769231,0.8571428571428571,0.8,0.75,0.6666666666666666,0.4444444444444444,0.42105263157894735,0.4,0.3,0.25,0.16326530612244897,0.047619047619047616],"fullNames":["Nyah Allen","Caitlin Thwaites","Helen Housby","Jo Harten","Tippah Dwan","Alice Teague-Neeld","Georgie Horjus","Kiera Austin","Tegan Philip","Gabrielle Sinclair","Mwai Kumwenda","Sam Wallace","Jhaniele Fowler","Lenize Potgieter"],"players":["N.Allen","C.Thwaites","H.Housby","J.Harten","T.Dwan","A.Teague-Neeld","G.Horjus","K.Austin","T.Philip","G.Sinclair","M.Kumwenda","S.Wallace","J.Fowler","L.Potgieter"],"squadNames":["Magpies","Vixens","Swifts","GIANTS","Firebirds","Fever","Thunderbirds","GIANTS","Vixens","Magpies","Vixens","Swifts","Fever","Thunderbirds"]},"selected":{"id":"5043"},"selection_policy":{"id":"5044"}},"id":"5008","type":"ColumnDataSource"},{"attributes":{"axis_label":"Points from Super Shots / Points from Standard Shots","formatter":{"id":"5041"},"ticker":{"id":"5025"}},"id":"5024","type":"LinearAxis"},{"attributes":{"factors":["N.Allen","C.Thwaites","H.Housby","J.Harten","T.Dwan","A.Teague-Neeld","G.Horjus","K.Austin","T.Philip","G.Sinclair","M.Kumwenda","S.Wallace","J.Fowler","L.Potgieter"],"range_padding":0.1},"id":"5013","type":"FactorRange"},{"attributes":{"axis":{"id":"5021"},"grid_line_color":null,"ticker":null},"id":"5023","type":"Grid"},{"attributes":{},"id":"5043","type":"Selection"},{"attributes":{"fill_alpha":{"value":0.1},"fill_color":{"field":"color"},"line_alpha":{"value":0.1},"line_color":{"field":"color"},"top":{"field":"counts"},"width":{"value":0.6},"x":{"field":"players"}},"id":"5033","type":"VBar"},{"attributes":{},"id":"5041","type":"BasicTickFormatter"},{"attributes":{},"id":"5025","type":"BasicTicker"},{"attributes":{"data_source":{"id":"5008"},"glyph":{"id":"5032"},"hover_glyph":null,"muted_glyph":null,"nonselection_glyph":{"id":"5033"},"selection_glyph":null,"view":{"id":"5035"}},"id":"5034","type":"GlyphRenderer"},{"attributes":{"align":"center","text":"Relative Differential in Points from Super vs. Standard Shots"},"id":"5011","type":"Title"},{"attributes":{"start":0},"id":"5015","type":"DataRange1d"},{"attributes":{"source":{"id":"5008"}},"id":"5035","type":"CDSView"},{"attributes":{"callback":null,"tooltips":[["Player","@fullNames"],["Team","@squadNames"],["Ratio of Points from Super:Standard Shots","@counts"]]},"id":"5028","type":"HoverTool"},{"attributes":{},"id":"5017","type":"CategoricalScale"},{"attributes":{"axis":{"id":"5024"},"dimension":1,"ticker":null},"id":"5027","type":"Grid"},{"attributes":{},"id":"5022","type":"CategoricalTicker"},{"attributes":{},"id":"5039","type":"CategoricalTickFormatter"},{"attributes":{"active_drag":"auto","active_inspect":"auto","active_multi":null,"active_scroll":"auto","active_tap":"auto","tools":[{"id":"5028"}]},"id":"5029","type":"Toolbar"}],"root_ids":["5010"]},"title":"Bokeh Application","version":"2.1.1"}}
+        </script>
+        <script type="text/javascript">
+          (function() {
+            var fn = function() {
+              Bokeh.safely(function() {
+                (function(root) {
+                  function embed_document(root) {
+                    
+                  var docs_json = document.getElementById('5214').textContent;
+                  var render_items = [{"docid":"8b583e0a-3de8-4d88-aa62-ebb314e0ac93","root_ids":["5010"],"roots":{"5010":"80182441-11ea-4bf4-a578-765808240632"}}];
+                  root.Bokeh.embed.embed_items(docs_json, render_items);
+                
+                  }
+                  if (root.Bokeh !== undefined) {
+                    embed_document(root);
+                  } else {
+                    var attempts = 0;
+                    var timer = setInterval(function(root) {
+                      if (root.Bokeh !== undefined) {
+                        clearInterval(timer);
+                        embed_document(root);
+                      } else {
+                        attempts++;
+                        if (attempts > 100) {
+                          clearInterval(timer);
+                          console.log("Bokeh: ERROR: Unable to run BokehJS code because BokehJS library is missing");
+                        }
+                      }
+                    }, 10, root)
+                  }
+                })(window);
+              });
+            };
+            if (document.readyState != "loading") fn();
+            else document.addEventListener("DOMContentLoaded", fn);
+          })();
+        </script>
+    
+  </body>
+  
+</html>

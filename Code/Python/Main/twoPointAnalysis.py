@@ -15,6 +15,10 @@ TODO: add more specific notes for script
 
 TODO: convert script for round to round analysis & mean data
     
+TODO: convert plot data generation to separate functions with inputs
+
+TODO: this script is expanding outside of just two point analysis (e.g. subs & +/-)
+
 """
 
 # %% Import packages
@@ -44,6 +48,8 @@ for file in os.listdir(os.getcwd()):
         
 #Create blank dictionaries to store data in
 
+#####TODO: convert whole import data to a function
+
 #Match info
 matchInfo = {'id': [], 'homeSquadId': [], 'awaySquadId': [],
              'startTime': [], 'roundNo': [], 'matchNo': [],
@@ -63,6 +69,13 @@ scoreFlowData = {'roundNo': [], 'matchNo': [],
                  'period': [], 'periodSeconds': [], 'periodCategory': [],
                  'playerId': [],'squadId': [], 'scoreName': [], 'shotOutcome': [], 'scorePoints': [],
                  'distanceCode': [], 'positionCode': [], 'shotCircle': []}
+
+#Substitution data
+##### TODO-----
+
+#Line-up data
+lineUpData = {'lineUpId': [], 'lineUpName': [], 'matchNo': [], 'roundNo': [], 'period': [], 'squadId': [],
+              'periodSecondsStart': [], 'periodSecondsEnd': [], 'plusMinus': []}
 
 #Loop through file list and extract data
 for ff in range(0,len(jsonFileList)):
@@ -93,7 +106,13 @@ for ff in range(0,len(jsonFileList)):
         teamInfo['squadName'].append(data['teamInfo']['team'][1]['squadName'][0])
         teamInfo['squadNickname'].append(data['teamInfo']['team'][1]['squadNickname'][0])
     
-    #Extract player details from each team   
+    #Extract player details from each team  
+    
+    ##### TODO: Magpies have 11 in first game
+    ##### It worked because they were 2nd team, but could be a problem
+    ##### Need to sort out for starting lineup
+    ##### Also happebs for a few 2nd teams in round 2
+    
     for pp in range(0,len(data['playerInfo']['player'])):
         #First, check if the player ID is in the current id list
         currPlayerId = playerInfo['playerId']
@@ -148,6 +167,57 @@ for ff in range(0,len(jsonFileList)):
         else:
             scoreFlowData['shotOutcome'].append(True)
     
+    # #Extract lineup data
+    
+    # #Get the squad ID order
+    # if data['teamInfo']['team'][0]['squadId'][0] < data['teamInfo']['team'][1]['squadId'][0]:
+    #     lineUpSquadId1 = data['teamInfo']['team'][0]['squadId'][0]
+    #     lineUpSquadId2 = data['teamInfo']['team'][1]['squadId'][0]
+    # else:
+    #     lineUpSquadId1 = data['teamInfo']['team'][1]['squadId'][0]
+    #     lineUpSquadId2 = data['teamInfo']['team'][0]['squadId'][0]
+    
+    # #Extract first squads lineups
+    
+    # #Get the starting lineup
+    # startLineUpId = list()
+    # startLineUpName = list()
+    # for pp in range(0,7):
+    #     startLineUpId.append(data['playerInfo']['player'][pp]['playerId'][0])
+    #     startLineUpName.append(data['playerInfo']['player'][pp]['displayName'][0])
+    
+    # ##### TODO: set better first lineup before looping through subs?
+    # ##### TODO: Or have checks in place for if it's the first lineup...
+    
+    # #Loop through substitutions and identify new lineups
+    # #### THIS LOOP WILL PICK UP MULTIPLE SUBS --- PROB NEEDS TO BE A WHILE LOOP?
+    # #### Needs to be while ss is less than length of subs, and add to this each time
+    # for ss in range(0,len(data['playerSubs']['player'])):
+    #     #Get the current substitutions squad ID
+    #     checkId = data['playerSubs']['player'][ss]['squadId'][0]
+    #     #Compare to current squad ID and progress if matching
+    #     if lineUpSquadId1 == checkId:
+    #         #Identify the indices of the substitutions for this time period
+    #         calcSubs = [ss]
+    #         #Set variable to stop while loop
+    #         progress = True
+    #         #Set counter
+    #         nextSub = 1
+    #         while progress:
+    #             #Check next sub
+    #             if data['playerSubs']['player'][ss]['periodSeconds'][0] == data['playerSubs']['player'][ss+nextSub]['periodSeconds'][0]:
+    #                 #Append this index to the list
+    #                 calcSubs.append(ss+nextSub)
+    #                 #Add to next sub counter
+    #                 nextSub = nextSub + 1
+    #             else:
+    #                 progress = False
+    #         #Identify the period and time...
+    #         ##### UP TO HERE...
+        
+        
+    
+    
     ##### TODO: extract game statistics data
 
 #Convert filled dictionaries to dataframes
@@ -169,6 +239,8 @@ df_scoreFlow = pd.DataFrame.from_dict(scoreFlowData)
 # %%
 
 # %% Test plots from round 1
+
+##### TODO: wrap each of these in function that takes round input etc.
 
 #There's a number of plot options I want to test:
     # - 2 x 2 plots for each match for a number of variables
@@ -215,13 +287,17 @@ bokehOptions = dict(tools = ['wheel_zoom,box_zoom'])
 figPlot = list()
 figSource = list()
 
+#Enter round
+##### TODO: create function with round as input
+round2Plot = 2
+
 #Run loop to create plots
 for gg in range(0,4):
     
     #Get team ID's for this match
-    teamId1 = matchInfo['homeSquadId'][gg]
-    teamId2 = matchInfo['awaySquadId'][gg]
-    
+    teamId1 = matchInfo['homeSquadId'][((round2Plot-1)*4)+gg]
+    teamId2 = matchInfo['awaySquadId'][((round2Plot-1)*4)+gg]
+   
     #Get team names for these ID's
     teamInd1 = [i for i,x in enumerate(teamInfo['squadId']) if x == teamId1]
     teamName1 = teamInfo['squadNickname'][teamInd1[0]]
@@ -251,7 +327,7 @@ for gg in range(0,4):
                      colourDict[teamName2]])
     
     #Set up categorical variables for current game
-    goalTypes = ['One Point Shots', 'Two Point Shots']
+    goalTypes = ['Standard Shots', 'Super Shots']
     teams = [teamName1, teamName2]
     
     #Extract total points scored by the two teams in each category
@@ -331,14 +407,14 @@ os.chdir('..\\..\\Figures\\TwoPointAnalysis\\RoundByRound')
 
 #Seems like storing html in same folder causes figures to overwrite?
 #Make directory to store
-os.mkdir('round1-totalteampoints-onevstwo')
-os.chdir('round1-totalteampoints-onevstwo')
+os.mkdir('round'+str(round2Plot)+'-totalteampoints-onevstwo')
+os.chdir('round'+str(round2Plot)+'-totalteampoints-onevstwo')
 
 #PNG
-export_png(grid, filename = 'round1-totalteampoints-onevstwo.png')
+export_png(grid, filename = 'round'+str(round2Plot)+'-totalteampoints-onevstwo.png')
 
 #HTML
-output_file('round1-totalteampoints-onevstwo.html')
+output_file('round'+str(round2Plot)+'-totalteampoints-onevstwo.html')
 save(grid)
 
 #Navigate back up
@@ -351,6 +427,10 @@ os.chdir('..')
 #Loop through the four games from round 1
 ##### TODO: This won't work for matches above round 1
 
+#Enter round
+##### TODO: create function with round as input
+round2Plot = 2
+
 #Set blank lists to fill with plots and source
 figPlot = list()
 figSource = list()
@@ -359,8 +439,8 @@ figSource = list()
 for gg in range(0,4):
     
     #Get team ID's for this match
-    teamId1 = matchInfo['homeSquadId'][gg]
-    teamId2 = matchInfo['awaySquadId'][gg]
+    teamId1 = matchInfo['homeSquadId'][((round2Plot-1)*4)+gg]
+    teamId2 = matchInfo['awaySquadId'][((round2Plot-1)*4)+gg]
     
     #Get team names for these ID's
     teamInd1 = [i for i,x in enumerate(teamInfo['squadId']) if x == teamId1]
@@ -395,8 +475,8 @@ for gg in range(0,4):
     
     #Set up factors
     factors = [
-        ('One Point Shots',teamName1),('Two Point Shots',teamName1),
-        ('One Point Shots',teamName2),('Two Point Shots',teamName2),
+        ('Standard Shots',teamName1),('Super Shots',teamName1),
+        ('Standard Shots',teamName2),('Super Shots',teamName2),
         ]
     
     #Set up quarter list
@@ -491,14 +571,14 @@ grid = gridplot([[figPlot[0], figPlot[1]],
 
 #Seems like storing html in same folder causes figures to overwrite?
 #Make directory to store
-os.mkdir('round1-quarterteampoints-onevstwo')
-os.chdir('round1-quarterteampoints-onevstwo')
+os.mkdir('round'+str(round2Plot)+'-quarterteampoints-onevstwo')
+os.chdir('round'+str(round2Plot)+'-quarterteampoints-onevstwo')
 
 #PNG
-export_png(grid, filename = 'round1-quarterteampoints-onevstwo.png')
+export_png(grid, filename = 'round'+str(round2Plot)+'-quarterteampoints-onevstwo.png')
 
 #HTML
-output_file('round1-quarterteampoints-onevstwo.html')
+output_file('round'+str(round2Plot)+'-quarterteampoints-onevstwo.html')
 save(grid)
 
 #Navigate back up
@@ -508,6 +588,10 @@ os.chdir('..')
 
 # %% Ratio of inner vs. outer shots in different periods
 
+#Enter round
+##### TODO: create function with round as input
+round2Plot = 2
+
 #Set blank lists to fill with plots and source
 figPlot = list()
 figSource = list()
@@ -516,8 +600,8 @@ figSource = list()
 for gg in range(0,4):
     
     #Get team ID's for this match
-    teamId1 = matchInfo['homeSquadId'][gg]
-    teamId2 = matchInfo['awaySquadId'][gg]
+    teamId1 = matchInfo['homeSquadId'][((round2Plot-1)*4)+gg]
+    teamId2 = matchInfo['awaySquadId'][((round2Plot-1)*4)+gg]
     
     #Get team names for these ID's
     teamInd1 = [i for i,x in enumerate(teamInfo['squadId']) if x == teamId1]
@@ -663,14 +747,14 @@ grid = gridplot([[figPlot[0], figPlot[1]],
 
 #Seems like storing html in same folder causes figures to overwrite?
 #Make directory to store
-os.mkdir('round1-teamshotratios-innervsouter')
-os.chdir('round1-teamshotratios-innervsouter')
+os.mkdir('round'+str(round2Plot)+'-teamshotratios-innervsouter')
+os.chdir('round'+str(round2Plot)+'-teamshotratios-innervsouter')
 
 #PNG
-export_png(grid, filename = 'round1-teamshotratios-innervsouter.png')
+export_png(grid, filename = 'round'+str(round2Plot)+'-teamshotratios-innervsouter.png')
 
 #HTML
-output_file('round1-teamshotratios-innervsouter.html')
+output_file('round'+str(round2Plot)+'-teamshotratios-innervsouter.html')
 save(grid)
 
 #Navigate back up
@@ -687,8 +771,13 @@ ind_2ptPlayerScoring = 0
 
 # %% Total two-point score
 
+#Enter round
+##### TODO: create function with round as input
+round2Plot = 2
+
 #Extract a dataframe of 2pt Goals
-df_2ptGoal = df_scoreFlow.loc[(df_scoreFlow['scoreName'] == '2pt Goal'),]
+df_2ptGoal = df_scoreFlow.loc[(df_scoreFlow['scoreName'] == '2pt Goal') &
+                              (df_scoreFlow['roundNo'] == round2Plot),]
 
 #Get the unique list of players who scored two-point goals
 playerList_2ptGoal = list(df_2ptGoal['playerId'].unique())
@@ -740,10 +829,10 @@ figSource_2ptPlayerScoring.append(ColumnDataSource(data = dict(players = players
 
 #Create figure
 figPlot_2ptPlayerScoring.append(figure(x_range = players, plot_height = 400, plot_width = 800,
-                                       title = 'Total Points from 2-Point Shots',
+                                       title = 'Total Points from Super Shots',
                                        toolbar_location = None,
                                        tools = 'hover', 
-                                       tooltips = [("Player", "@fullNames"), ("Team", "@squadNames"), ("Total Points from Two-Point Shots", "@counts")]))
+                                       tooltips = [("Player", "@fullNames"), ("Team", "@squadNames"), ("Total Points from Super Shots", "@counts")]))
 
 #Add bars
 figPlot_2ptPlayerScoring[ind_2ptPlayerScoring].vbar(x = 'players', top = 'counts', width=0.6,
@@ -762,8 +851,8 @@ figPlot_2ptPlayerScoring[ind_2ptPlayerScoring].yaxis.axis_label = 'Total Points'
 
 #Seems like storing html in same folder causes figures to overwrite?
 #Make directory to store
-os.mkdir('round1-player-twopointtotals')
-os.chdir('round1-player-twopointtotals')
+os.mkdir('round'+str(round2Plot)+'-player-twopointtotals')
+os.chdir('round'+str(round2Plot)+'-player-twopointtotals')
     
 #Export figure as both .png and .html
 
@@ -771,10 +860,10 @@ os.chdir('round1-player-twopointtotals')
 
 #PNG
 export_png(figPlot_2ptPlayerScoring[ind_2ptPlayerScoring],
-           filename = 'round1-player-twopointtotals.png')
+           filename = 'round'+str(round2Plot)+'-player-twopointtotals.png')
 
 #HTML
-output_file('round1-player-twopointtotals.html')
+output_file('round'+str(round2Plot)+'-player-twopointtotals.html')
 save(figPlot_2ptPlayerScoring[ind_2ptPlayerScoring])
 
 #Navigate back up
@@ -786,7 +875,8 @@ ind_2ptPlayerScoring = ind_2ptPlayerScoring + 1
 # %% Differential between two and one point scoring
 
 #Extract a dataframe of 2pt Goals
-df_allGoals = df_scoreFlow.loc[(df_scoreFlow['scoreName'].isin(['goal','2pt Goal'])),]
+df_allGoals = df_scoreFlow.loc[(df_scoreFlow['scoreName'].isin(['goal','2pt Goal'])) & 
+                               (df_scoreFlow['roundNo'] == round2Plot),]
 
 #Get the unique list of players who scored any goal
 playerList_allGoals = list(df_allGoals['playerId'].unique())
@@ -847,10 +937,10 @@ figSource_2ptPlayerScoring.append(ColumnDataSource(data = dict(players = players
 
 #Create figure
 figPlot_2ptPlayerScoring.append(figure(x_range = players, plot_height = 400, plot_width = 800,
-                                       title = 'Differential in Points from 2- vs. 1-Point Shots',
+                                       title = 'Differential in Points from Super vs. Standard Shots',
                                        toolbar_location = None,
                                        tools = 'hover', 
-                                       tooltips = [("Player", "@fullNames"), ("Team", "@squadNames"), ("Differential in Points from One- vs. Two-Point Shots", "@counts")]))
+                                       tooltips = [("Player", "@fullNames"), ("Team", "@squadNames"), ("Differential in Points from Standard vs. Super Shots", "@counts")]))
 
 #Add bars
 figPlot_2ptPlayerScoring[ind_2ptPlayerScoring].vbar(x = 'players', top = 'counts', width=0.6,
@@ -872,15 +962,15 @@ figPlot_2ptPlayerScoring[ind_2ptPlayerScoring].yaxis.axis_label = 'Points from T
 
 #Seems like storing html in same folder causes figures to overwrite?
 #Make directory to store
-os.mkdir('round1-player-twopointdifferentials')
-os.chdir('round1-player-twopointdifferentials')
+os.mkdir('round'+str(round2Plot)+'-player-twopointdifferentials')
+os.chdir('round'+str(round2Plot)+'-player-twopointdifferentials')
 
 #PNG
 export_png(figPlot_2ptPlayerScoring[ind_2ptPlayerScoring],
-           filename = 'round1-player-twopointdifferentials.png')
+           filename = 'round'+str(round2Plot)+'-player-twopointdifferentials.png')
 
 #HTML
-output_file('round1-player-twopointdifferentials.html')
+output_file('round'+str(round2Plot)+'-player-twopointdifferentials.html')
 save(figPlot_2ptPlayerScoring[ind_2ptPlayerScoring])
 
 #Navigate back up
@@ -890,6 +980,8 @@ os.chdir('..')
 ind_2ptPlayerScoring = ind_2ptPlayerScoring + 1 
 
 # %% Relative differential for two vs. one point totals
+
+### This section already has the specific round...
 
 #Loop through and sum the total one and two point value for each player
 #Calculate the relative differential with +ve reflecting more two point points
@@ -951,10 +1043,10 @@ figSource_2ptPlayerScoring.append(ColumnDataSource(data = dict(players = players
 
 #Create figure
 figPlot_2ptPlayerScoring.append(figure(x_range = players, plot_height = 400, plot_width = 800,
-                                       title = 'Relative Differential in Points from 2- vs. 1-Point Shots',
+                                       title = 'Relative Differential in Points from Super vs. Standard Shots',
                                        toolbar_location = None,
                                        tools = 'hover', 
-                                       tooltips = [("Player", "@fullNames"), ("Team", "@squadNames"), ("Ratio of Points from Two:One-Point Shots", "@counts")]))
+                                       tooltips = [("Player", "@fullNames"), ("Team", "@squadNames"), ("Ratio of Points from Super:Standard Shots", "@counts")]))
 
 #Add bars
 figPlot_2ptPlayerScoring[ind_2ptPlayerScoring].vbar(x = 'players', top = 'counts', width=0.6,
@@ -966,7 +1058,7 @@ figPlot_2ptPlayerScoring[ind_2ptPlayerScoring].x_range.range_padding = 0.1
 figPlot_2ptPlayerScoring[ind_2ptPlayerScoring].xaxis.major_label_orientation = 1
 figPlot_2ptPlayerScoring[ind_2ptPlayerScoring].xgrid.grid_line_color = None
 figPlot_2ptPlayerScoring[ind_2ptPlayerScoring].title.align = 'center'
-figPlot_2ptPlayerScoring[ind_2ptPlayerScoring].yaxis.axis_label = 'Points from Two-Point Shots / Points from One-Point Shots'
+figPlot_2ptPlayerScoring[ind_2ptPlayerScoring].yaxis.axis_label = 'Points from Super Shots / Points from Standard Shots'
 
 # #Show figure
 # show(figPlot_2ptPlayerScoring[ind_2ptPlayerScoring])
@@ -977,15 +1069,15 @@ figPlot_2ptPlayerScoring[ind_2ptPlayerScoring].yaxis.axis_label = 'Points from T
 
 #Seems like storing html in same folder causes figures to overwrite?
 #Make directory to store
-os.mkdir('round1-player-twopointdifferentialsrelative')
-os.chdir('round1-player-twopointdifferentialsrelative')
+os.mkdir('round'+str(round2Plot)+'-player-twopointdifferentialsrelative')
+os.chdir('round'+str(round2Plot)+'-player-twopointdifferentialsrelative')
 
 #PNG
 export_png(figPlot_2ptPlayerScoring[ind_2ptPlayerScoring],
-           filename = 'round1-player-twopointdifferentialsrelative.png')
+           filename = 'round'+str(round2Plot)+'-player-twopointdifferentialsrelative.png')
 
 #HTML
-output_file('round1-player-twopointdifferentialsrelative.html')
+output_file('round'+str(round2Plot)+'-player-twopointdifferentialsrelative.html')
 save(figPlot_2ptPlayerScoring[ind_2ptPlayerScoring])
 
 #Navigate back up
