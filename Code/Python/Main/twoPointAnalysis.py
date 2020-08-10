@@ -24,6 +24,7 @@ TODO: this script is expanding outside of just two point analysis (e.g. subs & +
 # %% Import packages
 
 import pandas as pd
+pd.options.mode.chained_assignment = None #turn of pandas chained warnings
 import os
 from bokeh.plotting import figure, output_file, save
 from bokeh.layouts import gridplot
@@ -31,8 +32,6 @@ from bokeh.models import FactorRange, ColumnDataSource, Legend, HoverTool
 from bokeh.transform import factor_cmap
 from bokeh.io import show
 from bokeh.io import export_png
-from bokeh.resources import CDN
-from bokeh.embed import file_html
 import json
 
 # %% Load in match data
@@ -46,6 +45,12 @@ for file in os.listdir(os.getcwd()):
     if file.endswith('.json'):
         jsonFileList.append(file)
         
+#Read in total squad lists as dataframe
+df_squadLists = pd.read_csv('squadLists.csv')
+
+#Create a variable for starting positions
+starterPositions = ['GS','GA','WA','C','WD','GD','GK']
+
 #Create blank dictionaries to store data in
 
 #####TODO: convert whole import data to a function
@@ -53,7 +58,7 @@ for file in os.listdir(os.getcwd()):
 #Match info
 matchInfo = {'id': [], 'homeSquadId': [], 'awaySquadId': [],
              'startTime': [], 'roundNo': [], 'matchNo': [],
-             'venueId': [], 'venueName': []}
+             'venueId': [], 'venueName': [], 'periodSeconds': []}
 
 #Team info
 teamInfo = {'squadCode': [], 'squadId': [],
@@ -66,16 +71,25 @@ playerInfo = {'playerId': [], 'displayName': [],
 
 #Score flow data
 scoreFlowData = {'roundNo': [], 'matchNo': [],
-                 'period': [], 'periodSeconds': [], 'periodCategory': [],
+                 'period': [], 'periodSeconds': [], 'periodCategory': [], 'matchSeconds': [],
                  'playerId': [],'squadId': [], 'scoreName': [], 'shotOutcome': [], 'scorePoints': [],
                  'distanceCode': [], 'positionCode': [], 'shotCircle': []}
 
 #Substitution data
-##### TODO-----
+substitutionData = {'roundNo': [], 'matchNo': [],
+                    'period': [], 'periodSeconds': [], 'matchSeconds': [],
+                    'playerId': [], 'squadId': [], 'fromPos': [], 'toPos': []}
 
 #Line-up data
-lineUpData = {'lineUpId': [], 'lineUpName': [], 'matchNo': [], 'roundNo': [], 'period': [], 'squadId': [],
-              'periodSecondsStart': [], 'periodSecondsEnd': [], 'plusMinus': []}
+lineUpData = {'lineUpId': [], 'lineUpName': [], 'matchNo': [], 'roundNo': [], 'squadId': [],
+              'matchSecondsStart': [], 'matchSecondsEnd': [], 'durationSeconds': [],
+              'pointsFor': [], 'pointsAgainst': [], 'plusMinus': []}
+
+#Individual player data
+individualLineUpData = {'playerId': [], 'playerName':[], 'squadId': [], 'playerPosition': [],
+                        'roundNo': [], 'matchNo': [],
+                        'matchSecondsStart': [], 'matchSecondsEnd': [], 'durationSeconds': [],
+                        'pointsFor': [], 'pointsAgainst': [], 'plusMinus': []}
 
 #Loop through file list and extract data
 for ff in range(0,len(jsonFileList)):
@@ -93,6 +107,10 @@ for ff in range(0,len(jsonFileList)):
     matchInfo['matchNo'].append(data['matchInfo']['matchNumber'][0])
     matchInfo['venueId'].append(data['matchInfo']['venueId'][0])
     matchInfo['venueName'].append(data['matchInfo']['venueName'][0])
+    qtrSeconds = list()
+    for qq in range(0,4):
+        qtrSeconds.append(data['periodInfo']['qtr'][qq]['periodSeconds'][0])
+    matchInfo['periodSeconds'].append(qtrSeconds)
 
     #If round 1, extract the league team details to lists
     if data['matchInfo']['roundNumber'][0] == 1:
@@ -106,13 +124,7 @@ for ff in range(0,len(jsonFileList)):
         teamInfo['squadName'].append(data['teamInfo']['team'][1]['squadName'][0])
         teamInfo['squadNickname'].append(data['teamInfo']['team'][1]['squadNickname'][0])
     
-    #Extract player details from each team  
-    
-    ##### TODO: Magpies have 11 in first game
-    ##### It worked because they were 2nd team, but could be a problem
-    ##### Need to sort out for starting lineup
-    ##### Also happebs for a few 2nd teams in round 2
-    
+    #Extract player details from each team     
     for pp in range(0,len(data['playerInfo']['player'])):
         #First, check if the player ID is in the current id list
         currPlayerId = playerInfo['playerId']
@@ -123,20 +135,14 @@ for ff in range(0,len(jsonFileList)):
             playerInfo['firstName'].append(data['playerInfo']['player'][pp]['firstname'][0])
             playerInfo['surname'].append(data['playerInfo']['player'][pp]['surname'][0])
             playerInfo['shortDisplayName'].append(data['playerInfo']['player'][pp]['shortDisplayName'][0])
-            ###### Seems that player order in the list is deemed by the squad ID
-            ###### i.e. whichever squad ID is lower goes first
-            ###### TODO: check if this holds across rounds
-            if pp < 12:
-                if data['teamInfo']['team'][0]['squadId'][0] < data['teamInfo']['team'][1]['squadId'][0]:
-                    playerInfo['squadId'].append(data['teamInfo']['team'][0]['squadId'][0])
-                else:
-                    playerInfo['squadId'].append(data['teamInfo']['team'][1]['squadId'][0])
-            else:
-                if data['teamInfo']['team'][0]['squadId'][0] < data['teamInfo']['team'][1]['squadId'][0]:
-                    playerInfo['squadId'].append(data['teamInfo']['team'][1]['squadId'][0])
-                else:
-                    playerInfo['squadId'].append(data['teamInfo']['team'][0]['squadId'][0])
-    
+            #Find which squad they belong to in the squad list dataframe
+            currPlayerSquad = df_squadLists.loc[(df_squadLists['displayName'] == \
+                                                 data['playerInfo']['player'][pp]['displayName'][0]),\
+                                                ].reset_index()['squadNickname'][0]
+            #Get the squad ID from the team info and append to players info
+            currPlayerSquadId = teamInfo['squadId'][teamInfo['squadNickname'].index(currPlayerSquad)]
+            playerInfo['squadId'].append(currPlayerSquadId)
+            
     #Extract score flow data
     for ss in range(0,len(data['scoreFlow']['score'])):
         scoreFlowData['roundNo'].append(data['matchInfo']['roundNumber'][0])
@@ -148,6 +154,18 @@ for ff in range(0,len(jsonFileList)):
             scoreFlowData['periodCategory'].append('twoPoint')
         else:
             scoreFlowData['periodCategory'].append('standard')
+        if data['scoreFlow']['score'][ss]['period'][0] == 1:
+            #Just use period seconds
+            scoreFlowData['matchSeconds'].append(data['scoreFlow']['score'][ss]['periodSeconds'][0])
+        elif data['scoreFlow']['score'][ss]['period'][0] == 2:
+            #Add the preceding period seconds
+            scoreFlowData['matchSeconds'].append(data['scoreFlow']['score'][ss]['periodSeconds'][0] + matchInfo['periodSeconds'][ff][0])
+        elif data['scoreFlow']['score'][ss]['period'][0] == 3:
+            #Add the preceding period seconds
+            scoreFlowData['matchSeconds'].append(data['scoreFlow']['score'][ss]['periodSeconds'][0] + matchInfo['periodSeconds'][ff][0] + matchInfo['periodSeconds'][ff][1])
+        elif data['scoreFlow']['score'][ss]['period'][0] == 4:
+            #Add the preceding period seconds
+            scoreFlowData['matchSeconds'].append(data['scoreFlow']['score'][ss]['periodSeconds'][0] + matchInfo['periodSeconds'][ff][0] + matchInfo['periodSeconds'][ff][1] + matchInfo['periodSeconds'][ff][2])
         scoreFlowData['playerId'].append(data['scoreFlow']['score'][ss]['playerId'][0])
         scoreFlowData['squadId'].append(data['scoreFlow']['score'][ss]['squadId'][0])
         scoreFlowData['scoreName'].append(data['scoreFlow']['score'][ss]['scoreName'][0])
@@ -167,57 +185,483 @@ for ff in range(0,len(jsonFileList)):
         else:
             scoreFlowData['shotOutcome'].append(True)
     
-    # #Extract lineup data
+    #Extract substitution data
+    for ss in range(0,len(data['playerSubs']['player'])):
+        #Get current round and match number from match data
+        substitutionData['roundNo'].append(matchInfo['roundNo'][ff])
+        substitutionData['matchNo'].append(matchInfo['matchNo'][ff])
+        #Get period and period seconds
+        substitutionData['period'].append(data['playerSubs']['player'][ss]['period'][0])
+        substitutionData['periodSeconds'].append(data['playerSubs']['player'][ss]['periodSeconds'][0])
+        #Convert to match seconds based on match info and period number
+        if data['playerSubs']['player'][ss]['period'][0] == 1:
+            #Just use the period seconds
+            substitutionData['matchSeconds'].append(data['playerSubs']['player'][ss]['periodSeconds'][0])
+        elif data['playerSubs']['player'][ss]['period'][0] == 2:
+            #Add the matches period 1 seconds to the total
+            newSeconds = data['playerSubs']['player'][ss]['periodSeconds'][0] + matchInfo['periodSeconds'][ff][0]
+            #Add to data dictionary
+            substitutionData['matchSeconds'].append(newSeconds)
+        elif data['playerSubs']['player'][ss]['period'][0] == 3:
+            #Add the matches period 1 & 2 seconds to the total
+            newSeconds = data['playerSubs']['player'][ss]['periodSeconds'][0] + matchInfo['periodSeconds'][ff][0] + matchInfo['periodSeconds'][ff][1]
+            #Add to data dictionary
+            substitutionData['matchSeconds'].append(newSeconds)
+        elif data['playerSubs']['player'][ss]['period'][0] == 4:
+            #Add the matches period 1, 2 & 3 seconds to the total
+            newSeconds = data['playerSubs']['player'][ss]['periodSeconds'][0] + matchInfo['periodSeconds'][ff][0] + matchInfo['periodSeconds'][ff][1] + matchInfo['periodSeconds'][ff][2]
+            #Add to data dictionary
+            substitutionData['matchSeconds'].append(newSeconds)
+        #Get player and squad ID's
+        substitutionData['playerId'].append(data['playerSubs']['player'][ss]['playerId'][0])
+        substitutionData['squadId'].append(data['playerSubs']['player'][ss]['squadId'][0])
+        #Get substitution positions
+        substitutionData['fromPos'].append(data['playerSubs']['player'][ss]['fromPos'][0])
+        substitutionData['toPos'].append(data['playerSubs']['player'][ss]['toPos'][0])
+                
+    #Extract lineup data
     
-    # #Get the squad ID order
-    # if data['teamInfo']['team'][0]['squadId'][0] < data['teamInfo']['team'][1]['squadId'][0]:
-    #     lineUpSquadId1 = data['teamInfo']['team'][0]['squadId'][0]
-    #     lineUpSquadId2 = data['teamInfo']['team'][1]['squadId'][0]
-    # else:
-    #     lineUpSquadId1 = data['teamInfo']['team'][1]['squadId'][0]
-    #     lineUpSquadId2 = data['teamInfo']['team'][0]['squadId'][0]
+    ##### TODO: consider adding durations for within one/two-point periods
     
-    # #Extract first squads lineups
+    #Get the squad ID and name order
+    if data['teamInfo']['team'][0]['squadId'][0] < data['teamInfo']['team'][1]['squadId'][0]:
+        lineUpSquadId1 = data['teamInfo']['team'][0]['squadId'][0]
+        lineUpSquadName1 = teamInfo['squadNickname'][teamInfo['squadId'].index(lineUpSquadId1)]
+        lineUpSquadId2 = data['teamInfo']['team'][1]['squadId'][0]
+        lineUpSquadName2 = teamInfo['squadNickname'][teamInfo['squadId'].index(lineUpSquadId2)]
+    else:
+        lineUpSquadId1 = data['teamInfo']['team'][1]['squadId'][0]
+        lineUpSquadName1 = teamInfo['squadNickname'][teamInfo['squadId'].index(lineUpSquadId1)]
+        lineUpSquadId2 = data['teamInfo']['team'][0]['squadId'][0]
+        lineUpSquadName2 = teamInfo['squadNickname'][teamInfo['squadId'].index(lineUpSquadId2)]
     
-    # #Get the starting lineup
-    # startLineUpId = list()
-    # startLineUpName = list()
-    # for pp in range(0,7):
-    #     startLineUpId.append(data['playerInfo']['player'][pp]['playerId'][0])
-    #     startLineUpName.append(data['playerInfo']['player'][pp]['displayName'][0])
+    #Get the starting lineups
     
-    # ##### TODO: set better first lineup before looping through subs?
-    # ##### TODO: Or have checks in place for if it's the first lineup...
+    #Find the first player in the player list that matches the first squad ID.
+    #This should theoretically always be at index 0
+    #Set starting search parameters
+    playerNo = 0
+    startIndSquad1 = []
+    #Loop through players
+    while not startIndSquad1:
+        #Get current player name
+        currPlayerName = data['playerInfo']['player'][playerNo]['displayName'][0]
+        #Get this players squad ID
+        currPlayerSquadId = playerInfo['squadId'][playerInfo['displayName'].index(currPlayerName)]
+        #Check if it matches the first squad ID and append if so. This should exit the loop
+        if currPlayerSquadId == lineUpSquadId1:
+            startIndSquad1.append(playerNo)
+        else:
+            #Add to the search index for player no
+            playerNo = playerNo + 1
+            
+    #Find the first player in the player list that matches the second squad ID.
+    #Set starting search parameters
+    playerNo = 0
+    startIndSquad2 = []
+    #Loop through players
+    while not startIndSquad2:
+        #Get current player name
+        currPlayerName = data['playerInfo']['player'][playerNo]['displayName'][0]
+        #Get this players squad ID
+        currPlayerSquadId = playerInfo['squadId'][playerInfo['displayName'].index(currPlayerName)]
+        #Check if it matches the first squad ID and append if so. This should exit the loop
+        if currPlayerSquadId == lineUpSquadId2:
+            startIndSquad2.append(playerNo)
+        else:
+            #Add to the search index for player no
+            playerNo = playerNo + 1
+            
+    #Convert the current substitution data dictionary to a dataframe to use
+    #Only extract the subs for the current round and match number
+    df_subChecker = pd.DataFrame.from_dict(substitutionData).loc[(pd.DataFrame.from_dict(substitutionData)['roundNo'] == matchInfo['roundNo'][ff]) &
+                                                                 (pd.DataFrame.from_dict(substitutionData)['matchNo'] == matchInfo['matchNo'][ff]),]
     
-    # #Loop through substitutions and identify new lineups
-    # #### THIS LOOP WILL PICK UP MULTIPLE SUBS --- PROB NEEDS TO BE A WHILE LOOP?
-    # #### Needs to be while ss is less than length of subs, and add to this each time
-    # for ss in range(0,len(data['playerSubs']['player'])):
-    #     #Get the current substitutions squad ID
-    #     checkId = data['playerSubs']['player'][ss]['squadId'][0]
-    #     #Compare to current squad ID and progress if matching
-    #     if lineUpSquadId1 == checkId:
-    #         #Identify the indices of the substitutions for this time period
-    #         calcSubs = [ss]
-    #         #Set variable to stop while loop
-    #         progress = True
-    #         #Set counter
-    #         nextSub = 1
-    #         while progress:
-    #             #Check next sub
-    #             if data['playerSubs']['player'][ss]['periodSeconds'][0] == data['playerSubs']['player'][ss+nextSub]['periodSeconds'][0]:
-    #                 #Append this index to the list
-    #                 calcSubs.append(ss+nextSub)
-    #                 #Add to next sub counter
-    #                 nextSub = nextSub + 1
-    #             else:
-    #                 progress = False
-    #         #Identify the period and time...
-    #         ##### UP TO HERE...
+    #Convert the current score flow data dictionary to a dataframe to use
+    #Only extract the scores for the current round and match number
+    df_scoreChecker = pd.DataFrame.from_dict(scoreFlowData).loc[(pd.DataFrame.from_dict(scoreFlowData)['roundNo'] == matchInfo['roundNo'][ff]) &
+                                                                (pd.DataFrame.from_dict(scoreFlowData)['matchNo'] == matchInfo['matchNo'][ff]),]
+    
+    #Extract each squads lineups
+    for nn in range(0,2):
         
+        #Set current squad details within loop
+        if nn == 0:
+            currStartIndSquad = startIndSquad1
+            currLineUpSquadId = lineUpSquadId1
+            
+        else:
+            currStartIndSquad = startIndSquad2
+            currLineUpSquadId = lineUpSquadId2
+    
+        #Get the starting lineup
+        startLineUpId = list()
+        startLineUpName = list()
+        for pp in range(currStartIndSquad[0],currStartIndSquad[0]+7):
+            startLineUpId.append(data['playerInfo']['player'][pp]['playerId'][0])
+            startLineUpName.append(data['playerInfo']['player'][pp]['displayName'][0])
         
+        #Get subs for the current squad
+        df_subCheckerTeam = df_subChecker.loc[(df_subChecker['squadId'] == currLineUpSquadId),]  
+        df_subCheckerTeam.reset_index(drop=True, inplace=True)
+        
+        #First check if dataframe is empty if a team makes no subs
+        if len(df_subCheckerTeam) == 0:
+            #No subs made by this team
+            #This lineup stays in the whole game and can be treated that way
+            #Set lineup ID and names
+            lineUpData['lineUpId'].append(startLineUpId)
+            lineUpData['lineUpName'].append(startLineUpName)
+            lineUpData['squadId'].append(currLineUpSquadId)
+            #Set match and round numbers
+            lineUpData['roundNo'].append(matchInfo['roundNo'][ff])
+            lineUpData['matchNo'].append(matchInfo['matchNo'][ff])
+            #Set match seconds start and end to 0 and match length
+            lineUpData['matchSecondsStart'].append(0)
+            lineUpData['matchSecondsEnd'].append(sum(matchInfo['periodSeconds'][ff]))
+            lineUpData['durationSeconds'].append(sum(matchInfo['periodSeconds'][ff]))
+            #Set points for the lineup
+            #Simply across the whole match
+            lineUpData['pointsFor'].append(df_scoreChecker.loc[(df_scoreChecker['squadId'] == currLineUpSquadId),
+                                                               ['scorePoints']].sum()['scorePoints'])
+            #Set points against the lineup
+            #Simply across the whole match
+            lineUpData['pointsAgainst'].append(df_scoreChecker.loc[(df_scoreChecker['squadId'] != currLineUpSquadId),
+                                                                   ['scorePoints']].sum()['scorePoints'])
+            #Calculate plus/minus
+            plusMinus = df_scoreChecker.loc[(df_scoreChecker['squadId'] == currLineUpSquadId),
+                                            ['scorePoints']].sum()['scorePoints'] - \
+                df_scoreChecker.loc[(df_scoreChecker['squadId'] != currLineUpSquadId),
+                                    ['scorePoints']].sum()['scorePoints']
+            lineUpData['plusMinus'].append(plusMinus)
+        else:
+            #Set the first lineup data based on the first substituion made by the team
+            #Set lineup ID and names
+            lineUpData['lineUpId'].append(startLineUpId)
+            lineUpData['lineUpName'].append(startLineUpName)
+            lineUpData['squadId'].append(currLineUpSquadId)
+            #Set match and round numbers
+            lineUpData['roundNo'].append(matchInfo['roundNo'][ff])
+            lineUpData['matchNo'].append(matchInfo['matchNo'][ff])
+            #Set match seconds start and end to 0 and the first substitution
+            lineUpData['matchSecondsStart'].append(0)
+            lineUpData['matchSecondsEnd'].append(df_subCheckerTeam['matchSeconds'][0])
+            lineUpData['durationSeconds'].append(df_subCheckerTeam['matchSeconds'][0])
+            #Set points for the lineup
+            #Search in score flow for less than the substitution end time
+            lineUpData['pointsFor'].append(df_scoreChecker.loc[(df_scoreChecker['squadId'] == currLineUpSquadId) &
+                                                               (df_scoreChecker['matchSeconds'] <= df_subCheckerTeam['matchSeconds'][0]),
+                                                               ['scorePoints']].sum()['scorePoints'])
+            #Set points against the lineup
+            #Simply across the whole match
+            lineUpData['pointsAgainst'].append(df_scoreChecker.loc[(df_scoreChecker['squadId'] != currLineUpSquadId) &
+                                                               (df_scoreChecker['matchSeconds'] <= df_subCheckerTeam['matchSeconds'][0]),
+                                                               ['scorePoints']].sum()['scorePoints'])
+            #Calculate plus/minus
+            plusMinus = df_scoreChecker.loc[(df_scoreChecker['squadId'] == currLineUpSquadId) &
+                                            (df_scoreChecker['matchSeconds'] <= df_subCheckerTeam['matchSeconds'][0]),
+                                            ['scorePoints']].sum()['scorePoints'] - \
+                df_scoreChecker.loc[(df_scoreChecker['squadId'] != currLineUpSquadId) &
+                                    (df_scoreChecker['matchSeconds'] <= df_subCheckerTeam['matchSeconds'][0]),
+                                    ['scorePoints']].sum()['scorePoints']
+            lineUpData['plusMinus'].append(plusMinus)
+            
+            #Loop through substitutions, identify lineups and calculate data
+            
+            #Identify the substitutions that are grouped together
+            uniqueSubs = df_subCheckerTeam['matchSeconds'].unique()
+            #Loop through unique subs
+            for uu in range(0,len(uniqueSubs)):
     
+                #Get substitutions for current time point
+                #Only take the ones that shift into a lineup position
+                df_currSubs = df_subCheckerTeam.loc[(df_subCheckerTeam['matchSeconds'] == uniqueSubs[uu]) &
+                                                    (df_subCheckerTeam['toPos'] != 'S'),]
+                df_currSubs.reset_index(drop=True, inplace=True)
+                
+                #Create a new lineup variable to edit from the previous lineup
+                newLineUpId = list()
+                newLineUpName = list()
+                for pp in range(0,7):
+                    newLineUpId.append(lineUpData['lineUpId'][len(lineUpData['lineUpId'])-1][pp])
+                    newLineUpName.append(lineUpData['lineUpName'][len(lineUpData['lineUpName'])-1][pp])
+                
+                #Loop through substitutions and replace the lineup
+                for cc in range(0,len(df_currSubs)):
+                    #Check for position and replace appropriately
+                    if df_currSubs['toPos'][cc] == 'GS':
+                        #Replace player ID
+                        newLineUpId[0] = df_currSubs['playerId'][cc]
+                        #Get and replace player name
+                        newPlayerName = playerInfo['displayName'][playerInfo['playerId'].index(newLineUpId[0])]
+                        newLineUpName[0] = newPlayerName
+                    elif df_currSubs['toPos'][cc] == 'GA':
+                        #Replace player ID
+                        newLineUpId[1] = df_currSubs['playerId'][cc]
+                        #Get and replace player name
+                        newPlayerName = playerInfo['displayName'][playerInfo['playerId'].index(newLineUpId[1])]
+                        newLineUpName[1] = newPlayerName
+                    elif df_currSubs['toPos'][cc] == 'WA':
+                        #Replace player ID
+                        newLineUpId[2] = df_currSubs['playerId'][cc]
+                        #Get and replace player name
+                        newPlayerName = playerInfo['displayName'][playerInfo['playerId'].index(newLineUpId[2])]
+                        newLineUpName[2] = newPlayerName
+                    elif df_currSubs['toPos'][cc] == 'C':
+                        #Replace player ID
+                        newLineUpId[3] = df_currSubs['playerId'][cc]
+                        #Get and replace player name
+                        newPlayerName = playerInfo['displayName'][playerInfo['playerId'].index(newLineUpId[3])]
+                        newLineUpName[3] = newPlayerName
+                    elif df_currSubs['toPos'][cc] == 'WD':
+                        #Replace player ID
+                        newLineUpId[4] = df_currSubs['playerId'][cc]
+                        #Get and replace player name
+                        newPlayerName = playerInfo['displayName'][playerInfo['playerId'].index(newLineUpId[4])]
+                        newLineUpName[4] = newPlayerName
+                    elif df_currSubs['toPos'][cc] == 'GD':
+                        #Replace player ID
+                        newLineUpId[5] = df_currSubs['playerId'][cc]
+                        #Get and replace player name
+                        newPlayerName = playerInfo['displayName'][playerInfo['playerId'].index(newLineUpId[5])]
+                        newLineUpName[5] = newPlayerName
+                    elif df_currSubs['toPos'][cc] == 'GK':
+                        #Replace player ID
+                        newLineUpId[6] = df_currSubs['playerId'][cc]
+                        #Get and replace player name
+                        newPlayerName = playerInfo['displayName'][playerInfo['playerId'].index(newLineUpId[6])]
+                        newLineUpName[6] = newPlayerName
+                
+                #Calculate and set data in lineup structure
+                #Set lineup ID and names
+                lineUpData['lineUpId'].append(newLineUpId)
+                lineUpData['lineUpName'].append(newLineUpName)
+                lineUpData['squadId'].append(currLineUpSquadId)
+                #Set match and round numbers
+                lineUpData['roundNo'].append(matchInfo['roundNo'][ff])
+                lineUpData['matchNo'].append(matchInfo['matchNo'][ff])
+                #Set match seconds start and end to 0 and the first substitution
+                lineUpData['matchSecondsStart'].append(uniqueSubs[uu]+1)
+                #Match seconds end will be next sub or match end when last sub
+                if uu < len(uniqueSubs)-1:
+                    lineUpData['matchSecondsEnd'].append(uniqueSubs[uu+1])
+                    lineUpData['durationSeconds'].append(uniqueSubs[uu+1] - uniqueSubs[uu])
+                else:
+                    lineUpData['matchSecondsEnd'].append(sum(matchInfo['periodSeconds'][ff]))
+                    lineUpData['durationSeconds'].append(sum(matchInfo['periodSeconds'][ff]) - uniqueSubs[uu])
+                #Search in score flow for less than the substitution end time
+                #If last sub need to only search for greater than the seconds time
+                if uu < len(uniqueSubs)-1:
+                    #Set points for the lineup
+                    lineUpData['pointsFor'].append(df_scoreChecker.loc[(df_scoreChecker['squadId'] == currLineUpSquadId) &
+                                                                   (df_scoreChecker['matchSeconds'] > uniqueSubs[uu]+1) & 
+                                                                   (df_scoreChecker['matchSeconds'] <= uniqueSubs[uu+1]),
+                                                                   ['scorePoints']].sum()['scorePoints'])
+                    #Set points against the lineup
+                    lineUpData['pointsAgainst'].append(df_scoreChecker.loc[(df_scoreChecker['squadId'] != currLineUpSquadId) &
+                                                                   (df_scoreChecker['matchSeconds'] > uniqueSubs[uu]+1) & 
+                                                                   (df_scoreChecker['matchSeconds'] <= uniqueSubs[uu+1]),
+                                                                   ['scorePoints']].sum()['scorePoints'])
+                    #Calculate plus/minus
+                    plusMinus = df_scoreChecker.loc[(df_scoreChecker['squadId'] == currLineUpSquadId) &
+                                                    (df_scoreChecker['matchSeconds'] > uniqueSubs[uu]+1) & 
+                                                    (df_scoreChecker['matchSeconds'] <= uniqueSubs[uu+1]),
+                                                    ['scorePoints']].sum()['scorePoints'] - \
+                        df_scoreChecker.loc[(df_scoreChecker['squadId'] != currLineUpSquadId) &
+                                            (df_scoreChecker['matchSeconds'] > uniqueSubs[uu]+1) & 
+                                            (df_scoreChecker['matchSeconds'] <= uniqueSubs[uu+1]),
+                                            ['scorePoints']].sum()['scorePoints']
+                    lineUpData['plusMinus'].append(plusMinus)
+                else:
+                    #Set points for the lineup
+                    lineUpData['pointsFor'].append(df_scoreChecker.loc[(df_scoreChecker['squadId'] == lineUpSquadId1) &
+                                                                   (df_scoreChecker['matchSeconds'] > uniqueSubs[uu]+1),
+                                                                   ['scorePoints']].sum()['scorePoints'])
+                    #Set points against the lineup
+                    lineUpData['pointsAgainst'].append(df_scoreChecker.loc[(df_scoreChecker['squadId'] != lineUpSquadId1) &
+                                                                   (df_scoreChecker['matchSeconds'] > uniqueSubs[uu]+1),
+                                                                   ['scorePoints']].sum()['scorePoints'])
+                    #Calculate plus/minus
+                    plusMinus = df_scoreChecker.loc[(df_scoreChecker['squadId'] == lineUpSquadId1) &
+                                                    (df_scoreChecker['matchSeconds'] > uniqueSubs[uu]+1),
+                                                    ['scorePoints']].sum()['scorePoints'] - \
+                        df_scoreChecker.loc[(df_scoreChecker['squadId'] != lineUpSquadId1) &
+                                            (df_scoreChecker['matchSeconds'] > uniqueSubs[uu]+1),
+                                            ['scorePoints']].sum()['scorePoints']
+                    lineUpData['plusMinus'].append(plusMinus)
+                    
+    #Extract individual player 'lineup' data
+    #Loop through two teams
+    for nn in range(0,2):
+        
+        #Set current squad details within loop
+        if nn == 0:
+            currStartIndSquad = startIndSquad1
+            if currStartIndSquad < startIndSquad2:
+                currEndIndSquad = startIndSquad2
+            else:
+                currEndIndSquad = [len(data['playerInfo']['player'])]                
+        else:
+            currStartIndSquad = startIndSquad2
+            if currStartIndSquad < startIndSquad1:
+                currEndIndSquad = startIndSquad1
+            else:
+                currEndIndSquad = [len(data['playerInfo']['player'])]    
     
+        #Start with first squad players
+        for pp in range(currStartIndSquad[0],currEndIndSquad[0]):
+            
+            #Extract current player info
+            currPlayerId = data['playerInfo']['player'][pp]['playerId'][0]
+            currPlayerName = data['playerInfo']['player'][pp]['displayName'][0]
+            currPlayerSquadId = playerInfo['squadId'][playerInfo['playerId'].index(currPlayerId)]
+            
+            #Check if player is in starting lineup
+            if pp <= (currStartIndSquad[0] + 6):
+                isStarter = True
+            else:
+                isStarter = False
+            
+            #Grab the substitution data that contains this players id
+            df_subCheckerPlayer = df_subChecker.loc[(df_subChecker['playerId'] == currPlayerId),]
+            df_subCheckerPlayer.reset_index(drop=True, inplace=True)
+            
+            #Check combinations of starter vs. no starter and number of subs
+            if len(df_subCheckerPlayer) == 0:
+                
+                #If the player started the game and had no subs, they played the whole game
+                #If they didn't then we won't add them as they didn't play
+                if isStarter:
+                
+                    #Player started and played the whole game
+                    #Set player/squad ID and names
+                    individualLineUpData['playerId'].append(currPlayerId)
+                    individualLineUpData['playerName'].append(currPlayerName)
+                    individualLineUpData['playerPosition'].append(starterPositions[pp - currStartIndSquad[0]])
+                    individualLineUpData['squadId'].append(currPlayerSquadId)
+                    #Set match and round numbers
+                    individualLineUpData['roundNo'].append(matchInfo['roundNo'][ff])
+                    individualLineUpData['matchNo'].append(matchInfo['matchNo'][ff])
+                    #Set match seconds start and end to 0 and match length
+                    individualLineUpData['matchSecondsStart'].append(0)
+                    individualLineUpData['matchSecondsEnd'].append(sum(matchInfo['periodSeconds'][ff]))
+                    individualLineUpData['durationSeconds'].append(sum(matchInfo['periodSeconds'][ff]))
+                    #Set points for the lineup
+                    #Simply across the whole match
+                    individualLineUpData['pointsFor'].append(df_scoreChecker.loc[(df_scoreChecker['squadId'] == currPlayerSquadId),
+                                                                       ['scorePoints']].sum()['scorePoints'])
+                    #Set points against the lineup
+                    #Simply across the whole match
+                    individualLineUpData['pointsAgainst'].append(df_scoreChecker.loc[(df_scoreChecker['squadId'] != currPlayerSquadId),
+                                                                           ['scorePoints']].sum()['scorePoints'])
+                    #Calculate plus/minus
+                    plusMinus = df_scoreChecker.loc[(df_scoreChecker['squadId'] == currPlayerSquadId),
+                                                    ['scorePoints']].sum()['scorePoints'] - \
+                        df_scoreChecker.loc[(df_scoreChecker['squadId'] != currPlayerSquadId),
+                                            ['scorePoints']].sum()['scorePoints']
+                    individualLineUpData['plusMinus'].append(plusMinus)
+                
+            else:
+                
+                #Player incurred some form of substitution and game time
+                
+                #Loop through substitutions and address accordingly
+                for ss in range(0,len(df_subCheckerPlayer)+1):
+                    
+                    #Set player/squad ID and names
+                    individualLineUpData['playerId'].append(currPlayerId)
+                    individualLineUpData['playerName'].append(currPlayerName)
+                    individualLineUpData['squadId'].append(currPlayerSquadId)
+                    #Set match and round numbers
+                    individualLineUpData['roundNo'].append(matchInfo['roundNo'][ff])
+                    individualLineUpData['matchNo'].append(matchInfo['matchNo'][ff])
+                    
+                    #Check substitution number and code accordingly
+                    if ss == 0:
+                        #Starters first substitution involvement                    
+                        #Set starting position
+                        if isStarter:
+                            individualLineUpData['playerPosition'].append(starterPositions[pp - currStartIndSquad[0]])
+                        else:
+                            individualLineUpData['playerPosition'].append('S')                        
+                        #Set match start, end and duration
+                        individualLineUpData['matchSecondsStart'].append(0)
+                        individualLineUpData['durationSeconds'].append(df_subCheckerPlayer['matchSeconds'][ss])
+                        individualLineUpData['matchSecondsEnd'].append(df_subCheckerPlayer['matchSeconds'][ss])
+                        #Set points for and against the lineup
+                        individualLineUpData['pointsFor'].append(df_scoreChecker.loc[(df_scoreChecker['squadId'] == currPlayerSquadId) &
+                                                                                     (df_scoreChecker['matchSeconds'] <= df_subCheckerPlayer['matchSeconds'][ss]),
+                                                                                     ['scorePoints']].sum()['scorePoints'])
+                        individualLineUpData['pointsAgainst'].append(df_scoreChecker.loc[(df_scoreChecker['squadId'] != currPlayerSquadId) &
+                                                                                     (df_scoreChecker['matchSeconds'] <= df_subCheckerPlayer['matchSeconds'][ss]),
+                                                                                     ['scorePoints']].sum()['scorePoints'])
+                        #Calculate plus/minus
+                        plusMinus = df_scoreChecker.loc[(df_scoreChecker['squadId'] == currPlayerSquadId) &
+                                                        (df_scoreChecker['matchSeconds'] <= df_subCheckerPlayer['matchSeconds'][ss]),
+                                                        ['scorePoints']].sum()['scorePoints'] - \
+                            df_scoreChecker.loc[(df_scoreChecker['squadId'] != currPlayerSquadId) &
+                                                (df_scoreChecker['matchSeconds'] <= df_subCheckerPlayer['matchSeconds'][ss]),
+                                                ['scorePoints']].sum()['scorePoints']
+                        individualLineUpData['plusMinus'].append(plusMinus)    
+                        
+                    elif ss == len(df_subCheckerPlayer):
+                        
+                        #Starters last substituion involvement
+                        #Set starting position
+                        individualLineUpData['playerPosition'].append(df_subCheckerPlayer['toPos'][ss-1])
+                        #Set match start and duration
+                        individualLineUpData['matchSecondsStart'].append(df_subCheckerPlayer['matchSeconds'][ss-1]+1)
+                        individualLineUpData['durationSeconds'].append(sum(matchInfo['periodSeconds'][ff]) - df_subCheckerPlayer['matchSeconds'][ss-1]+1)
+                        individualLineUpData['matchSecondsEnd'].append(sum(matchInfo['periodSeconds'][ff]))
+                        #Set points for and against the lineup
+                        individualLineUpData['pointsFor'].append(df_scoreChecker.loc[(df_scoreChecker['squadId'] == currPlayerSquadId) &
+                                                                                     (df_scoreChecker['matchSeconds'] > df_subCheckerPlayer['matchSeconds'][ss-1]) & 
+                                                                                     (df_scoreChecker['matchSeconds'] <= sum(matchInfo['periodSeconds'][ff])),
+                                                                                     ['scorePoints']].sum()['scorePoints'])
+                        individualLineUpData['pointsAgainst'].append(df_scoreChecker.loc[(df_scoreChecker['squadId'] != currPlayerSquadId) &
+                                                                                     (df_scoreChecker['matchSeconds'] > df_subCheckerPlayer['matchSeconds'][ss-1]) & 
+                                                                                     (df_scoreChecker['matchSeconds'] <= sum(matchInfo['periodSeconds'][ff])),
+                                                                                     ['scorePoints']].sum()['scorePoints'])
+                        #Calculate plus/minus
+                        plusMinus = df_scoreChecker.loc[(df_scoreChecker['squadId'] == currPlayerSquadId) &
+                                                        (df_scoreChecker['matchSeconds'] > df_subCheckerPlayer['matchSeconds'][ss-1]) & 
+                                                        (df_scoreChecker['matchSeconds'] <= sum(matchInfo['periodSeconds'][ff])),
+                                                        ['scorePoints']].sum()['scorePoints'] - \
+                            df_scoreChecker.loc[(df_scoreChecker['squadId'] != currPlayerSquadId) &
+                                                (df_scoreChecker['matchSeconds'] > df_subCheckerPlayer['matchSeconds'][ss-1]) & 
+                                                (df_scoreChecker['matchSeconds'] <= sum(matchInfo['periodSeconds'][ff])),
+                                                ['scorePoints']].sum()['scorePoints']
+                        individualLineUpData['plusMinus'].append(plusMinus)
+                        
+                    else:
+                        
+                        #Substitutions throughout match
+                        #Set substituting position
+                        individualLineUpData['playerPosition'].append(df_subCheckerPlayer['toPos'][ss-1])
+                        #Set match start, end and duration
+                        individualLineUpData['matchSecondsStart'].append(df_subCheckerPlayer['matchSeconds'][ss-1]+1)
+                        individualLineUpData['durationSeconds'].append(df_subCheckerPlayer['matchSeconds'][ss] - df_subCheckerPlayer['matchSeconds'][ss-1]+1)
+                        individualLineUpData['matchSecondsEnd'].append(df_subCheckerPlayer['matchSeconds'][ss])
+                        #Set points for and against the lineup
+                        individualLineUpData['pointsFor'].append(df_scoreChecker.loc[(df_scoreChecker['squadId'] == currPlayerSquadId) &
+                                                                                     (df_scoreChecker['matchSeconds'] > df_subCheckerPlayer['matchSeconds'][ss-1]) & 
+                                                                                     (df_scoreChecker['matchSeconds'] <= df_subCheckerPlayer['matchSeconds'][ss]),
+                                                                                     ['scorePoints']].sum()['scorePoints'])
+                        individualLineUpData['pointsAgainst'].append(df_scoreChecker.loc[(df_scoreChecker['squadId'] != currPlayerSquadId) &
+                                                                                     (df_scoreChecker['matchSeconds'] > df_subCheckerPlayer['matchSeconds'][ss-1]) & 
+                                                                                     (df_scoreChecker['matchSeconds'] <= df_subCheckerPlayer['matchSeconds'][ss]),
+                                                                                     ['scorePoints']].sum()['scorePoints'])                
+                        #Calculate plus/minus
+                        plusMinus = df_scoreChecker.loc[(df_scoreChecker['squadId'] == currPlayerSquadId) &
+                                                        (df_scoreChecker['matchSeconds'] > df_subCheckerPlayer['matchSeconds'][ss-1]+1) & 
+                                                        (df_scoreChecker['matchSeconds'] <= df_subCheckerPlayer['matchSeconds'][ss]),
+                                                        ['scorePoints']].sum()['scorePoints'] - \
+                            df_scoreChecker.loc[(df_scoreChecker['squadId'] != currPlayerSquadId) &
+                                                (df_scoreChecker['matchSeconds'] > df_subCheckerPlayer['matchSeconds'][ss-1]+1) & 
+                                                (df_scoreChecker['matchSeconds'] <= df_subCheckerPlayer['matchSeconds'][ss]),
+                                                ['scorePoints']].sum()['scorePoints']
+                        individualLineUpData['plusMinus'].append(plusMinus)
+                
     ##### TODO: extract game statistics data
 
 #Convert filled dictionaries to dataframes
@@ -233,6 +677,10 @@ df_matchInfo = pd.DataFrame.from_dict(matchInfo)
 
 #Score flow data
 df_scoreFlow = pd.DataFrame.from_dict(scoreFlowData)
+
+#Lineup data
+df_lineUp = pd.DataFrame.from_dict(lineUpData)
+df_individualLineUp = pd.DataFrame.from_dict(individualLineUpData)
 
 ##### TODO: other dataframes once extracted
     
@@ -874,6 +1322,8 @@ ind_2ptPlayerScoring = ind_2ptPlayerScoring + 1
 
 # %% Differential between two and one point scoring
 
+##### TODO: fix so that players with no 2-point goals are still included...
+
 #Extract a dataframe of 2pt Goals
 df_allGoals = df_scoreFlow.loc[(df_scoreFlow['scoreName'].isin(['goal','2pt Goal'])) & 
                                (df_scoreFlow['roundNo'] == round2Plot),]
@@ -1085,5 +1535,491 @@ os.chdir('..')
 
 #Add to two point figure indexing
 ind_2ptPlayerScoring = ind_2ptPlayerScoring + 1 
+
+# %% Plus/minus figures
+
+# %% Team line-up plus/minus grid
+
+##### TODO: sort plus minus per figure, toolbar in second html issue?
+
+os.chdir('..\\..\\PlusMinusAnalysis')
+
+##### NOTE: this doesn't split across rounds
+
+#Get alphabetical list of squad nicknames
+plotSquadNames = teamInfo['squadNickname']
+plotSquadNames = sorted(plotSquadNames)
+
+#Get the id's for the team names ordering
+plotSquadId = list()
+for tt in range(0,len(plotSquadNames)):
+    plotSquadId.append(teamInfo['squadId'][teamInfo['squadNickname'].index(plotSquadNames[tt])])
+
+#Set blank lists to fill with plots and source
+figPlotAbs = list()
+figSourceAbs = list()
+figPlotPer = list()
+figSourcePer = list()
+
+#Loop through teams
+for tt in range(0,len(plotSquadNames)):
+
+    #Set current squad ID
+    currSquadId = plotSquadId[tt]
+    
+    #Extract the lineup dataframe for the current team
+    df_lineUpChecker = df_lineUp.loc[(df_lineUp['squadId'] == currSquadId),]
+    df_lineUpChecker.reset_index(drop=True, inplace=True)
+    
+    #Loop through dataframe and create a new list of combined player names
+    combinedLineUpName = list()
+    for dd in range(0,len(df_lineUpChecker)):
+        combinedLineUpName.append(", ".join(df_lineUpChecker['lineUpName'][dd]))
+    #Append to dataframe
+    df_lineUpChecker['combinedLineUpName'] = combinedLineUpName
+        
+    #Extract the unique lineups for the current team
+    uniqueLineUps = df_lineUpChecker['combinedLineUpName'].unique()
+    
+    #Loop through unique lineups and sum the duration and plus/minus data
+    ##### NOTE: current code only takes lineups that have played more than 5 mins
+    #Durations converted to minutes here
+    lineUpDuration = list()
+    lineUpPlusMinus = list()
+    analyseLineUps = list()
+    for uu in range(0,len(uniqueLineUps)):
+        #Get a separated dataframe
+        df_currLineUp = df_lineUpChecker.loc[(df_lineUpChecker['combinedLineUpName'] == uniqueLineUps[uu]),]
+        #Sum data and append to list if greater than 5 mins (300 seconds)
+        if sum(df_currLineUp['durationSeconds']) >= 300:
+            analyseLineUps.append(uniqueLineUps[uu])
+            lineUpDuration.append(sum(df_currLineUp['durationSeconds']) / 60)
+            lineUpPlusMinus.append(sum(df_currLineUp['plusMinus']))
+    
+    #Split the string of the lineups to put in figure source
+    lineUpGS = list()
+    lineUpGA = list()
+    lineUpWA = list()
+    lineUpC = list()
+    lineUpWD = list()
+    lineUpGD = list()
+    lineUpGK = list()
+    for aa in range(0,len(analyseLineUps)):
+        #Split and allocate
+        splitLineUp = analyseLineUps[aa].split(', ')
+        lineUpGS.append(splitLineUp[0])
+        lineUpGA.append(splitLineUp[1])
+        lineUpWA.append(splitLineUp[2])
+        lineUpC.append(splitLineUp[3])
+        lineUpWD.append(splitLineUp[4])
+        lineUpGD.append(splitLineUp[5])
+        lineUpGK.append(splitLineUp[6])
+        
+    #Convert to dataframe and sort
+    df_lineUpPlusMinus = pd.DataFrame(list(zip(analyseLineUps,lineUpDuration,lineUpPlusMinus,
+                                               lineUpGS,lineUpGA,lineUpWA,lineUpC,lineUpWD,lineUpGD,lineUpGK)),
+                                      columns = ['analyseLineUps','lineUpDuration','lineUpPlusMinus',
+                                                 'lineUpGS','lineUpGA','lineUpWA','lineUpC','lineUpWD','lineUpGD','lineUpGK'])
+    df_lineUpPlusMinus.sort_values(by = 'lineUpPlusMinus', inplace = True,
+                                   ascending = False, ignore_index = True)
+    
+    #Add a per 15 column to dataframe
+    perPlusMinus = list()
+    perDivider = 15 #per 15 minutes
+    for mm in range(0,len(df_lineUpPlusMinus)):
+        perFac = perDivider / df_lineUpPlusMinus['lineUpDuration'][mm]
+        perPlusMinus.append(df_lineUpPlusMinus['lineUpPlusMinus'][mm]*perFac)
+    #Append to dataframe
+    df_lineUpPlusMinus['lineUpPerPlusMinus'] = perPlusMinus
+    
+    #Create source for figures
+    figSourceAbs.append(ColumnDataSource(data = dict(analyseLineUps = list(df_lineUpPlusMinus['analyseLineUps']),
+                                                     plusMinus = list(df_lineUpPlusMinus['lineUpPlusMinus']),
+                                                     durations = list(df_lineUpPlusMinus['lineUpDuration']),
+                                                     lineUpGS = list(df_lineUpPlusMinus['lineUpGS']),
+                                                     lineUpGA = list(df_lineUpPlusMinus['lineUpGA']),
+                                                     lineUpWA = list(df_lineUpPlusMinus['lineUpWA']),
+                                                     lineUpC = list(df_lineUpPlusMinus['lineUpC']),
+                                                     lineUpWD = list(df_lineUpPlusMinus['lineUpWD']),
+                                                     lineUpGD = list(df_lineUpPlusMinus['lineUpGD']),
+                                                     lineUpGK = list(df_lineUpPlusMinus['lineUpGK']))))
+    figSourcePer.append(ColumnDataSource(data = dict(analyseLineUps = list(df_lineUpPlusMinus['analyseLineUps']),
+                                                     plusMinus = list(df_lineUpPlusMinus['lineUpPerPlusMinus']),
+                                                     durations = list(df_lineUpPlusMinus['lineUpDuration']),
+                                                     lineUpGS = list(df_lineUpPlusMinus['lineUpGS']),
+                                                     lineUpGA = list(df_lineUpPlusMinus['lineUpGA']),
+                                                     lineUpWA = list(df_lineUpPlusMinus['lineUpWA']),
+                                                     lineUpC = list(df_lineUpPlusMinus['lineUpC']),
+                                                     lineUpWD = list(df_lineUpPlusMinus['lineUpWD']),
+                                                     lineUpGD = list(df_lineUpPlusMinus['lineUpGD']),
+                                                     lineUpGK = list(df_lineUpPlusMinus['lineUpGK']))))
+    
+    #Create figures
+    figPlotAbs.append(figure(x_range = list(df_lineUpPlusMinus['analyseLineUps']), plot_height = 300, plot_width = 400,
+                             title = plotSquadNames[tt]+' Lineups Plus/Minus (Min. 5 Minutes Played)',
+                             toolbar_location = None,
+                             tools = 'hover', 
+                             tooltips = [("GS", "@lineUpGS"), ("GA", "@lineUpGA"), ("WA", "@lineUpWA"), 
+                                      ("C", "@lineUpC"), ("WD", "@lineUpWD"), ("GD", "@lineUpGD"), ("GK", "@lineUpGK"),
+                                      ("Minutes Played", "@durations"), ("Plus/Minus", "@plusMinus")]))
+    figPlotPer.append(figure(x_range = list(df_lineUpPlusMinus['analyseLineUps']), plot_height = 300, plot_width = 400,
+                             title = plotSquadNames[tt]+' Lineups Plus/Minus per 15 Minute (Min. 5 Minutes Played)',
+                             toolbar_location = None,
+                             tools = 'hover', 
+                             tooltips = [("GS", "@lineUpGS"), ("GA", "@lineUpGA"), ("WA", "@lineUpWA"), 
+                                      ("C", "@lineUpC"), ("WD", "@lineUpWD"), ("GD", "@lineUpGD"), ("GK", "@lineUpGK"),
+                                      ("Minutes Played", "@durations"), ("Plus/Minus per 15 Mins", "@plusMinus")]))
+    
+    #Add bars
+    figPlotAbs[tt].vbar(x = 'analyseLineUps', top = 'plusMinus', width=0.6,
+                        color = colourDict[plotSquadNames[tt]], source = figSourceAbs[tt])
+    figPlotPer[tt].vbar(x = 'analyseLineUps', top = 'plusMinus', width=0.6,
+                        color = colourDict[plotSquadNames[tt]], source = figSourcePer[tt])
+    
+    #Set figure parameters
+    # figPlot[tt].y_range.start = 0
+    figPlotAbs[tt].x_range.range_padding = 0.1
+    figPlotAbs[tt].xaxis.major_label_orientation = 1
+    figPlotAbs[tt].xgrid.grid_line_color = None
+    figPlotAbs[tt].title.align = 'center'
+    figPlotAbs[tt].yaxis.axis_label = 'Total Plus/Minus'
+    figPlotAbs[tt].xaxis.major_label_text_font_size = '0pt'  # current solution to turn off long x-tick labels
+    figPlotAbs[tt].xaxis.major_tick_line_color = None  # turn off x-axis major ticks
+    
+    # figPlot[tt].y_range.start = 0
+    figPlotPer[tt].x_range.range_padding = 0.1
+    figPlotPer[tt].xaxis.major_label_orientation = 1
+    figPlotPer[tt].xgrid.grid_line_color = None
+    figPlotPer[tt].title.align = 'center'
+    figPlotPer[tt].title.text_font_size = '8pt'
+    figPlotPer[tt].yaxis.axis_label = 'Total Plus/Minus (per 15 minutes)'
+    figPlotPer[tt].xaxis.major_label_text_font_size = '0pt'  # current solution to turn off long x-tick labels
+    figPlotPer[tt].xaxis.major_tick_line_color = None  # turn off x-axis major ticks
+    
+    # #Show figure
+    # show(figPlotAbs[tt])
+    # show(figPlotPer[tt])
+    
+#Create the gridplot
+gridAbs = gridplot([[figPlotAbs[0], figPlotAbs[1], figPlotAbs[2], figPlotAbs[3]],
+                    [figPlotAbs[4], figPlotAbs[5], figPlotAbs[6], figPlotAbs[7]]],
+                   plot_height = 300, plot_width = 400)
+gridPer = gridplot([[figPlotPer[0], figPlotPer[1], figPlotPer[2], figPlotPer[3]],
+                    [figPlotPer[4], figPlotPer[5], figPlotPer[6], figPlotPer[7]]],
+                   plot_height = 300, plot_width = 400)
+
+# #Show grid
+# show(gridAbs)
+# show(gridPer)
+
+#Export grid as both .png and .html
+
+##### TODO: set better naming strings for figures with looping
+
+#Seems like storing html in same folder causes figures to overwrite?
+#Make directory to store
+os.mkdir('total-absolutePlusMinus-teamLineUps')
+os.chdir('total-absolutePlusMinus-teamLineUps')
+
+#PNG
+export_png(gridAbs, filename = 'total-absolutePlusMinus-teamLineUps.png')
+
+#HTML
+output_file('total-absolutePlusMinus-teamLineUps.html')
+save(gridAbs)
+
+#Navigate back up
+os.chdir('..')     
+
+#Seems like storing html in same folder causes figures to overwrite?
+#Make directory to store
+os.mkdir('total-per15PlusMinus-teamLineUps')
+os.chdir('total-per15PlusMinus-teamLineUps')
+
+#PNG
+export_png(gridPer, filename = 'total-per15PlusMinus-teamLineUps.png')
+
+#HTML
+output_file('total-per15PlusMinus-teamLineUps.html')
+save(gridPer)
+
+#Navigate back up
+os.chdir('..')  
+    
+# %% Plot player plus/minus
+
+#Get unique list of players from the lineup dataframe
+plotPlayers = list(df_individualLineUp['playerId'].unique())
+
+#Loop through players and extract total plus minus data
+#Set blank lists to store data in
+playerDuration = list()
+playerPlusMinus = list()
+playerPlusMinusPer15 = list()
+analysePlayer = list()
+analyseColour = list()
+analyseSquad = list()
+for pp in range(0,len(plotPlayers)):
+    
+    #Extract current player to dataframe
+    df_currPlayer = df_individualLineUp.loc[(df_individualLineUp['playerId'] == plotPlayers[pp]) &
+                                            (df_individualLineUp['playerPosition'] != 'S'),
+                                            ['playerId','durationSeconds','plusMinus']]
+    df_currPlayer.reset_index(drop=True, inplace=True)
+    
+    #Check if player total is greater than 5 minutes and get data if so
+    if sum(df_currPlayer['durationSeconds']) > 300:
+        #Append duration and plus/minus
+        playerDuration.append(sum(df_currPlayer['durationSeconds'])/60)
+        playerPlusMinus.append(sum(df_currPlayer['plusMinus']))
+        #Calculate per 15 plus minus
+        perDivider = 15
+        perFac = perDivider / (sum(df_currPlayer['durationSeconds']/60))
+        playerPlusMinusPer15.append(sum(df_currPlayer['plusMinus'])*perFac)
+        #Get current player and append
+        analysePlayer.append(playerInfo['displayName'][playerInfo['playerId'].index(plotPlayers[pp])])
+        #Get squad ID colour for player
+        currSquadId = playerInfo['squadId'][playerInfo['playerId'].index(plotPlayers[pp])]
+        analyseColour.append(colourDict[teamInfo['squadNickname'][teamInfo['squadId'].index(currSquadId)]])
+        analyseSquad.append(teamInfo['squadNickname'][teamInfo['squadId'].index(currSquadId)])
+        
+        
+        
+#Place player plus minus data in dataframe and sort
+df_playerPlusMinus = pd.DataFrame(list(zip(analysePlayer,analyseColour,analyseSquad,
+                                           playerDuration,playerPlusMinus,playerPlusMinusPer15)),
+                                  columns = ['analysePlayer','analyseColour','analyseSquad',
+                                             'playerDuration','playerPlusMinus','playerPlusMinusPer15'])
+df_playerPlusMinus.sort_values(by = 'playerPlusMinus', inplace = True,
+                               ascending = False, ignore_index = True)
+ 
+#Create figure for total player plus minus (top 20 players)
+figPlot = list()
+figSource = list()
+
+#Create source for figure
+figSource.append(ColumnDataSource(data = dict(players = list(df_playerPlusMinus['analysePlayer'].iloc[0:20]),
+                                              counts = list(df_playerPlusMinus['playerPlusMinus'].iloc[0:20]),
+                                              duration = list(df_playerPlusMinus['playerDuration'].iloc[0:20]),
+                                              squad = list(df_playerPlusMinus['analyseSquad'].iloc[0:20]),
+                                              colours = tuple(df_playerPlusMinus['analyseColour'].iloc[0:20]))))
+
+#Create figure
+figPlot.append(figure(x_range = list(df_playerPlusMinus['analysePlayer'].iloc[0:20]), plot_height = 400, plot_width = 800,
+                      title = 'Top 20 Players for Total Plus/Minus (min. 5 minutes played)',
+                      toolbar_location = None,
+                      tools = 'hover', 
+                      tooltips = [("Player", "@players"), ("Team", "@squad"), ("Total Minutes", "@duration"), ("Player Total Plus/Minus", "@counts")]))
+
+#Add bars
+figPlot[0].vbar(x = 'players', top = 'counts', width=0.6,
+                color = 'colours', source = figSource[0])
+
+#Set figure parameters
+figPlot[0].y_range.start = 0
+figPlot[0].x_range.range_padding = 0.1
+figPlot[0].xaxis.major_label_orientation = 1
+figPlot[0].xgrid.grid_line_color = None
+figPlot[0].title.align = 'center'
+figPlot[0].yaxis.axis_label = 'Total Plus/Minus'
+
+# #Show figure
+# show(figPlot[0])
+
+#Export figure as PNG and HTML
+
+#Seems like storing html in same folder causes figures to overwrite?
+#Make directory to store
+os.mkdir('total-absolutePlusMinus-players')
+os.chdir('total-absolutePlusMinus-players')
+
+#PNG
+export_png(figPlot[0], filename = 'total-absolutePlusMinus-players.png')
+
+#HTML
+output_file('total-absolutePlusMinus-players.html')
+save(figPlot[0])
+
+#Navigate back up
+os.chdir('..') 
+
+# %% Plot player plus/minus per 15
+
+#Resort player plus minus by per 15
+df_playerPlusMinus.sort_values(by = 'playerPlusMinusPer15', inplace = True,
+                               ascending = False, ignore_index = True)
+ 
+#Create figure for total player plus minus (top 20 players)
+figPlot = list()
+figSource = list()
+
+#Create source for figure
+figSource.append(ColumnDataSource(data = dict(players = list(df_playerPlusMinus['analysePlayer'].iloc[0:20]),
+                                              counts = list(df_playerPlusMinus['playerPlusMinusPer15'].iloc[0:20]),
+                                              duration = list(df_playerPlusMinus['playerDuration'].iloc[0:20]),
+                                              squad = list(df_playerPlusMinus['analyseSquad'].iloc[0:20]),
+                                              colours = tuple(df_playerPlusMinus['analyseColour'].iloc[0:20]))))
+
+#Create figure
+figPlot.append(figure(x_range = list(df_playerPlusMinus['analysePlayer'].iloc[0:20]), plot_height = 400, plot_width = 800,
+                      title = 'Top 20 Players for Total Plus/Minus Per 15 Minutes (min. 5 minutes played)',
+                      toolbar_location = None,
+                      tools = 'hover', 
+                      tooltips = [("Player", "@players"), ("Team", "@squad"), ("Total Minutes", "@duration"), ("Player Total Plus/Minus Per 15", "@counts")]))
+
+#Add bars
+figPlot[0].vbar(x = 'players', top = 'counts', width=0.6,
+                color = 'colours', source = figSource[0])
+
+#Set figure parameters
+figPlot[0].y_range.start = 0
+figPlot[0].x_range.range_padding = 0.1
+figPlot[0].xaxis.major_label_orientation = 1
+figPlot[0].xgrid.grid_line_color = None
+figPlot[0].title.align = 'center'
+figPlot[0].yaxis.axis_label = 'Total Plus/Minus Per 15 Minutes Played'
+
+# #Show figure
+# show(figPlot[0])
+
+#Export figure as PNG and HTML
+
+#Seems like storing html in same folder causes figures to overwrite?
+#Make directory to store
+os.mkdir('total-per15PlusMinus-players')
+os.chdir('total-per15PlusMinus-players')
+
+#PNG
+export_png(figPlot[0], filename = 'total-per15PlusMinus-players.png')
+
+#HTML
+output_file('total-per15PlusMinus-players.html')
+save(figPlot[0])
+
+#Navigate back up
+os.chdir('..') 
+
+# %% Plot differential between plus/minus when player on/off
+
+#Loop through players and extract total plus minus data
+#Set blank lists to store data in
+playerDurationOn = list()
+playerDurationOff = list()
+playerPlusMinusOn = list()
+playerPlusMinusOff = list()
+playerPlusMinusOnPer15 = list()
+playerPlusMinusOffPer15 = list()
+analysePlayer = list()
+analyseColour = list()
+analyseSquad = list()
+for pp in range(0,len(plotPlayers)):
+    
+    #Extract current player to dataframe for on and off
+    df_currPlayerOn = df_individualLineUp.loc[(df_individualLineUp['playerId'] == plotPlayers[pp]) &
+                                              (df_individualLineUp['playerPosition'] != 'S'),
+                                              ['playerId','durationSeconds','plusMinus']]
+    df_currPlayerOn.reset_index(drop=True, inplace=True)
+    df_currPlayerOff = df_individualLineUp.loc[(df_individualLineUp['playerId'] == plotPlayers[pp]) &
+                                               (df_individualLineUp['playerPosition'] == 'S'),
+                                               ['playerId','durationSeconds','plusMinus']]
+    df_currPlayerOff.reset_index(drop=True, inplace=True)
+    
+    #Check if player total is greater than 5 minutes and get data if so
+    if sum(df_currPlayerOn['durationSeconds']) > 300 and sum(df_currPlayerOff['durationSeconds']) > 300:
+        #Append duration and plus/minus when on vs. off
+        playerDurationOn.append(sum(df_currPlayerOn['durationSeconds'])/60)
+        playerPlusMinusOn.append(sum(df_currPlayerOn['plusMinus']))
+        playerDurationOff.append(sum(df_currPlayerOff['durationSeconds'])/60)
+        playerPlusMinusOff.append(sum(df_currPlayerOff['plusMinus']))
+        #Calculate per 15 plus minus
+        perDivider = 15
+        #On
+        perFac = perDivider / (sum(df_currPlayerOn['durationSeconds']/60))
+        playerPlusMinusOnPer15.append(sum(df_currPlayerOn['plusMinus'])*perFac)
+        #Off
+        perFac = perDivider / (sum(df_currPlayerOff['durationSeconds']/60))
+        playerPlusMinusOffPer15.append(sum(df_currPlayerOff['plusMinus'])*perFac)
+        #Get current player and append
+        analysePlayer.append(playerInfo['displayName'][playerInfo['playerId'].index(plotPlayers[pp])])
+        #Get squad ID colour for player
+        currSquadId = playerInfo['squadId'][playerInfo['playerId'].index(plotPlayers[pp])]
+        analyseColour.append(colourDict[teamInfo['squadNickname'][teamInfo['squadId'].index(currSquadId)]])
+        analyseSquad.append(teamInfo['squadNickname'][teamInfo['squadId'].index(currSquadId)])
+        
+        
+        
+#Place player plus minus data in dataframe and sort
+df_playerPlusMinusRel = pd.DataFrame(list(zip(analysePlayer,analyseColour,analyseSquad,
+                                              playerDurationOn,playerPlusMinusOn,playerPlusMinusOnPer15,
+                                              playerDurationOff,playerPlusMinusOff,playerPlusMinusOffPer15)),
+                                     columns = ['analysePlayer','analyseColour','analyseSquad',
+                                                'playerDurationOn','playerPlusMinusOn','playerPlusMinusOnPer15',
+                                                'playerDurationOff','playerPlusMinusOff','playerPlusMinusOffPer15'])
+
+#Calculate the relative difference between when the player is off vs. on
+#This calculation means positive and negative values mean the team does better
+#versus worse when the player is on, respectively
+relPerformance = list()
+relPerformancePer15 = list()
+for dd in range(0,len(df_playerPlusMinusRel)):
+    relPerformance.append(df_playerPlusMinusRel['playerPlusMinusOn'][dd] - df_playerPlusMinusRel['playerPlusMinusOff'][dd])
+    relPerformancePer15.append(df_playerPlusMinusRel['playerPlusMinusOnPer15'][dd] - df_playerPlusMinusRel['playerPlusMinusOffPer15'][dd])
+#Append to dataframe
+df_playerPlusMinusRel['relPerformance'] = relPerformance
+df_playerPlusMinusRel['relPerformancePer15'] = relPerformancePer15
+#Resort by relative per 15 performance
+df_playerPlusMinusRel.sort_values(by = 'relPerformancePer15', inplace = True,
+                                  ascending = False, ignore_index = True)
+ 
+#Create figure for total player plus minus (top 20 players)
+figPlot = list()
+figSource = list()
+
+#Create source for figure
+figSource.append(ColumnDataSource(data = dict(players = list(df_playerPlusMinusRel['analysePlayer'].iloc[0:20]),
+                                              counts = list(df_playerPlusMinusRel['relPerformancePer15'].iloc[0:20]),
+                                              durationOn = list(df_playerPlusMinusRel['playerDurationOn'].iloc[0:20]),
+                                              durationOff = list(df_playerPlusMinusRel['playerDurationOff'].iloc[0:20]),
+                                              squad = list(df_playerPlusMinusRel['analyseSquad'].iloc[0:20]),
+                                              colours = tuple(df_playerPlusMinusRel['analyseColour'].iloc[0:20]))))
+
+#Create figure
+figPlot.append(figure(x_range = list(df_playerPlusMinusRel['analysePlayer'].iloc[0:20]), plot_height = 400, plot_width = 800,
+                      title = 'Top 20 Players for Plus/Minus per 15 Minute when On vs. Off Court (min. 5 minutes on & off court)',
+                      toolbar_location = None,
+                      tools = 'hover', 
+                      tooltips = [("Player", "@players"), ("Team", "@squad"), ("Minutes On-Court", "@durationOn"), ("Minutes Off-Court", "@durationOff"), ("Relative Plus/Minus per 15 Minutes", "@counts")]))
+
+#Add bars
+figPlot[0].vbar(x = 'players', top = 'counts', width=0.6,
+                color = 'colours', source = figSource[0])
+
+#Set figure parameters
+figPlot[0].y_range.start = 0
+figPlot[0].x_range.range_padding = 0.1
+figPlot[0].xaxis.major_label_orientation = 1
+figPlot[0].xgrid.grid_line_color = None
+figPlot[0].title.align = 'center'
+figPlot[0].yaxis.axis_label = 'Relative Plus/Minus per 15 Minutes'
+
+# #Show figure
+# show(figPlot[0])
+
+#Export figure as PNG and HTML
+
+#Seems like storing html in same folder causes figures to overwrite?
+#Make directory to store
+os.mkdir('total-relativePer15PlusMinus-players')
+os.chdir('total-relativePer15PlusMinus-players')
+
+#PNG
+export_png(figPlot[0], filename = 'total-relativePer15PlusMinus-players.png')
+
+#HTML
+output_file('total-relativePer15PlusMinus-players.html')
+save(figPlot[0])
+
+#Navigate back up
+os.chdir('..') 
 
 # %%

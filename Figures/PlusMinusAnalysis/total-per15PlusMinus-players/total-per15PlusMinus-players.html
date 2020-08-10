@@ -1,0 +1,85 @@
+
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+  
+  <head>
+    
+      <meta charset="utf-8">
+      <title>Bokeh Plot</title>
+      
+      
+        
+          
+        
+        
+          
+        <script type="text/javascript" src="https://cdn.bokeh.org/bokeh/release/bokeh-2.1.1.min.js" integrity="sha384-kLr4fYcqcSpbuI95brIH3vnnYCquzzSxHPU6XGQCIkQRGJwhg0StNbj1eegrHs12" crossorigin="anonymous"></script>
+        <script type="text/javascript">
+            Bokeh.set_log_level("info");
+        </script>
+        
+      
+      
+    
+  </head>
+  
+  
+  <body>
+    
+      
+        
+          
+          
+            
+              <div class="bk-root" id="265f4aae-c6af-4841-b22b-cf9250b3c0b3" data-root-id="4578"></div>
+            
+          
+        
+      
+      
+        <script type="application/json" id="4780">
+          {"b2e7ab8b-02f0-4142-af53-8c93f6b24dca":{"roots":{"references":[{"attributes":{"axis_label":"Total Plus/Minus Per 15 Minutes Played","formatter":{"id":"4606"},"ticker":{"id":"4593"}},"id":"4592","type":"LinearAxis"},{"attributes":{"active_drag":"auto","active_inspect":"auto","active_multi":null,"active_scroll":"auto","active_tap":"auto","tools":[{"id":"4596"}]},"id":"4597","type":"Toolbar"},{"attributes":{},"id":"4593","type":"BasicTicker"},{"attributes":{"fill_alpha":{"value":0.1},"fill_color":{"field":"colours"},"line_alpha":{"value":0.1},"line_color":{"field":"colours"},"top":{"field":"counts"},"width":{"value":0.6},"x":{"field":"players"}},"id":"4601","type":"VBar"},{"attributes":{"formatter":{"id":"4608"},"major_label_orientation":1,"ticker":{"id":"4590"}},"id":"4589","type":"CategoricalAxis"},{"attributes":{"fill_color":{"field":"colours"},"line_color":{"field":"colours"},"top":{"field":"counts"},"width":{"value":0.6},"x":{"field":"players"}},"id":"4600","type":"VBar"},{"attributes":{},"id":"4610","type":"UnionRenderers"},{"attributes":{"data":{"colours":["#fdb61c","#00a68e","#e54078","#00a68e","#00a68e","#00a68e","#00a68e","#00a68e","#00a68e","#00a68e","#00a68e","#00a68e","#00953b","#00953b","#0082cd","#fdb61c","#0082cd","#fdb61c","#fdb61c","#fdb61c"],"counts":[9.677419354838708,6.319702602230483,5.934065934065934,5.6614563476934805,5.625,5.073598496711556,5.027932960893854,4.67397576457011,4.5830681094844055,4.383116883116884,4.287075261987932,4.0636422274779616,3.3950617283950617,3.1781701444622796,3.1304347826086962,3.0941125913192957,3.0471584038694077,2.955454026270702,2.9169121979964645,2.7242707760044027],"duration":[37.2,80.7,7.583333333333333,87.43333333333334,32.0,106.43333333333334,107.4,115.53333333333333,78.55,20.533333333333335,104.96666666666667,77.51666666666667,97.2,51.916666666666664,9.583333333333334,116.35,68.91666666666667,116.73333333333333,113.13333333333334,121.13333333333334],"players":["J.Russell","E.Mannix","C.Blackman","T.Philip","T.Honey","K.Moloney","J.Weston","K.Eddy","M.Kumwenda","J.Newton","L.Watson","C.Thwaites","A.Teague-Neeld","C.Bruce","N.Styles","L.Scherian","S.Garbin","S.Wood","P.Maweni","K.Pretorius"],"squad":["Lightning","Vixens","Thunderbirds","Vixens","Vixens","Vixens","Vixens","Vixens","Vixens","Vixens","Vixens","Vixens","Fever","Fever","Swifts","Lightning","Swifts","Lightning","Lightning","Lightning"]},"selected":{"id":"4609"},"selection_policy":{"id":"4610"}},"id":"4577","type":"ColumnDataSource"},{"attributes":{"align":"center","text":"Top 20 Players for Total Plus/Minus Per 15 Minutes (min. 5 minutes played)"},"id":"4579","type":"Title"},{"attributes":{"axis":{"id":"4589"},"grid_line_color":null,"ticker":null},"id":"4591","type":"Grid"},{"attributes":{},"id":"4606","type":"BasicTickFormatter"},{"attributes":{"axis":{"id":"4592"},"dimension":1,"ticker":null},"id":"4595","type":"Grid"},{"attributes":{},"id":"4585","type":"CategoricalScale"},{"attributes":{"below":[{"id":"4589"}],"center":[{"id":"4591"},{"id":"4595"}],"left":[{"id":"4592"}],"plot_height":400,"plot_width":800,"renderers":[{"id":"4602"}],"title":{"id":"4579"},"toolbar":{"id":"4597"},"toolbar_location":null,"x_range":{"id":"4581"},"x_scale":{"id":"4585"},"y_range":{"id":"4583"},"y_scale":{"id":"4587"}},"id":"4578","subtype":"Figure","type":"Plot"},{"attributes":{"source":{"id":"4577"}},"id":"4603","type":"CDSView"},{"attributes":{"factors":["J.Russell","E.Mannix","C.Blackman","T.Philip","T.Honey","K.Moloney","J.Weston","K.Eddy","M.Kumwenda","J.Newton","L.Watson","C.Thwaites","A.Teague-Neeld","C.Bruce","N.Styles","L.Scherian","S.Garbin","S.Wood","P.Maweni","K.Pretorius"],"range_padding":0.1},"id":"4581","type":"FactorRange"},{"attributes":{"callback":null,"tooltips":[["Player","@players"],["Team","@squad"],["Total Minutes","@duration"],["Player Total Plus/Minus Per 15","@counts"]]},"id":"4596","type":"HoverTool"},{"attributes":{},"id":"4587","type":"LinearScale"},{"attributes":{},"id":"4590","type":"CategoricalTicker"},{"attributes":{},"id":"4609","type":"Selection"},{"attributes":{"start":0},"id":"4583","type":"DataRange1d"},{"attributes":{"data_source":{"id":"4577"},"glyph":{"id":"4600"},"hover_glyph":null,"muted_glyph":null,"nonselection_glyph":{"id":"4601"},"selection_glyph":null,"view":{"id":"4603"}},"id":"4602","type":"GlyphRenderer"},{"attributes":{},"id":"4608","type":"CategoricalTickFormatter"}],"root_ids":["4578"]},"title":"Bokeh Application","version":"2.1.1"}}
+        </script>
+        <script type="text/javascript">
+          (function() {
+            var fn = function() {
+              Bokeh.safely(function() {
+                (function(root) {
+                  function embed_document(root) {
+                    
+                  var docs_json = document.getElementById('4780').textContent;
+                  var render_items = [{"docid":"b2e7ab8b-02f0-4142-af53-8c93f6b24dca","root_ids":["4578"],"roots":{"4578":"265f4aae-c6af-4841-b22b-cf9250b3c0b3"}}];
+                  root.Bokeh.embed.embed_items(docs_json, render_items);
+                
+                  }
+                  if (root.Bokeh !== undefined) {
+                    embed_document(root);
+                  } else {
+                    var attempts = 0;
+                    var timer = setInterval(function(root) {
+                      if (root.Bokeh !== undefined) {
+                        clearInterval(timer);
+                        embed_document(root);
+                      } else {
+                        attempts++;
+                        if (attempts > 100) {
+                          clearInterval(timer);
+                          console.log("Bokeh: ERROR: Unable to run BokehJS code because BokehJS library is missing");
+                        }
+                      }
+                    }, 10, root)
+                  }
+                })(window);
+              });
+            };
+            if (document.readyState != "loading") fn();
+            else document.addEventListener("DOMContentLoaded", fn);
+          })();
+        </script>
+    
+  </body>
+  
+</html>

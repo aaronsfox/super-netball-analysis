@@ -1,0 +1,85 @@
+
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+  
+  <head>
+    
+      <meta charset="utf-8">
+      <title>Bokeh Plot</title>
+      
+      
+        
+          
+        
+        
+          
+        <script type="text/javascript" src="https://cdn.bokeh.org/bokeh/release/bokeh-2.1.1.min.js" integrity="sha384-kLr4fYcqcSpbuI95brIH3vnnYCquzzSxHPU6XGQCIkQRGJwhg0StNbj1eegrHs12" crossorigin="anonymous"></script>
+        <script type="text/javascript">
+            Bokeh.set_log_level("info");
+        </script>
+        
+      
+      
+    
+  </head>
+  
+  
+  <body>
+    
+      
+        
+          
+          
+            
+              <div class="bk-root" id="3c6b883e-9ae9-4c76-921a-bd5f18494818" data-root-id="4782"></div>
+            
+          
+        
+      
+      
+        <script type="application/json" id="4984">
+          {"ee2cc45b-d0fc-4112-9fba-2f509f7a206d":{"roots":{"references":[{"attributes":{"factors":["T.Dwan","V.Charles","J.Russell","M.Cassidy","A.Teague-Neeld","R.Aiken","S.Poolman","L.Scherian","K.Jenner","J.Ward","G.Horjus","S.Garbin","P.Hadley","L.Dunkley","C.Bassett","C.Blackman","E.Mannix","M.Proud","S.Craig","J.Anstiss"],"range_padding":0.1},"id":"4785","type":"FactorRange"},{"attributes":{"axis_label":"Relative Plus/Minus per 15 Minutes","formatter":{"id":"4810"},"ticker":{"id":"4797"}},"id":"4796","type":"LinearAxis"},{"attributes":{"align":"center","text":"Top 20 Players for Plus/Minus per 15 Minute when On vs. Off Court (min. 5 minutes on &amp; off court)"},"id":"4783","type":"Title"},{"attributes":{},"id":"4797","type":"BasicTicker"},{"attributes":{"below":[{"id":"4793"}],"center":[{"id":"4795"},{"id":"4799"}],"left":[{"id":"4796"}],"plot_height":400,"plot_width":800,"renderers":[{"id":"4806"}],"title":{"id":"4783"},"toolbar":{"id":"4801"},"toolbar_location":null,"x_range":{"id":"4785"},"x_scale":{"id":"4789"},"y_range":{"id":"4787"},"y_scale":{"id":"4791"}},"id":"4782","subtype":"Figure","type":"Plot"},{"attributes":{"callback":null,"tooltips":[["Player","@players"],["Team","@squad"],["Minutes On-Court","@durationOn"],["Minutes Off-Court","@durationOff"],["Relative Plus/Minus per 15 Minutes","@counts"]]},"id":"4800","type":"HoverTool"},{"attributes":{},"id":"4812","type":"CategoricalTickFormatter"},{"attributes":{},"id":"4814","type":"UnionRenderers"},{"attributes":{"formatter":{"id":"4812"},"major_label_orientation":1,"ticker":{"id":"4794"}},"id":"4793","type":"CategoricalAxis"},{"attributes":{"data_source":{"id":"4781"},"glyph":{"id":"4804"},"hover_glyph":null,"muted_glyph":null,"nonselection_glyph":{"id":"4805"},"selection_glyph":null,"view":{"id":"4807"}},"id":"4806","type":"GlyphRenderer"},{"attributes":{"source":{"id":"4781"}},"id":"4807","type":"CDSView"},{"attributes":{},"id":"4789","type":"CategoricalScale"},{"attributes":{},"id":"4813","type":"Selection"},{"attributes":{"axis":{"id":"4796"},"dimension":1,"ticker":null},"id":"4799","type":"Grid"},{"attributes":{"start":0},"id":"4787","type":"DataRange1d"},{"attributes":{"active_drag":"auto","active_inspect":"auto","active_multi":null,"active_scroll":"auto","active_tap":"auto","tools":[{"id":"4800"}]},"id":"4801","type":"Toolbar"},{"attributes":{},"id":"4791","type":"LinearScale"},{"attributes":{"axis":{"id":"4793"},"grid_line_color":null,"ticker":null},"id":"4795","type":"Grid"},{"attributes":{},"id":"4810","type":"BasicTickFormatter"},{"attributes":{"data":{"colours":["#4b2c69","#00953b","#fdb61c","#4b2c69","#00953b","#4b2c69","#f57921","#fdb61c","#4b2c69","#494b4a","#e54078","#0082cd","#0082cd","#4b2c69","#f57921","#e54078","#00a68e","#0082cd","#0082cd","#00953b"],"counts":[19.281572418079943,16.802386802386803,13.529059868390776,10.594805797812459,10.148131305475552,10.022310602386266,9.5285303027437,9.07417903650202,9.036953261377326,8.092970569708543,6.875035883063143,6.151579852599417,5.279242551895532,4.841316566660979,4.811216101424723,4.503678140041776,4.492662407346195,3.899195128200609,3.2949097438739114,3.161068828207741],"durationOff":[22.433333333333334,6.166666666666667,23.366666666666667,18.416666666666668,24.433333333333334,20.333333333333332,30.466666666666665,5.016666666666667,7.416666666666667,32.88333333333333,42.31666666666667,53.15,18.183333333333334,76.21666666666667,46.31666666666667,52.43333333333333,41.05,39.86666666666667,11.466666666666667,9.65],"durationOn":[99.28333333333333,115.5,37.2,103.3,97.2,101.4,90.61666666666666,116.35,114.25,88.68333333333334,78.43333333333334,68.91666666666667,103.93333333333334,45.5,74.86666666666666,7.583333333333333,80.7,82.23333333333333,110.51666666666667,112.03333333333333],"players":["T.Dwan","V.Charles","J.Russell","M.Cassidy","A.Teague-Neeld","R.Aiken","S.Poolman","L.Scherian","K.Jenner","J.Ward","G.Horjus","S.Garbin","P.Hadley","L.Dunkley","C.Bassett","C.Blackman","E.Mannix","M.Proud","S.Craig","J.Anstiss"],"squad":["Firebirds","Fever","Lightning","Firebirds","Fever","Firebirds","GIANTS","Lightning","Firebirds","Magpies","Thunderbirds","Swifts","Swifts","Firebirds","GIANTS","Thunderbirds","Vixens","Swifts","Swifts","Fever"]},"selected":{"id":"4813"},"selection_policy":{"id":"4814"}},"id":"4781","type":"ColumnDataSource"},{"attributes":{"fill_alpha":{"value":0.1},"fill_color":{"field":"colours"},"line_alpha":{"value":0.1},"line_color":{"field":"colours"},"top":{"field":"counts"},"width":{"value":0.6},"x":{"field":"players"}},"id":"4805","type":"VBar"},{"attributes":{},"id":"4794","type":"CategoricalTicker"},{"attributes":{"fill_color":{"field":"colours"},"line_color":{"field":"colours"},"top":{"field":"counts"},"width":{"value":0.6},"x":{"field":"players"}},"id":"4804","type":"VBar"}],"root_ids":["4782"]},"title":"Bokeh Application","version":"2.1.1"}}
+        </script>
+        <script type="text/javascript">
+          (function() {
+            var fn = function() {
+              Bokeh.safely(function() {
+                (function(root) {
+                  function embed_document(root) {
+                    
+                  var docs_json = document.getElementById('4984').textContent;
+                  var render_items = [{"docid":"ee2cc45b-d0fc-4112-9fba-2f509f7a206d","root_ids":["4782"],"roots":{"4782":"3c6b883e-9ae9-4c76-921a-bd5f18494818"}}];
+                  root.Bokeh.embed.embed_items(docs_json, render_items);
+                
+                  }
+                  if (root.Bokeh !== undefined) {
+                    embed_document(root);
+                  } else {
+                    var attempts = 0;
+                    var timer = setInterval(function(root) {
+                      if (root.Bokeh !== undefined) {
+                        clearInterval(timer);
+                        embed_document(root);
+                      } else {
+                        attempts++;
+                        if (attempts > 100) {
+                          clearInterval(timer);
+                          console.log("Bokeh: ERROR: Unable to run BokehJS code because BokehJS library is missing");
+                        }
+                      }
+                    }, 10, root)
+                  }
+                })(window);
+              });
+            };
+            if (document.readyState != "loading") fn();
+            else document.addEventListener("DOMContentLoaded", fn);
+          })();
+        </script>
+    
+  </body>
+  
+</html>
