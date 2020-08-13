@@ -1,0 +1,85 @@
+
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+  
+  <head>
+    
+      <meta charset="utf-8">
+      <title>Bokeh Plot</title>
+      
+      
+        
+          
+        
+        
+          
+        <script type="text/javascript" src="https://cdn.bokeh.org/bokeh/release/bokeh-2.1.1.min.js" integrity="sha384-kLr4fYcqcSpbuI95brIH3vnnYCquzzSxHPU6XGQCIkQRGJwhg0StNbj1eegrHs12" crossorigin="anonymous"></script>
+        <script type="text/javascript">
+            Bokeh.set_log_level("info");
+        </script>
+        
+      
+      
+    
+  </head>
+  
+  
+  <body>
+    
+      
+        
+          
+          
+            
+              <div class="bk-root" id="3bc9991b-742c-44cc-9bb3-fd6015c72944" data-root-id="5728"></div>
+            
+          
+        
+      
+      
+        <script type="application/json" id="5930">
+          {"aa508c10-8993-4a6e-a3ca-9aab757ffc55":{"roots":{"references":[{"attributes":{},"id":"5735","type":"CategoricalScale"},{"attributes":{"data_source":{"id":"5727"},"glyph":{"id":"5750"},"hover_glyph":null,"muted_glyph":null,"nonselection_glyph":{"id":"5751"},"selection_glyph":null,"view":{"id":"5753"}},"id":"5752","type":"GlyphRenderer"},{"attributes":{"callback":null,"tooltips":[["Player","@fullNames"],["Team","@squadNames"],["Total Points from Super Shots","@counts"]]},"id":"5746","type":"HoverTool"},{"attributes":{"axis":{"id":"5742"},"dimension":1,"ticker":null},"id":"5745","type":"Grid"},{"attributes":{"axis":{"id":"5739"},"grid_line_color":null,"ticker":null},"id":"5741","type":"Grid"},{"attributes":{},"id":"5755","type":"CategoricalTickFormatter"},{"attributes":{},"id":"5743","type":"BasicTicker"},{"attributes":{},"id":"5737","type":"LinearScale"},{"attributes":{},"id":"5757","type":"BasicTickFormatter"},{"attributes":{"data":{"color":["#e54078","#f57921","#494b4a","#0082cd","#00953b","#00a68e","#00a68e","#0082cd","#fdb61c","#00953b","#00953b","#4b2c69","#4b2c69","#fdb61c"],"counts":[14,12,10,10,6,6,6,4,4,2,2,2,2,2],"fullNames":["Sasha Glasgow","Jo Harten","Gabrielle Sinclair","Helen Housby","Kaylia Stanton","Tegan Philip","Caitlin Thwaites","Sam Wallace","Steph Wood","Alice Teague-Neeld","Jhaniele Fowler","Tippah Dwan","Ine-Mari Venter","Cara Koenen"],"players":["S.Glasgow","J.Harten","G.Sinclair","H.Housby","K.Stanton","T.Philip","C.Thwaites","S.Wallace","S.Wood","A.Teague-Neeld","J.Fowler","T.Dwan","I.Venter","C.Koenen"],"squadNames":["Thunderbirds","GIANTS","Magpies","Swifts","Fever","Vixens","Vixens","Swifts","Lightning","Fever","Fever","Firebirds","Firebirds","Lightning"]},"selected":{"id":"5759"},"selection_policy":{"id":"5760"}},"id":"5727","type":"ColumnDataSource"},{"attributes":{"align":"center","text":"Total Points from Super Shots"},"id":"5729","type":"Title"},{"attributes":{"fill_alpha":{"value":0.1},"fill_color":{"field":"color"},"line_alpha":{"value":0.1},"line_color":{"field":"color"},"top":{"field":"counts"},"width":{"value":0.6},"x":{"field":"players"}},"id":"5751","type":"VBar"},{"attributes":{"formatter":{"id":"5755"},"major_label_orientation":1,"ticker":{"id":"5740"}},"id":"5739","type":"CategoricalAxis"},{"attributes":{},"id":"5740","type":"CategoricalTicker"},{"attributes":{"axis_label":"Total Points","formatter":{"id":"5757"},"ticker":{"id":"5743"}},"id":"5742","type":"LinearAxis"},{"attributes":{"active_drag":"auto","active_inspect":"auto","active_multi":null,"active_scroll":"auto","active_tap":"auto","tools":[{"id":"5746"}]},"id":"5747","type":"Toolbar"},{"attributes":{},"id":"5759","type":"Selection"},{"attributes":{"factors":["S.Glasgow","J.Harten","G.Sinclair","H.Housby","K.Stanton","T.Philip","C.Thwaites","S.Wallace","S.Wood","A.Teague-Neeld","J.Fowler","T.Dwan","I.Venter","C.Koenen"],"range_padding":0.1},"id":"5731","type":"FactorRange"},{"attributes":{},"id":"5760","type":"UnionRenderers"},{"attributes":{"fill_color":{"field":"color"},"line_color":{"field":"color"},"top":{"field":"counts"},"width":{"value":0.6},"x":{"field":"players"}},"id":"5750","type":"VBar"},{"attributes":{"start":0},"id":"5733","type":"DataRange1d"},{"attributes":{"source":{"id":"5727"}},"id":"5753","type":"CDSView"},{"attributes":{"below":[{"id":"5739"}],"center":[{"id":"5741"},{"id":"5745"}],"left":[{"id":"5742"}],"plot_height":400,"plot_width":800,"renderers":[{"id":"5752"}],"title":{"id":"5729"},"toolbar":{"id":"5747"},"toolbar_location":null,"x_range":{"id":"5731"},"x_scale":{"id":"5735"},"y_range":{"id":"5733"},"y_scale":{"id":"5737"}},"id":"5728","subtype":"Figure","type":"Plot"}],"root_ids":["5728"]},"title":"Bokeh Application","version":"2.1.1"}}
+        </script>
+        <script type="text/javascript">
+          (function() {
+            var fn = function() {
+              Bokeh.safely(function() {
+                (function(root) {
+                  function embed_document(root) {
+                    
+                  var docs_json = document.getElementById('5930').textContent;
+                  var render_items = [{"docid":"aa508c10-8993-4a6e-a3ca-9aab757ffc55","root_ids":["5728"],"roots":{"5728":"3bc9991b-742c-44cc-9bb3-fd6015c72944"}}];
+                  root.Bokeh.embed.embed_items(docs_json, render_items);
+                
+                  }
+                  if (root.Bokeh !== undefined) {
+                    embed_document(root);
+                  } else {
+                    var attempts = 0;
+                    var timer = setInterval(function(root) {
+                      if (root.Bokeh !== undefined) {
+                        clearInterval(timer);
+                        embed_document(root);
+                      } else {
+                        attempts++;
+                        if (attempts > 100) {
+                          clearInterval(timer);
+                          console.log("Bokeh: ERROR: Unable to run BokehJS code because BokehJS library is missing");
+                        }
+                      }
+                    }, 10, root)
+                  }
+                })(window);
+              });
+            };
+            if (document.readyState != "loading") fn();
+            else document.addEventListener("DOMContentLoaded", fn);
+          })();
+        </script>
+    
+  </body>
+  
+</html>
