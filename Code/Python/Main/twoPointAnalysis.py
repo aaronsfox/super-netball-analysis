@@ -737,7 +737,7 @@ figSource = list()
 
 #Enter round
 ##### TODO: create function with round as input
-round2Plot = 2
+round2Plot = 3
 
 #Run loop to create plots
 for gg in range(0,4):
@@ -754,18 +754,22 @@ for gg in range(0,4):
     
     #Get match result for title
     team1Score = df_scoreFlow.loc[(df_scoreFlow['matchNo'] == gg+1) & 
+                                  (df_scoreFlow['roundNo'] == round2Plot) &
                                   (df_scoreFlow['scoreName'] == 'goal') & 
                                   (df_scoreFlow['squadId'] == teamId1),
                                   ['scorePoints']].sum()[0] + \
         df_scoreFlow.loc[(df_scoreFlow['matchNo'] == gg+1) & 
+                         (df_scoreFlow['roundNo'] == round2Plot) &
                          (df_scoreFlow['scoreName'] == '2pt Goal') & 
                          (df_scoreFlow['squadId'] == teamId1),
                          ['scorePoints']].sum()[0]
     team2Score = df_scoreFlow.loc[(df_scoreFlow['matchNo'] == gg+1) & 
+                                  (df_scoreFlow['roundNo'] == round2Plot) &
                                   (df_scoreFlow['scoreName'] == 'goal') & 
                                   (df_scoreFlow['squadId'] == teamId2),
                                   ['scorePoints']].sum()[0] + \
         df_scoreFlow.loc[(df_scoreFlow['matchNo'] == gg+1) & 
+                         (df_scoreFlow['roundNo'] == round2Plot) &
                          (df_scoreFlow['scoreName'] == '2pt Goal') & 
                          (df_scoreFlow['squadId'] == teamId2),
                          ['scorePoints']].sum()[0]
@@ -782,20 +786,24 @@ for gg in range(0,4):
     
     #Team 1
     standardTeam1 = df_scoreFlow.loc[(df_scoreFlow['matchNo'] == gg+1) & 
+                                     (df_scoreFlow['roundNo'] == round2Plot) &
                                      (df_scoreFlow['scoreName'] == 'goal') & 
                                      (df_scoreFlow['squadId'] == teamId1),
                                      ['scorePoints']].sum()
     twoPointTeam1 = df_scoreFlow.loc[(df_scoreFlow['matchNo'] == gg+1) & 
+                                     (df_scoreFlow['roundNo'] == round2Plot) &
                                      (df_scoreFlow['scoreName'] == '2pt Goal') & 
                                      (df_scoreFlow['squadId'] == teamId1),
                                      ['scorePoints']].sum()
     
     #Team 2
     standardTeam2 = df_scoreFlow.loc[(df_scoreFlow['matchNo'] == gg+1) & 
+                                     (df_scoreFlow['roundNo'] == round2Plot) &
                                      (df_scoreFlow['scoreName'] == 'goal') & 
                                      (df_scoreFlow['squadId'] == teamId2),
                                      ['scorePoints']].sum()
     twoPointTeam2 = df_scoreFlow.loc[(df_scoreFlow['matchNo'] == gg+1) & 
+                                     (df_scoreFlow['roundNo'] == round2Plot) &
                                      (df_scoreFlow['scoreName'] == '2pt Goal') & 
                                      (df_scoreFlow['squadId'] == teamId2),
                                      ['scorePoints']].sum()
@@ -877,7 +885,7 @@ os.chdir('..')
 
 #Enter round
 ##### TODO: create function with round as input
-round2Plot = 2
+round2Plot = 3
 
 #Set blank lists to fill with plots and source
 figPlot = list()
@@ -898,18 +906,22 @@ for gg in range(0,4):
     
     #Get match result for title
     team1Score = df_scoreFlow.loc[(df_scoreFlow['matchNo'] == gg+1) & 
+                                  (df_scoreFlow['roundNo'] == round2Plot) &
                                   (df_scoreFlow['scoreName'] == 'goal') & 
                                   (df_scoreFlow['squadId'] == teamId1),
                                   ['scorePoints']].sum()[0] + \
         df_scoreFlow.loc[(df_scoreFlow['matchNo'] == gg+1) & 
+                         (df_scoreFlow['roundNo'] == round2Plot) &
                          (df_scoreFlow['scoreName'] == '2pt Goal') & 
                          (df_scoreFlow['squadId'] == teamId1),
                          ['scorePoints']].sum()[0]
     team2Score = df_scoreFlow.loc[(df_scoreFlow['matchNo'] == gg+1) & 
+                                  (df_scoreFlow['roundNo'] == round2Plot) &
                                   (df_scoreFlow['scoreName'] == 'goal') & 
                                   (df_scoreFlow['squadId'] == teamId2),
                                   ['scorePoints']].sum()[0] + \
         df_scoreFlow.loc[(df_scoreFlow['matchNo'] == gg+1) & 
+                         (df_scoreFlow['roundNo'] == round2Plot) &
                          (df_scoreFlow['scoreName'] == '2pt Goal') & 
                          (df_scoreFlow['squadId'] == teamId2),
                          ['scorePoints']].sum()[0]
@@ -937,11 +949,13 @@ for gg in range(0,4):
     twoPointTeam1 = list()
     for qq in range(0,4):
         standardTeam1.append(df_scoreFlow.loc[(df_scoreFlow['matchNo'] == gg+1) & 
+                                              (df_scoreFlow['roundNo'] == round2Plot) &
                                               (df_scoreFlow['scoreName'] == 'goal') & 
                                               (df_scoreFlow['squadId'] == teamId1) & 
                                               (df_scoreFlow['period'] == qq+1),
                                               ['scorePoints']].sum()[0])
         twoPointTeam1.append(df_scoreFlow.loc[(df_scoreFlow['matchNo'] == gg+1) & 
+                                              (df_scoreFlow['roundNo'] == round2Plot) &
                                               (df_scoreFlow['scoreName'] == '2pt Goal') & 
                                               (df_scoreFlow['squadId'] == teamId1) & 
                                               (df_scoreFlow['period'] == qq+1),
@@ -952,11 +966,13 @@ for gg in range(0,4):
     twoPointTeam2 = list()
     for qq in range(0,4):
         standardTeam2.append(df_scoreFlow.loc[(df_scoreFlow['matchNo'] == gg+1) & 
+                                              (df_scoreFlow['roundNo'] == round2Plot) &
                                               (df_scoreFlow['scoreName'] == 'goal') & 
                                               (df_scoreFlow['squadId'] == teamId2) & 
                                               (df_scoreFlow['period'] == qq+1),
                                               ['scorePoints']].sum()[0])
         twoPointTeam2.append(df_scoreFlow.loc[(df_scoreFlow['matchNo'] == gg+1) & 
+                                              (df_scoreFlow['roundNo'] == round2Plot) &
                                               (df_scoreFlow['scoreName'] == '2pt Goal') & 
                                               (df_scoreFlow['squadId'] == teamId2) & 
                                               (df_scoreFlow['period'] == qq+1),
@@ -1038,7 +1054,7 @@ os.chdir('..')
 
 #Enter round
 ##### TODO: create function with round as input
-round2Plot = 2
+round2Plot = 3
 
 #Set blank lists to fill with plots and source
 figPlot = list()
@@ -1059,18 +1075,22 @@ for gg in range(0,4):
     
     #Get match result for title
     team1Score = df_scoreFlow.loc[(df_scoreFlow['matchNo'] == gg+1) & 
+                                  (df_scoreFlow['roundNo'] == round2Plot) &
                                   (df_scoreFlow['scoreName'] == 'goal') & 
                                   (df_scoreFlow['squadId'] == teamId1),
                                   ['scorePoints']].sum()[0] + \
         df_scoreFlow.loc[(df_scoreFlow['matchNo'] == gg+1) & 
+                         (df_scoreFlow['roundNo'] == round2Plot) &
                          (df_scoreFlow['scoreName'] == '2pt Goal') & 
                          (df_scoreFlow['squadId'] == teamId1),
                          ['scorePoints']].sum()[0]
     team2Score = df_scoreFlow.loc[(df_scoreFlow['matchNo'] == gg+1) & 
+                                  (df_scoreFlow['roundNo'] == round2Plot) &
                                   (df_scoreFlow['scoreName'] == 'goal') & 
                                   (df_scoreFlow['squadId'] == teamId2),
                                   ['scorePoints']].sum()[0] + \
         df_scoreFlow.loc[(df_scoreFlow['matchNo'] == gg+1) & 
+                         (df_scoreFlow['roundNo'] == round2Plot) &
                          (df_scoreFlow['scoreName'] == '2pt Goal') & 
                          (df_scoreFlow['squadId'] == teamId2),
                          ['scorePoints']].sum()[0]
@@ -1101,11 +1121,13 @@ for gg in range(0,4):
     outerTeam1 = list()
     for qq in range(0,len(ratios)):
         innerTeam1.append(df_scoreFlow.loc[(df_scoreFlow['matchNo'] == gg+1) & 
+                                           (df_scoreFlow['roundNo'] == round2Plot) &
                                            (df_scoreFlow['squadId'] == teamId1) & 
                                            (df_scoreFlow['periodCategory'] == ratios[qq]) &
                                            (df_scoreFlow['shotCircle'] == 'innerCircle'),
                                            ['shotCircle']].count()[0])
         outerTeam1.append(df_scoreFlow.loc[(df_scoreFlow['matchNo'] == gg+1) & 
+                                           (df_scoreFlow['roundNo'] == round2Plot) &
                                            (df_scoreFlow['squadId'] == teamId1) & 
                                            (df_scoreFlow['periodCategory'] == ratios[qq]) &
                                            (df_scoreFlow['shotCircle'] == 'outerCircle'),
@@ -1124,11 +1146,13 @@ for gg in range(0,4):
     outerTeam2 = list()
     for qq in range(0,len(ratios)):
         innerTeam2.append(df_scoreFlow.loc[(df_scoreFlow['matchNo'] == gg+1) & 
+                                           (df_scoreFlow['roundNo'] == round2Plot) &
                                            (df_scoreFlow['squadId'] == teamId2) & 
                                            (df_scoreFlow['periodCategory'] == ratios[qq]) &
                                            (df_scoreFlow['shotCircle'] == 'innerCircle'),
                                            ['shotCircle']].count()[0])
         outerTeam2.append(df_scoreFlow.loc[(df_scoreFlow['matchNo'] == gg+1) & 
+                                           (df_scoreFlow['roundNo'] == round2Plot) &
                                            (df_scoreFlow['squadId'] == teamId2) & 
                                            (df_scoreFlow['periodCategory'] == ratios[qq]) &
                                            (df_scoreFlow['shotCircle'] == 'outerCircle'),
@@ -1221,7 +1245,7 @@ ind_2ptPlayerScoring = 0
 
 #Enter round
 ##### TODO: create function with round as input
-round2Plot = 2
+round2Plot = 3
 
 #Extract a dataframe of 2pt Goals
 df_2ptGoal = df_scoreFlow.loc[(df_scoreFlow['scoreName'] == '2pt Goal') &
