@@ -37,3 +37,13 @@ write_json(r2_g2,"r2_g2_SSN2020.json")
 write_json(r2_g3,"r2_g3_SSN2020.json")
 write_json(r2_g4,"r2_g4_SSN2020.json")
 
+r3_g1 <- downloadMatch("11108",3,1)
+r3_g2 <- downloadMatch("11108",3,2)
+r3_g3 <- downloadMatch("11108",3,3)
+r3_g4 <- downloadMatch("11108",3,4)
+
+write_json(r3_g1,"r3_g1_SSN2020.json")
+write_json(r3_g2,"r3_g2_SSN2020.json")
+write_json(r3_g3,"r3_g3_SSN2020.json")
+write_json(r3_g4,"r3_g4_SSN2020.json")
+
