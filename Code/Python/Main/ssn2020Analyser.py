@@ -7,23 +7,23 @@ Author:
     Centre for Sport Research
     Deakin University
     aaron.f@deakin.edu.au
-    
-This script takes in the .json files grabbed using the superNetballR package and
-collates the data into a Pandas dataframe format to analyse and visualise.
 
-TODO: add more specific notes for script
-
-TODO: convert script for round to round analysis & mean data
-    
-TODO: convert plot data generation to separate functions with inputs
-
-TODO: this script is expanding outside of just two point analysis (e.g. subs & +/-)
+This script serves to analyse various aspects of the Super Netball 2020 season.
+It will be continuously updated with different aspects depending on what analysis 
+is of interest, and leverages a number of functions in the supplementart code folder
+of this repo. The script uses the .json files grabbed using the superNetballR package
+and collates data into Pandas dataframe format to analyse and visualise.
 
 """
 
 # %% Import packages
 
 import pandas as pd
+import numpy as np
+import scipy.stats as stats
+import random
+import seaborn as sns
+import matplotlib.pyplot as plt
 pd.options.mode.chained_assignment = None #turn of pandas chained warnings
 import os
 from bokeh.plotting import figure, output_file, save
@@ -33,6 +33,12 @@ from bokeh.transform import factor_cmap
 from bokeh.io import show
 from bokeh.io import export_png
 import json
+
+#Navigate to supplementary directory and import helper scripts
+os.chdir('..\\Supplementary')
+import ssn2020FigHelper as figHelper
+
+##### TODO: import figHelper script as 'figHelper'
 
 # %% Load in match data
 
@@ -683,12 +689,8 @@ df_lineUp = pd.DataFrame.from_dict(lineUpData)
 df_individualLineUp = pd.DataFrame.from_dict(individualLineUpData)
 
 ##### TODO: other dataframes once extracted
-    
-# %%
 
-# %% Test plots from round 1
-
-##### TODO: wrap each of these in function that takes round input etc.
+# %% Plots to consider...
 
 #There's a number of plot options I want to test:
     # - 2 x 2 plots for each match for a number of variables
@@ -722,1055 +724,275 @@ colourDict = {'Fever': '#00953b',
 #Set bokeh figure options
 bokehOptions = dict(tools = ['wheel_zoom,box_zoom'])
 
-# %% Team-based data
+# %% Team-based data two-point shot figures
 
-# %% Total one vs. two point shots
-
-#See for sample: https://nbviewer.jupyter.org/github/bokeh/bokeh-notebooks/blob/master/tutorial/07%20-%20Bar%20and%20Categorical%20Data%20Plots.ipynb
-
-#Loop through the four games from round 1
-##### TODO: This won't work for matches above round 1
-
-#Set blank lists to fill with plots and source
-figPlot = list()
-figSource = list()
-
-#Enter round
-##### TODO: create function with round as input
-round2Plot = 3
-
-#Run loop to create plots
-for gg in range(0,4):
-    
-    #Get team ID's for this match
-    teamId1 = matchInfo['homeSquadId'][((round2Plot-1)*4)+gg]
-    teamId2 = matchInfo['awaySquadId'][((round2Plot-1)*4)+gg]
-   
-    #Get team names for these ID's
-    teamInd1 = [i for i,x in enumerate(teamInfo['squadId']) if x == teamId1]
-    teamName1 = teamInfo['squadNickname'][teamInd1[0]]
-    teamInd2 = [i for i,x in enumerate(teamInfo['squadId']) if x == teamId2]
-    teamName2 = teamInfo['squadNickname'][teamInd2[0]]
-    
-    #Get match result for title
-    team1Score = df_scoreFlow.loc[(df_scoreFlow['matchNo'] == gg+1) & 
-                                  (df_scoreFlow['roundNo'] == round2Plot) &
-                                  (df_scoreFlow['scoreName'] == 'goal') & 
-                                  (df_scoreFlow['squadId'] == teamId1),
-                                  ['scorePoints']].sum()[0] + \
-        df_scoreFlow.loc[(df_scoreFlow['matchNo'] == gg+1) & 
-                         (df_scoreFlow['roundNo'] == round2Plot) &
-                         (df_scoreFlow['scoreName'] == '2pt Goal') & 
-                         (df_scoreFlow['squadId'] == teamId1),
-                         ['scorePoints']].sum()[0]
-    team2Score = df_scoreFlow.loc[(df_scoreFlow['matchNo'] == gg+1) & 
-                                  (df_scoreFlow['roundNo'] == round2Plot) &
-                                  (df_scoreFlow['scoreName'] == 'goal') & 
-                                  (df_scoreFlow['squadId'] == teamId2),
-                                  ['scorePoints']].sum()[0] + \
-        df_scoreFlow.loc[(df_scoreFlow['matchNo'] == gg+1) & 
-                         (df_scoreFlow['roundNo'] == round2Plot) &
-                         (df_scoreFlow['scoreName'] == '2pt Goal') & 
-                         (df_scoreFlow['squadId'] == teamId2),
-                         ['scorePoints']].sum()[0]
-    
-    #Set colour palette based on team names
-    palette = tuple([colourDict[teamName1],
-                     colourDict[teamName2]])
-    
-    #Set up categorical variables for current game
-    goalTypes = ['Standard Shots', 'Super Shots']
-    teams = [teamName1, teamName2]
-    
-    #Extract total points scored by the two teams in each category
-    
-    #Team 1
-    standardTeam1 = df_scoreFlow.loc[(df_scoreFlow['matchNo'] == gg+1) & 
-                                     (df_scoreFlow['roundNo'] == round2Plot) &
-                                     (df_scoreFlow['scoreName'] == 'goal') & 
-                                     (df_scoreFlow['squadId'] == teamId1),
-                                     ['scorePoints']].sum()
-    twoPointTeam1 = df_scoreFlow.loc[(df_scoreFlow['matchNo'] == gg+1) & 
-                                     (df_scoreFlow['roundNo'] == round2Plot) &
-                                     (df_scoreFlow['scoreName'] == '2pt Goal') & 
-                                     (df_scoreFlow['squadId'] == teamId1),
-                                     ['scorePoints']].sum()
-    
-    #Team 2
-    standardTeam2 = df_scoreFlow.loc[(df_scoreFlow['matchNo'] == gg+1) & 
-                                     (df_scoreFlow['roundNo'] == round2Plot) &
-                                     (df_scoreFlow['scoreName'] == 'goal') & 
-                                     (df_scoreFlow['squadId'] == teamId2),
-                                     ['scorePoints']].sum()
-    twoPointTeam2 = df_scoreFlow.loc[(df_scoreFlow['matchNo'] == gg+1) & 
-                                     (df_scoreFlow['roundNo'] == round2Plot) &
-                                     (df_scoreFlow['scoreName'] == '2pt Goal') & 
-                                     (df_scoreFlow['squadId'] == teamId2),
-                                     ['scorePoints']].sum()
-    
-    #Collate data into dictionary
-    dataDict = {'Goal Type' : goalTypes,
-                'Team 1'   : [standardTeam1[0], twoPointTeam2[0]],
-                'Team 2'   : [standardTeam2[0], twoPointTeam2[0]]}
-    
-    #Construct data into bokeh friendly format for current bar plotting technique
-    x = [(goalType, team) for goalType in goalTypes for team in teams]
-    counts = tuple([standardTeam1[0],standardTeam2[0],twoPointTeam1[0],twoPointTeam2[0]])
-    
-    #Create source for figure
-    figSource.append(ColumnDataSource(data = dict(x = x, counts = counts)))
-    
-    #Create figure
-    figPlot.append(figure(x_range = FactorRange(*x),
-                          plot_height = 300, plot_width = 300,
-                          title = teamName1+' ('+str(team1Score)+') vs. '+teamName2+' ('+str(team2Score)+')',
-                          **bokehOptions))
-    
-    #Set the bar glyphs
-    figPlot[gg].vbar(x = 'x', top = 'counts', width = 1.0, source = figSource[gg], line_color = 'white',
-                     fill_color = factor_cmap('x', palette = palette, factors = teams, start = 1, end = 2))
-    
-    #Set the hover parameter
-    figPlot[gg].add_tools(HoverTool(tooltips=[('Category', '@x'), ('Points Scored', '@counts')]))
-    
-    #Set figure parameters
-    figPlot[gg].y_range.start = 0
-    figPlot[gg].x_range.range_padding = 0.1
-    figPlot[gg].xaxis.major_label_orientation = 1
-    figPlot[gg].xgrid.grid_line_color = None
-    figPlot[gg].title.align = 'center'
-    figPlot[gg].yaxis.axis_label = 'Points Scored'
-    
-    # #Show figure
-    # show(figPlot[gg])
-
-#Create the gridplot
-grid = gridplot([[figPlot[0], figPlot[1]],
-                 [figPlot[2], figPlot[3]]],
-                plot_width = 300, plot_height = 300,
-                toolbar_location = 'right')
-
-# #Show grid
-# show(grid)
-
-#Export grid as both .png and .html
-
-#Navigate to relevant figure directory
-##### TODO: better navigation set
+#Shift to round by round figure directory
 os.chdir('..\\..\\Figures\\TwoPointAnalysis\\RoundByRound')
 
-##### TODO: set better naming strings for figures with looping
+#Total one vs. two point shots
+round2Plot = 4
+figHelper.totalPointsOneVsTwo(round2Plot = round2Plot, matchInfo = matchInfo,
+                              teamInfo = teamInfo, df_scoreFlow = df_scoreFlow,
+                              colourDict = colourDict, bokehOptions = bokehOptions,
+                              showPlot = False, exportPNG = True, exportHTML = True)
 
-#Seems like storing html in same folder causes figures to overwrite?
-#Make directory to store
-os.mkdir('round'+str(round2Plot)+'-totalteampoints-onevstwo')
-os.chdir('round'+str(round2Plot)+'-totalteampoints-onevstwo')
+#Quarter by quarter one vs. two point shots
+round2Plot = 4
+figHelper.quarterPointsOneVsTwo(round2Plot = round2Plot, matchInfo = matchInfo,
+                                teamInfo = teamInfo, df_scoreFlow = df_scoreFlow,
+                                colourDict = colourDict, bokehOptions = bokehOptions,
+                                showPlot = False, exportPNG = True, exportHTML = True)
 
-#PNG
-export_png(grid, filename = 'round'+str(round2Plot)+'-totalteampoints-onevstwo.png')
-
-#HTML
-output_file('round'+str(round2Plot)+'-totalteampoints-onevstwo.html')
-save(grid)
-
-#Navigate back up
-os.chdir('..')
-
-##### TODO: figure out effective method to copy to github pages?
-
-# %% Quarter by quarter one vs. two point shots
-
-#Loop through the four games from round 1
-##### TODO: This won't work for matches above round 1
-
-#Enter round
-##### TODO: create function with round as input
-round2Plot = 3
-
-#Set blank lists to fill with plots and source
-figPlot = list()
-figSource = list()
-
-#Run loop to create plots
-for gg in range(0,4):
-    
-    #Get team ID's for this match
-    teamId1 = matchInfo['homeSquadId'][((round2Plot-1)*4)+gg]
-    teamId2 = matchInfo['awaySquadId'][((round2Plot-1)*4)+gg]
-    
-    #Get team names for these ID's
-    teamInd1 = [i for i,x in enumerate(teamInfo['squadId']) if x == teamId1]
-    teamName1 = teamInfo['squadNickname'][teamInd1[0]]
-    teamInd2 = [i for i,x in enumerate(teamInfo['squadId']) if x == teamId2]
-    teamName2 = teamInfo['squadNickname'][teamInd2[0]]
-    
-    #Get match result for title
-    team1Score = df_scoreFlow.loc[(df_scoreFlow['matchNo'] == gg+1) & 
-                                  (df_scoreFlow['roundNo'] == round2Plot) &
-                                  (df_scoreFlow['scoreName'] == 'goal') & 
-                                  (df_scoreFlow['squadId'] == teamId1),
-                                  ['scorePoints']].sum()[0] + \
-        df_scoreFlow.loc[(df_scoreFlow['matchNo'] == gg+1) & 
-                         (df_scoreFlow['roundNo'] == round2Plot) &
-                         (df_scoreFlow['scoreName'] == '2pt Goal') & 
-                         (df_scoreFlow['squadId'] == teamId1),
-                         ['scorePoints']].sum()[0]
-    team2Score = df_scoreFlow.loc[(df_scoreFlow['matchNo'] == gg+1) & 
-                                  (df_scoreFlow['roundNo'] == round2Plot) &
-                                  (df_scoreFlow['scoreName'] == 'goal') & 
-                                  (df_scoreFlow['squadId'] == teamId2),
-                                  ['scorePoints']].sum()[0] + \
-        df_scoreFlow.loc[(df_scoreFlow['matchNo'] == gg+1) & 
-                         (df_scoreFlow['roundNo'] == round2Plot) &
-                         (df_scoreFlow['scoreName'] == '2pt Goal') & 
-                         (df_scoreFlow['squadId'] == teamId2),
-                         ['scorePoints']].sum()[0]
-    
-    #Set colour palette based on team names
-    palette = tuple([colourDict[teamName1],
-                      colourDict[teamName2]])
-    
-    #Set teams for factors
-    teams = [teamName1, teamName2]
-    
-    #Set up factors
-    factors = [
-        ('Standard Shots',teamName1),('Super Shots',teamName1),
-        ('Standard Shots',teamName2),('Super Shots',teamName2),
-        ]
-    
-    #Set up quarter list
-    quarters = ['Q1','Q2','Q3','Q4']
-    
-    #Extract total points scored by the two teams in each category & quarter
-    
-    #Team 1
-    standardTeam1 = list()
-    twoPointTeam1 = list()
-    for qq in range(0,4):
-        standardTeam1.append(df_scoreFlow.loc[(df_scoreFlow['matchNo'] == gg+1) & 
-                                              (df_scoreFlow['roundNo'] == round2Plot) &
-                                              (df_scoreFlow['scoreName'] == 'goal') & 
-                                              (df_scoreFlow['squadId'] == teamId1) & 
-                                              (df_scoreFlow['period'] == qq+1),
-                                              ['scorePoints']].sum()[0])
-        twoPointTeam1.append(df_scoreFlow.loc[(df_scoreFlow['matchNo'] == gg+1) & 
-                                              (df_scoreFlow['roundNo'] == round2Plot) &
-                                              (df_scoreFlow['scoreName'] == '2pt Goal') & 
-                                              (df_scoreFlow['squadId'] == teamId1) & 
-                                              (df_scoreFlow['period'] == qq+1),
-                                              ['scorePoints']].sum()[0])
-        
-    #Team 2
-    standardTeam2 = list()
-    twoPointTeam2 = list()
-    for qq in range(0,4):
-        standardTeam2.append(df_scoreFlow.loc[(df_scoreFlow['matchNo'] == gg+1) & 
-                                              (df_scoreFlow['roundNo'] == round2Plot) &
-                                              (df_scoreFlow['scoreName'] == 'goal') & 
-                                              (df_scoreFlow['squadId'] == teamId2) & 
-                                              (df_scoreFlow['period'] == qq+1),
-                                              ['scorePoints']].sum()[0])
-        twoPointTeam2.append(df_scoreFlow.loc[(df_scoreFlow['matchNo'] == gg+1) & 
-                                              (df_scoreFlow['roundNo'] == round2Plot) &
-                                              (df_scoreFlow['scoreName'] == '2pt Goal') & 
-                                              (df_scoreFlow['squadId'] == teamId2) & 
-                                              (df_scoreFlow['period'] == qq+1),
-                                              ['scorePoints']].sum()[0])
-     
-    #Set up data source
-    figSource.append(ColumnDataSource(data = dict(
-        x = factors,
-        Q1 = [standardTeam1[0],twoPointTeam1[0],standardTeam2[0],twoPointTeam2[0]],
-        Q2 = [standardTeam1[1],twoPointTeam1[1],standardTeam2[1],twoPointTeam2[1]],
-        Q3 = [standardTeam1[2],twoPointTeam1[2],standardTeam2[2],twoPointTeam2[2]],
-        Q4 = [standardTeam1[3],twoPointTeam1[3],standardTeam2[3],twoPointTeam2[3]],
-        )))
-    
-    #Create figure
-    figPlot.append(figure(x_range = FactorRange(*factors),
-                          plot_height = 400, plot_width = 500,
-                          title = teamName1+' ('+str(team1Score)+') vs. '+teamName2+' ('+str(team2Score)+')',
-                          toolbar_location = None,
-                          tools = 'hover', 
-                          tooltips = [("Category", "@x"),("Quarter", "$name"),("Points Scored", "@$name")]))
-    
-    #Add the vbar stack
-    f = figPlot[gg].vbar_stack(quarters, x = 'x', width = 1.0,
-                               #color = ["blue", "red", "green", "yellow"],
-                               fill_color = 'white', #white setting for hatches;#factor_cmap('x', palette = palette, factors = teams, start = 1, end = 2),
-                               line_color = factor_cmap('x', palette = palette, factors = teams, start = 1, end = 2),
-                               hatch_pattern = ['/','/','blank','\\'], #scale setting for the / is a hack to get solid
-                               hatch_color = factor_cmap('x', palette = palette, factors = teams, start = 1, end = 2),
-                               hatch_scale = [1.0,10,10,10],
-                               #legend_label = quarters,
-                               source = figSource[gg])
-    
-    #Add legend
-    legend = Legend(items = [(x,[f[i]]) for i,x in enumerate(quarters)], location=(10, 0))
-    figPlot[gg].add_layout(legend,'right')
-    
-    #Set figure parameters
-    figPlot[gg].y_range.start = 0
-    figPlot[gg].x_range.range_padding = 0.1
-    figPlot[gg].xaxis.major_label_orientation = 1
-    figPlot[gg].xgrid.grid_line_color = None
-    figPlot[gg].title.align = 'center'
-    figPlot[gg].yaxis.axis_label = 'Points Scored'
-    
-    # #Show figure
-    # show(figPlot[gg])
- 
-#Create the gridplot
-grid = gridplot([[figPlot[0], figPlot[1]],
-                 [figPlot[2], figPlot[3]]],
-                plot_width = 400, plot_height = 350)
-
-# #Show grid
-# show(grid)
-
-#Export grid as both .png and .html
-
-##### TODO: set better naming strings for figures with looping
-
-#Seems like storing html in same folder causes figures to overwrite?
-#Make directory to store
-os.mkdir('round'+str(round2Plot)+'-quarterteampoints-onevstwo')
-os.chdir('round'+str(round2Plot)+'-quarterteampoints-onevstwo')
-
-#PNG
-export_png(grid, filename = 'round'+str(round2Plot)+'-quarterteampoints-onevstwo.png')
-
-#HTML
-output_file('round'+str(round2Plot)+'-quarterteampoints-onevstwo.html')
-save(grid)
-
-#Navigate back up
-os.chdir('..')
-
-##### TODO: figure out effective method to copy to github pages?
-
-# %% Ratio of inner vs. outer shots in different periods
-
-#Enter round
-##### TODO: create function with round as input
-round2Plot = 3
-
-#Set blank lists to fill with plots and source
-figPlot = list()
-figSource = list()
-
-#Run loop to create plots
-for gg in range(0,4):
-    
-    #Get team ID's for this match
-    teamId1 = matchInfo['homeSquadId'][((round2Plot-1)*4)+gg]
-    teamId2 = matchInfo['awaySquadId'][((round2Plot-1)*4)+gg]
-    
-    #Get team names for these ID's
-    teamInd1 = [i for i,x in enumerate(teamInfo['squadId']) if x == teamId1]
-    teamName1 = teamInfo['squadNickname'][teamInd1[0]]
-    teamInd2 = [i for i,x in enumerate(teamInfo['squadId']) if x == teamId2]
-    teamName2 = teamInfo['squadNickname'][teamInd2[0]]
-    
-    #Get match result for title
-    team1Score = df_scoreFlow.loc[(df_scoreFlow['matchNo'] == gg+1) & 
-                                  (df_scoreFlow['roundNo'] == round2Plot) &
-                                  (df_scoreFlow['scoreName'] == 'goal') & 
-                                  (df_scoreFlow['squadId'] == teamId1),
-                                  ['scorePoints']].sum()[0] + \
-        df_scoreFlow.loc[(df_scoreFlow['matchNo'] == gg+1) & 
-                         (df_scoreFlow['roundNo'] == round2Plot) &
-                         (df_scoreFlow['scoreName'] == '2pt Goal') & 
-                         (df_scoreFlow['squadId'] == teamId1),
-                         ['scorePoints']].sum()[0]
-    team2Score = df_scoreFlow.loc[(df_scoreFlow['matchNo'] == gg+1) & 
-                                  (df_scoreFlow['roundNo'] == round2Plot) &
-                                  (df_scoreFlow['scoreName'] == 'goal') & 
-                                  (df_scoreFlow['squadId'] == teamId2),
-                                  ['scorePoints']].sum()[0] + \
-        df_scoreFlow.loc[(df_scoreFlow['matchNo'] == gg+1) & 
-                         (df_scoreFlow['roundNo'] == round2Plot) &
-                         (df_scoreFlow['scoreName'] == '2pt Goal') & 
-                         (df_scoreFlow['squadId'] == teamId2),
-                         ['scorePoints']].sum()[0]
-    
-    #Set colour palette based on team names
-    palette = tuple([colourDict[teamName1],
-                      colourDict[teamName2]])
-    
-    #Set teams for factors
-    teams = [teamName1, teamName2]
-    
-    #Set up factors
-    factors = [
-        ('Standard Period',teamName1),('Super Shot Period',teamName1),
-        ('Standard Period',teamName2),('Super Shot Period',teamName2),
-        ]
-    
-    #Set up circle and ratios list
-    circle = ['Inner Circle','Outer Circle']
-    ratios = ['standard', 'twoPoint']
-    
-    #Extract total points scored by the two teams in each category & quarter
-    
-    #Extract ratio of shots in inner vs. outer circle in the different periods
-    
-    #Team 1
-    innerTeam1 = list()
-    outerTeam1 = list()
-    for qq in range(0,len(ratios)):
-        innerTeam1.append(df_scoreFlow.loc[(df_scoreFlow['matchNo'] == gg+1) & 
-                                           (df_scoreFlow['roundNo'] == round2Plot) &
-                                           (df_scoreFlow['squadId'] == teamId1) & 
-                                           (df_scoreFlow['periodCategory'] == ratios[qq]) &
-                                           (df_scoreFlow['shotCircle'] == 'innerCircle'),
-                                           ['shotCircle']].count()[0])
-        outerTeam1.append(df_scoreFlow.loc[(df_scoreFlow['matchNo'] == gg+1) & 
-                                           (df_scoreFlow['roundNo'] == round2Plot) &
-                                           (df_scoreFlow['squadId'] == teamId1) & 
-                                           (df_scoreFlow['periodCategory'] == ratios[qq]) &
-                                           (df_scoreFlow['shotCircle'] == 'outerCircle'),
-                                           ['shotCircle']].count()[0])
-    
-    #Normalise team 1 data to a ratio
-    innerTeam1Ratio = list()
-    innerTeam1Ratio.append(innerTeam1[0] / (innerTeam1[0]+outerTeam1[0]))
-    innerTeam1Ratio.append(innerTeam1[1] / (innerTeam1[1]+outerTeam1[1]))
-    outerTeam1Ratio = list()
-    outerTeam1Ratio.append(outerTeam1[0] / (innerTeam1[0]+outerTeam1[0]))
-    outerTeam1Ratio.append(outerTeam1[1] / (innerTeam1[1]+outerTeam1[1]))
-        
-    #Team 2
-    innerTeam2 = list()
-    outerTeam2 = list()
-    for qq in range(0,len(ratios)):
-        innerTeam2.append(df_scoreFlow.loc[(df_scoreFlow['matchNo'] == gg+1) & 
-                                           (df_scoreFlow['roundNo'] == round2Plot) &
-                                           (df_scoreFlow['squadId'] == teamId2) & 
-                                           (df_scoreFlow['periodCategory'] == ratios[qq]) &
-                                           (df_scoreFlow['shotCircle'] == 'innerCircle'),
-                                           ['shotCircle']].count()[0])
-        outerTeam2.append(df_scoreFlow.loc[(df_scoreFlow['matchNo'] == gg+1) & 
-                                           (df_scoreFlow['roundNo'] == round2Plot) &
-                                           (df_scoreFlow['squadId'] == teamId2) & 
-                                           (df_scoreFlow['periodCategory'] == ratios[qq]) &
-                                           (df_scoreFlow['shotCircle'] == 'outerCircle'),
-                                           ['shotCircle']].count()[0])
-    
-    #Normalise team 2 data to a ratio
-    innerTeam2Ratio = list()
-    innerTeam2Ratio.append(innerTeam2[0] / (innerTeam2[0]+outerTeam2[0]))
-    innerTeam2Ratio.append(innerTeam2[1] / (innerTeam2[1]+outerTeam2[1]))
-    outerTeam2Ratio = list()
-    outerTeam2Ratio.append(outerTeam2[0] / (innerTeam2[0]+outerTeam2[0]))
-    outerTeam2Ratio.append(outerTeam2[1] / (innerTeam2[1]+outerTeam2[1]))
-     
-    #Set up data source
-    figSource.append(ColumnDataSource(data = dict(
-        x = factors,
-        standard = [innerTeam1Ratio[0],innerTeam1Ratio[1],innerTeam2Ratio[0],innerTeam2Ratio[1]],
-        twoPoint = [outerTeam1Ratio[0],outerTeam1Ratio[1],outerTeam2Ratio[0],outerTeam2Ratio[1]],
-        )))
-    
-    #Create figure
-    figPlot.append(figure(x_range = FactorRange(*factors),
-                          plot_height = 450, plot_width = 500,
-                          title = teamName1+' ('+str(team1Score)+') vs. '+teamName2+' ('+str(team2Score)+')',
-                          toolbar_location = None,
-                          tools = 'hover', 
-                          tooltips = [("Category", "@x"),("Shot Ratio", "@$name")]))
-    
-    #Add the vbar stack
-    f = figPlot[gg].vbar_stack(ratios, x = 'x', width = 1.0,
-                               fill_color = 'white', #white setting for hatches;#factor_cmap('x', palette = palette, factors = teams, start = 1, end = 2),
-                               line_color = factor_cmap('x', palette = palette, factors = teams, start = 1, end = 2),
-                               hatch_pattern = ['/','blank'], #scale setting for the / is a hack to get solid
-                               hatch_color = factor_cmap('x', palette = palette, factors = teams, start = 1, end = 2),
-                               hatch_scale = [1,10],
-                               source = figSource[gg])
-    
-    #Add legend
-    legend = Legend(items = [(x,[f[i]]) for i,x in enumerate(circle)], location=(10, 0))
-    figPlot[gg].add_layout(legend,'right')
-    
-    #Set figure parameters
-    figPlot[gg].y_range.start = 0
-    figPlot[gg].x_range.range_padding = 0.1
-    figPlot[gg].xaxis.major_label_orientation = 1
-    figPlot[gg].xgrid.grid_line_color = None
-    figPlot[gg].title.align = 'center'
-    figPlot[gg].yaxis.axis_label = 'Ratio of Shots'
-    
-    # #Show figure
-    # show(figPlot[gg])
- 
-#Create the gridplot
-grid = gridplot([[figPlot[0], figPlot[1]],
-                 [figPlot[2], figPlot[3]]],
-                plot_width = 450, plot_height = 350)
-
-# #Show grid
-# show(grid)
-
-#Export grid as both .png and .html
-
-##### TODO: set better naming strings for figures with looping
-
-#Seems like storing html in same folder causes figures to overwrite?
-#Make directory to store
-os.mkdir('round'+str(round2Plot)+'-teamshotratios-innervsouter')
-os.chdir('round'+str(round2Plot)+'-teamshotratios-innervsouter')
-
-#PNG
-export_png(grid, filename = 'round'+str(round2Plot)+'-teamshotratios-innervsouter.png')
-
-#HTML
-output_file('round'+str(round2Plot)+'-teamshotratios-innervsouter.html')
-save(grid)
-
-#Navigate back up
-os.chdir('..')
+#Ratio of inner vs. outer shots in different periods
+round2Plot = 4
+figHelper.teamShotRatiosInnerVsOuter(round2Plot = round2Plot, matchInfo = matchInfo,
+                                     teamInfo = teamInfo, df_scoreFlow = df_scoreFlow,
+                                     colourDict = colourDict, bokehOptions = bokehOptions,
+                                     showPlot = False, exportPNG = True, exportHTML = True)
 
 # %% Individual player two-point scoring
 
-#Create list to stash 2pt figures
-figPlot_2ptPlayerScoring = list()
-figSource_2ptPlayerScoring = list()
+#Total two-point score
+round2Plot = 4
+figHelper.playerTwoPointTotals(round2Plot = round2Plot, df_scoreFlow = df_scoreFlow,
+                               df_playerInfo = df_playerInfo, df_teamInfo = df_teamInfo,
+                               colourDict = colourDict, showPlot = False,
+                               exportPNG = True, exportHTML = True)
 
-#Setting for current figure index
-ind_2ptPlayerScoring = 0
+#Differential between two and one point scoring
+round2Plot = 4
+figHelper.playerTwoPointDifferentials(round2Plot = round2Plot, df_scoreFlow = df_scoreFlow,
+                                      df_playerInfo = df_playerInfo, df_teamInfo = df_teamInfo,
+                                      colourDict = colourDict, showPlot = False,
+                                      exportPNG = True, exportHTML = True)
 
-# %% Total two-point score
-
-#Enter round
-##### TODO: create function with round as input
-round2Plot = 3
-
-#Extract a dataframe of 2pt Goals
-df_2ptGoal = df_scoreFlow.loc[(df_scoreFlow['scoreName'] == '2pt Goal') &
-                              (df_scoreFlow['roundNo'] == round2Plot),]
-
-#Get the unique list of players who scored two-point goals
-playerList_2ptGoal = list(df_2ptGoal['playerId'].unique())
-
-#Loop through and sum the total two point value for each player
-playerList_2ptTotal = list()
-for pp in range(0,len(playerList_2ptGoal)):
-    #Calculate and append total 2 point score
-    playerList_2ptTotal.append(df_2ptGoal.loc[(df_2ptGoal['playerId'] == playerList_2ptGoal[pp]),
-                                              ['scorePoints']].sum()[0])
-    
-#Convert to dataframe and sort
-df_2ptTotals = pd.DataFrame(list(zip(playerList_2ptGoal,playerList_2ptTotal)),
-                            columns = ['playerId','2ptTotal'])
-df_2ptTotals.sort_values(by = '2ptTotal', inplace = True,
-                         ascending = False, ignore_index = True)
-
-#Create bar plot for two point totals
-#Create lists to store the data in
-players = list()
-fullNames = list()
-squadNames = list()
-totals = list()
-twoPointTotalsPalette = list()
-#Loop through the player list and collate the data needed for the plot
-for pp in range(0,len(df_2ptTotals)):
-    #Get the ID of the current player
-    currId = df_2ptTotals.iloc[pp]['playerId']
-    #Get the dataframe ID of the current player
-    currInd = df_playerInfo.index[df_playerInfo['playerId'] == currId].tolist()[0]
-    #Get the current player details
-    players.append(df_playerInfo.iloc[currInd]['displayName'])
-    fullNames.append(df_playerInfo.iloc[currInd]['firstName']+' '+df_playerInfo.iloc[currInd]['surname'])
-    #Get current players total points
-    totals.append(df_2ptTotals.iloc[pp]['2ptTotal'])
-    #Set current colour and name based on squad ID
-    currSquadId = df_playerInfo.iloc[currInd]['squadId']
-    squadInd = df_teamInfo.index[df_teamInfo['squadId'] == currSquadId].tolist()[0]
-    currSquadName = df_teamInfo.iloc[squadInd]['squadNickname']    
-    twoPointTotalsPalette.append(colourDict[currSquadName])
-    squadNames.append(currSquadName)
-    
-#Create source for figure
-figSource_2ptPlayerScoring.append(ColumnDataSource(data = dict(players = players,
-                                                               counts = totals,
-                                                               fullNames = fullNames,
-                                                               squadNames = squadNames,
-                                                               color = tuple(twoPointTotalsPalette))))
-
-#Create figure
-figPlot_2ptPlayerScoring.append(figure(x_range = players, plot_height = 400, plot_width = 800,
-                                       title = 'Total Points from Super Shots',
-                                       toolbar_location = None,
-                                       tools = 'hover', 
-                                       tooltips = [("Player", "@fullNames"), ("Team", "@squadNames"), ("Total Points from Super Shots", "@counts")]))
-
-#Add bars
-figPlot_2ptPlayerScoring[ind_2ptPlayerScoring].vbar(x = 'players', top = 'counts', width=0.6,
-                                                    color = 'color', source = figSource_2ptPlayerScoring[ind_2ptPlayerScoring])
-
-#Set figure parameters
-figPlot_2ptPlayerScoring[ind_2ptPlayerScoring].y_range.start = 0
-figPlot_2ptPlayerScoring[ind_2ptPlayerScoring].x_range.range_padding = 0.1
-figPlot_2ptPlayerScoring[ind_2ptPlayerScoring].xaxis.major_label_orientation = 1
-figPlot_2ptPlayerScoring[ind_2ptPlayerScoring].xgrid.grid_line_color = None
-figPlot_2ptPlayerScoring[ind_2ptPlayerScoring].title.align = 'center'
-figPlot_2ptPlayerScoring[ind_2ptPlayerScoring].yaxis.axis_label = 'Total Points'
-
-# #Show figure
-# show(figPlot_2ptPlayerScoring[ind_2ptPlayerScoring])
-
-#Seems like storing html in same folder causes figures to overwrite?
-#Make directory to store
-os.mkdir('round'+str(round2Plot)+'-player-twopointtotals')
-os.chdir('round'+str(round2Plot)+'-player-twopointtotals')
-    
-#Export figure as both .png and .html
-
-##### TODO: set better naming strings for figures with looping
-
-#PNG
-export_png(figPlot_2ptPlayerScoring[ind_2ptPlayerScoring],
-           filename = 'round'+str(round2Plot)+'-player-twopointtotals.png')
-
-#HTML
-output_file('round'+str(round2Plot)+'-player-twopointtotals.html')
-save(figPlot_2ptPlayerScoring[ind_2ptPlayerScoring])
-
-#Navigate back up
-os.chdir('..')
-
-#Add to two point figure indexing
-ind_2ptPlayerScoring = ind_2ptPlayerScoring + 1
-
-# %% Differential between two and one point scoring
-
-##### TODO: fix so that players with no 2-point goals are still included...
-
-#Extract a dataframe of 2pt Goals
-df_allGoals = df_scoreFlow.loc[(df_scoreFlow['scoreName'].isin(['goal','2pt Goal'])) & 
-                               (df_scoreFlow['roundNo'] == round2Plot),]
-
-#Get the unique list of players who scored any goal
-playerList_allGoals = list(df_allGoals['playerId'].unique())
-
-#Loop through and sum the total one and two point value for each player
-#Calculate the differential with +ve reflecting more two point points
-playerList_2ptDifferential = list()
-for pp in range(0,len(playerList_allGoals)):
-    #Calculate and two vs. one point differential
-    #Calculate two point score
-    twoPointVal = df_allGoals.loc[(df_allGoals['playerId'] == playerList_allGoals[pp]) &
-                                  (df_allGoals['scoreName'] == '2pt Goal'),
-                                  ['scorePoints']].sum()[0]
-    #Calculate one point score
-    onePointVal = df_allGoals.loc[(df_allGoals['playerId'] == playerList_allGoals[pp]) &
-                                  (df_allGoals['scoreName'] == 'goal'),
-                                  ['scorePoints']].sum()[0]
-    #Append differential
-    playerList_2ptDifferential.append(twoPointVal - onePointVal)
-    
-#Convert to dataframe and sort
-df_2ptDifferential = pd.DataFrame(list(zip(playerList_allGoals,playerList_2ptDifferential)),
-                                  columns = ['playerId','2ptDifferential'])
-df_2ptDifferential.sort_values(by = '2ptDifferential', inplace = True,
-                               ascending = False, ignore_index = True)
-
-#Create bar plot for two point totals
-#Create lists to store the data in
-players = list()
-fullNames = list()
-squadNames = list()
-differentials = list()
-twoPointDifferentialPalette = list()
-#Loop through the player list and collate the data needed for the plot
-for pp in range(0,len(df_2ptDifferential)):
-    #Get the ID of the current player
-    currId = df_2ptDifferential.iloc[pp]['playerId']
-    #Get the dataframe ID of the current player
-    currInd = df_playerInfo.index[df_playerInfo['playerId'] == currId].tolist()[0]
-    #Get the current player details
-    players.append(df_playerInfo.iloc[currInd]['displayName'])
-    fullNames.append(df_playerInfo.iloc[currInd]['firstName']+' '+df_playerInfo.iloc[currInd]['surname'])
-    #Get current players total points
-    differentials.append(df_2ptDifferential.iloc[pp]['2ptDifferential'])
-    #Set current colour and name based on squad ID
-    currSquadId = df_playerInfo.iloc[currInd]['squadId']
-    squadInd = df_teamInfo.index[df_teamInfo['squadId'] == currSquadId].tolist()[0]
-    currSquadName = df_teamInfo.iloc[squadInd]['squadNickname']    
-    twoPointDifferentialPalette.append(colourDict[currSquadName])
-    squadNames.append(currSquadName)
-    
-#Create source for figure
-figSource_2ptPlayerScoring.append(ColumnDataSource(data = dict(players = players,
-                                                               counts = differentials,
-                                                               fullNames = fullNames,
-                                                               squadNames = squadNames,
-                                                               color = tuple(twoPointDifferentialPalette))))
-
-#Create figure
-figPlot_2ptPlayerScoring.append(figure(x_range = players, plot_height = 400, plot_width = 800,
-                                       title = 'Differential in Points from Super vs. Standard Shots',
-                                       toolbar_location = None,
-                                       tools = 'hover', 
-                                       tooltips = [("Player", "@fullNames"), ("Team", "@squadNames"), ("Differential in Points from Standard vs. Super Shots", "@counts")]))
-
-#Add bars
-figPlot_2ptPlayerScoring[ind_2ptPlayerScoring].vbar(x = 'players', top = 'counts', width=0.6,
-                                                    color = 'color', source = figSource_2ptPlayerScoring[ind_2ptPlayerScoring])
-
-#Set figure parameters
-figPlot_2ptPlayerScoring[ind_2ptPlayerScoring].x_range.range_padding = 0.1
-figPlot_2ptPlayerScoring[ind_2ptPlayerScoring].xaxis.major_label_orientation = 1
-figPlot_2ptPlayerScoring[ind_2ptPlayerScoring].xgrid.grid_line_color = None
-figPlot_2ptPlayerScoring[ind_2ptPlayerScoring].title.align = 'center'
-figPlot_2ptPlayerScoring[ind_2ptPlayerScoring].yaxis.axis_label = 'Points from Two-Point Shots - Points from One-Point Shots'
-
-# #Show figure
-# show(figPlot_2ptPlayerScoring[ind_2ptPlayerScoring])
-    
-#Export figure as both .png and .html
-
-##### TODO: set better naming strings for figures with looping
-
-#Seems like storing html in same folder causes figures to overwrite?
-#Make directory to store
-os.mkdir('round'+str(round2Plot)+'-player-twopointdifferentials')
-os.chdir('round'+str(round2Plot)+'-player-twopointdifferentials')
-
-#PNG
-export_png(figPlot_2ptPlayerScoring[ind_2ptPlayerScoring],
-           filename = 'round'+str(round2Plot)+'-player-twopointdifferentials.png')
-
-#HTML
-output_file('round'+str(round2Plot)+'-player-twopointdifferentials.html')
-save(figPlot_2ptPlayerScoring[ind_2ptPlayerScoring])
-
-#Navigate back up
-os.chdir('..')
-
-#Add to two point figure indexing
-ind_2ptPlayerScoring = ind_2ptPlayerScoring + 1 
-
-# %% Relative differential for two vs. one point totals
-
-### This section already has the specific round...
-
-#Loop through and sum the total one and two point value for each player
-#Calculate the relative differential with +ve reflecting more two point points
-playerList_2ptDifferentialRelative = list()
-playerList_bothGoals = list()
-for pp in range(0,len(playerList_allGoals)):
-    #Calculate and two vs. one point differential
-    #Calculate two point score
-    twoPointVal = df_allGoals.loc[(df_allGoals['playerId'] == playerList_allGoals[pp]) &
-                                  (df_allGoals['scoreName'] == '2pt Goal'),
-                                  ['scorePoints']].sum()[0]
-    #Calculate one point score
-    onePointVal = df_allGoals.loc[(df_allGoals['playerId'] == playerList_allGoals[pp]) &
-                                  (df_allGoals['scoreName'] == 'goal'),
-                                  ['scorePoints']].sum()[0]
-    #Append differential
-    #Check if they have at least a score from each
-    if twoPointVal != 0 and onePointVal != 0:
-        playerList_bothGoals.append(playerList_allGoals[pp])
-        playerList_2ptDifferentialRelative.append(twoPointVal / onePointVal)
-    
-#Convert to dataframe and sort
-df_2ptDifferentialRelative = pd.DataFrame(list(zip(playerList_bothGoals,playerList_2ptDifferentialRelative)),
-                                          columns = ['playerId','2ptDifferentialRelative'])
-df_2ptDifferentialRelative.sort_values(by = '2ptDifferentialRelative', inplace = True,
-                                       ascending = False, ignore_index = True)
-
-#Create bar plot for two point totals
-#Create lists to store the data in
-players = list()
-fullNames = list()
-squadNames = list()
-differentials = list()
-twoPointDifferentialPalette = list()
-#Loop through the player list and collate the data needed for the plot
-for pp in range(0,len(df_2ptDifferentialRelative)):
-    #Get the ID of the current player
-    currId = df_2ptDifferentialRelative.iloc[pp]['playerId']
-    #Get the dataframe ID of the current player
-    currInd = df_playerInfo.index[df_playerInfo['playerId'] == currId].tolist()[0]
-    #Get the current player details
-    players.append(df_playerInfo.iloc[currInd]['displayName'])
-    fullNames.append(df_playerInfo.iloc[currInd]['firstName']+' '+df_playerInfo.iloc[currInd]['surname'])
-    #Get current players total points
-    differentials.append(df_2ptDifferentialRelative.iloc[pp]['2ptDifferentialRelative'])
-    #Set current colour and name based on squad ID
-    currSquadId = df_playerInfo.iloc[currInd]['squadId']
-    squadInd = df_teamInfo.index[df_teamInfo['squadId'] == currSquadId].tolist()[0]
-    currSquadName = df_teamInfo.iloc[squadInd]['squadNickname']    
-    twoPointDifferentialPalette.append(colourDict[currSquadName])
-    squadNames.append(currSquadName)
-    
-#Create source for figure
-figSource_2ptPlayerScoring.append(ColumnDataSource(data = dict(players = players,
-                                                               counts = differentials,
-                                                               fullNames = fullNames,
-                                                               squadNames = squadNames,
-                                                               color = tuple(twoPointDifferentialPalette))))
-
-#Create figure
-figPlot_2ptPlayerScoring.append(figure(x_range = players, plot_height = 400, plot_width = 800,
-                                       title = 'Relative Differential in Points from Super vs. Standard Shots',
-                                       toolbar_location = None,
-                                       tools = 'hover', 
-                                       tooltips = [("Player", "@fullNames"), ("Team", "@squadNames"), ("Ratio of Points from Super:Standard Shots", "@counts")]))
-
-#Add bars
-figPlot_2ptPlayerScoring[ind_2ptPlayerScoring].vbar(x = 'players', top = 'counts', width=0.6,
-                                                    color = 'color', source = figSource_2ptPlayerScoring[ind_2ptPlayerScoring])
-
-#Set figure parameters
-figPlot_2ptPlayerScoring[ind_2ptPlayerScoring].y_range.start = 0
-figPlot_2ptPlayerScoring[ind_2ptPlayerScoring].x_range.range_padding = 0.1
-figPlot_2ptPlayerScoring[ind_2ptPlayerScoring].xaxis.major_label_orientation = 1
-figPlot_2ptPlayerScoring[ind_2ptPlayerScoring].xgrid.grid_line_color = None
-figPlot_2ptPlayerScoring[ind_2ptPlayerScoring].title.align = 'center'
-figPlot_2ptPlayerScoring[ind_2ptPlayerScoring].yaxis.axis_label = 'Points from Super Shots / Points from Standard Shots'
-
-# #Show figure
-# show(figPlot_2ptPlayerScoring[ind_2ptPlayerScoring])
-    
-#Export figure as both .png and .html
-
-##### TODO: set better naming strings for figures with looping
-
-#Seems like storing html in same folder causes figures to overwrite?
-#Make directory to store
-os.mkdir('round'+str(round2Plot)+'-player-twopointdifferentialsrelative')
-os.chdir('round'+str(round2Plot)+'-player-twopointdifferentialsrelative')
-
-#PNG
-export_png(figPlot_2ptPlayerScoring[ind_2ptPlayerScoring],
-           filename = 'round'+str(round2Plot)+'-player-twopointdifferentialsrelative.png')
-
-#HTML
-output_file('round'+str(round2Plot)+'-player-twopointdifferentialsrelative.html')
-save(figPlot_2ptPlayerScoring[ind_2ptPlayerScoring])
-
-#Navigate back up
-os.chdir('..')
-
-#Add to two point figure indexing
-ind_2ptPlayerScoring = ind_2ptPlayerScoring + 1 
+#Relative differential for two vs. one point totals
+round2Plot = 4
+figHelper.playerTwoPointRelativeDifferentials(round2Plot = round2Plot, df_scoreFlow = df_scoreFlow,
+                                              df_playerInfo = df_playerInfo, df_teamInfo = df_teamInfo,
+                                              colourDict = colourDict, showPlot = False,
+                                              exportPNG = True, exportHTML = True)
 
 # %% Plus/minus figures
 
-# %% Team line-up plus/minus grid
+#Navigate to appropriate directory
+os.chdir('..\\..\\PlusMinusAnalysis')
 
 ##### TODO: sort plus minus per figure, toolbar in second html issue?
 
-os.chdir('..\\..\\PlusMinusAnalysis')
+# %% All matches team line-up plus/minus grid
 
-##### NOTE: this doesn't split across rounds
+#Create plot
+figHelper.totalPlusMinusLineUps(teamInfo = teamInfo, df_lineUp = df_lineUp,
+                                absPlusMinus = True, perPlusMinus = True,
+                                perDivider = 15, minLineUpDuration = 5,
+                                colourDict = colourDict, showPlot = False,
+                                exportPNG = True, exportHTML = True)
 
-#Get alphabetical list of squad nicknames
-plotSquadNames = teamInfo['squadNickname']
-plotSquadNames = sorted(plotSquadNames)
+# %% Super shot period score simulator
 
-#Get the id's for the team names ordering
-plotSquadId = list()
-for tt in range(0,len(plotSquadNames)):
-    plotSquadId.append(teamInfo['squadId'][teamInfo['squadNickname'].index(plotSquadNames[tt])])
+# The goal of this analysis is to understand how many shot opportunities teams
+# get in the five minute super shot period, the success of standard vs. super shots 
+# in this period - and from this simulate how many points teams would expect to get
+# taking different proportions of standard vs. super shots
 
-#Set blank lists to fill with plots and source
-figPlotAbs = list()
-figSourceAbs = list()
-figPlotPer = list()
-figSourcePer = list()
+##### TODO: consider adding a factor that removes the super shot opportunity at a
+##### certain probability (e.g. only 75% of super shots get a chance) --- simulates 
+##### the idea that teams are getting turnovers when trying to set up...
+
+#Set a list of proportions to examine across simulations
+superShotProps = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5,
+                  0.6, 0.7, 0.8, 0.9, 1.0]
+
+#Create dictionary to store data in
+superSimResults = {'squadId': [], 'squadNickname': [],
+                   'nShots': [], 'nStandard': [], 'nSuper': [],
+                   'superProp': [], 'superPropCat': [], 'totalPts': []}
 
 #Loop through teams
-for tt in range(0,len(plotSquadNames)):
+##### TODO: start with one team
+currSquadId = 8117
+currSquadName = teamInfo['squadNickname'][teamInfo['squadId'].index(currSquadId)]
 
-    #Set current squad ID
-    currSquadId = plotSquadId[tt]
+#Extract a dataframe of shots for the current team during super shot period
+df_currSquadShots = df_scoreFlow.loc[(df_scoreFlow['squadId'] == currSquadId) &
+                                     (df_scoreFlow['periodCategory'] == 'twoPoint'),]
+
+#Loop through rounds, extract frequencies for different shots
+#Get number of rounds
+nRounds = max(df_currSquadShots['roundNo'])
+#Set lists to store data in
+madeStandard = list()
+missedStandard = list()
+madeSuper = list()
+missedSuper = list()
+totalShots = list()
+#Get data from each round
+for rr in range(0,nRounds):
+    #Loop through quarters within rounds too
+    for qq in range(0,4):
+        #Made standard shots
+        madeStandard.append(df_currSquadShots.loc[(df_currSquadShots['roundNo'] == rr+1) & 
+                                                  (df_currSquadShots['period'] == qq+1) & 
+                                                  (df_currSquadShots['scoreName'] == 'goal'),
+                                                  ['roundNo']].count()[0])
+        #Missed standard shots
+        missedStandard.append(df_currSquadShots.loc[(df_currSquadShots['roundNo'] == rr+1) & 
+                                                    (df_currSquadShots['period'] == qq+1) & 
+                                                    (df_currSquadShots['scoreName'] == 'miss'),
+                                                    ['roundNo']].count()[0])
+        #Made super shots
+        madeSuper.append(df_currSquadShots.loc[(df_currSquadShots['roundNo'] == rr+1) & 
+                                               (df_currSquadShots['period'] == qq+1) & 
+                                               (df_currSquadShots['scoreName'] == '2pt Goal'),
+                                               ['roundNo']].count()[0])
+        #Missed standard shots
+        missedSuper.append(df_currSquadShots.loc[(df_currSquadShots['roundNo'] == rr+1) & 
+                                                 (df_currSquadShots['period'] == qq+1) & 
+                                                 (df_currSquadShots['scoreName'] == '2pt Miss'),
+                                                 ['roundNo']].count()[0])
+        #Total shots
+        totalShots.append(madeStandard[rr]+missedStandard[rr]+madeSuper[rr]+missedSuper[rr])
+
+#Calculate mean and standard deviation for total shots per quarter
+totalShotsM = np.mean(totalShots)
+totalShotsSD = np.std(totalShots)
+
+#Create a truncated normal distribution of the total shots mean/SD
+#Truncate it at 0 so that a team can't get less than no shots
+#Randomly sample values from the distribution to use in simulations
+
+#Set number of simulations
+nSims = 1000
+
+#Sample from truncated normal distribution with mean/SD parameters
+nShotVals = stats.truncnorm((0 - totalShotsM) / totalShotsSD,
+                            (np.inf - totalShotsM) / totalShotsSD,
+                            loc = totalShotsM, scale = totalShotsSD).rvs(nSims)
+#Round shot values to nearest whole number
+nShotVals = np.around(nShotVals)
+
+#Calculate made and missed shots from the different zones for beta distributions
+totalMadeStandard = np.sum(madeStandard)
+totalMissedStandard = np.sum(missedStandard)
+totalMadeSuper = np.sum(madeSuper)
+totalMissedSuper = np.sum(missedSuper)
+
+#Loop through the different super shot proportions
+for pp in range(0,len(superShotProps)):
     
-    #Extract the lineup dataframe for the current team
-    df_lineUpChecker = df_lineUp.loc[(df_lineUp['squadId'] == currSquadId),]
-    df_lineUpChecker.reset_index(drop=True, inplace=True)
-    
-    #Loop through dataframe and create a new list of combined player names
-    combinedLineUpName = list()
-    for dd in range(0,len(df_lineUpChecker)):
-        combinedLineUpName.append(", ".join(df_lineUpChecker['lineUpName'][dd]))
-    #Append to dataframe
-    df_lineUpChecker['combinedLineUpName'] = combinedLineUpName
+    #Loop through the simulations
+    for nn in range(0,nSims):
         
-    #Extract the unique lineups for the current team
-    uniqueLineUps = df_lineUpChecker['combinedLineUpName'].unique()
-    
-    #Loop through unique lineups and sum the duration and plus/minus data
-    ##### NOTE: current code only takes lineups that have played more than 5 mins
-    #Durations converted to minutes here
-    lineUpDuration = list()
-    lineUpPlusMinus = list()
-    analyseLineUps = list()
-    for uu in range(0,len(uniqueLineUps)):
-        #Get a separated dataframe
-        df_currLineUp = df_lineUpChecker.loc[(df_lineUpChecker['combinedLineUpName'] == uniqueLineUps[uu]),]
-        #Sum data and append to list if greater than 5 mins (300 seconds)
-        if sum(df_currLineUp['durationSeconds']) >= 300:
-            analyseLineUps.append(uniqueLineUps[uu])
-            lineUpDuration.append(sum(df_currLineUp['durationSeconds']) / 60)
-            lineUpPlusMinus.append(sum(df_currLineUp['plusMinus']))
-    
-    #Split the string of the lineups to put in figure source
-    lineUpGS = list()
-    lineUpGA = list()
-    lineUpWA = list()
-    lineUpC = list()
-    lineUpWD = list()
-    lineUpGD = list()
-    lineUpGK = list()
-    for aa in range(0,len(analyseLineUps)):
-        #Split and allocate
-        splitLineUp = analyseLineUps[aa].split(', ')
-        lineUpGS.append(splitLineUp[0])
-        lineUpGA.append(splitLineUp[1])
-        lineUpWA.append(splitLineUp[2])
-        lineUpC.append(splitLineUp[3])
-        lineUpWD.append(splitLineUp[4])
-        lineUpGD.append(splitLineUp[5])
-        lineUpGK.append(splitLineUp[6])
+        #Set total points counter for current iteration
+        totalPts = 0
         
-    #Convert to dataframe and sort
-    df_lineUpPlusMinus = pd.DataFrame(list(zip(analyseLineUps,lineUpDuration,lineUpPlusMinus,
-                                               lineUpGS,lineUpGA,lineUpWA,lineUpC,lineUpWD,lineUpGD,lineUpGK)),
-                                      columns = ['analyseLineUps','lineUpDuration','lineUpPlusMinus',
-                                                 'lineUpGS','lineUpGA','lineUpWA','lineUpC','lineUpWD','lineUpGD','lineUpGK'])
-    df_lineUpPlusMinus.sort_values(by = 'lineUpPlusMinus', inplace = True,
-                                   ascending = False, ignore_index = True)
-    
-    #Add a per 15 column to dataframe
-    perPlusMinus = list()
-    perDivider = 15 #per 15 minutes
-    for mm in range(0,len(df_lineUpPlusMinus)):
-        perFac = perDivider / df_lineUpPlusMinus['lineUpDuration'][mm]
-        perPlusMinus.append(df_lineUpPlusMinus['lineUpPlusMinus'][mm]*perFac)
-    #Append to dataframe
-    df_lineUpPlusMinus['lineUpPerPlusMinus'] = perPlusMinus
-    
-    #Create source for figures
-    figSourceAbs.append(ColumnDataSource(data = dict(analyseLineUps = list(df_lineUpPlusMinus['analyseLineUps']),
-                                                     plusMinus = list(df_lineUpPlusMinus['lineUpPlusMinus']),
-                                                     durations = list(df_lineUpPlusMinus['lineUpDuration']),
-                                                     lineUpGS = list(df_lineUpPlusMinus['lineUpGS']),
-                                                     lineUpGA = list(df_lineUpPlusMinus['lineUpGA']),
-                                                     lineUpWA = list(df_lineUpPlusMinus['lineUpWA']),
-                                                     lineUpC = list(df_lineUpPlusMinus['lineUpC']),
-                                                     lineUpWD = list(df_lineUpPlusMinus['lineUpWD']),
-                                                     lineUpGD = list(df_lineUpPlusMinus['lineUpGD']),
-                                                     lineUpGK = list(df_lineUpPlusMinus['lineUpGK']))))
-    figSourcePer.append(ColumnDataSource(data = dict(analyseLineUps = list(df_lineUpPlusMinus['analyseLineUps']),
-                                                     plusMinus = list(df_lineUpPlusMinus['lineUpPerPlusMinus']),
-                                                     durations = list(df_lineUpPlusMinus['lineUpDuration']),
-                                                     lineUpGS = list(df_lineUpPlusMinus['lineUpGS']),
-                                                     lineUpGA = list(df_lineUpPlusMinus['lineUpGA']),
-                                                     lineUpWA = list(df_lineUpPlusMinus['lineUpWA']),
-                                                     lineUpC = list(df_lineUpPlusMinus['lineUpC']),
-                                                     lineUpWD = list(df_lineUpPlusMinus['lineUpWD']),
-                                                     lineUpGD = list(df_lineUpPlusMinus['lineUpGD']),
-                                                     lineUpGK = list(df_lineUpPlusMinus['lineUpGK']))))
-    
-    #Create figures
-    figPlotAbs.append(figure(x_range = list(df_lineUpPlusMinus['analyseLineUps']), plot_height = 300, plot_width = 400,
-                             title = plotSquadNames[tt]+' Lineups Plus/Minus (Min. 5 Minutes Played)',
-                             toolbar_location = None,
-                             tools = 'hover', 
-                             tooltips = [("GS", "@lineUpGS"), ("GA", "@lineUpGA"), ("WA", "@lineUpWA"), 
-                                      ("C", "@lineUpC"), ("WD", "@lineUpWD"), ("GD", "@lineUpGD"), ("GK", "@lineUpGK"),
-                                      ("Minutes Played", "@durations"), ("Plus/Minus", "@plusMinus")]))
-    figPlotPer.append(figure(x_range = list(df_lineUpPlusMinus['analyseLineUps']), plot_height = 300, plot_width = 400,
-                             title = plotSquadNames[tt]+' Lineups Plus/Minus per 15 Minute (Min. 5 Minutes Played)',
-                             toolbar_location = None,
-                             tools = 'hover', 
-                             tooltips = [("GS", "@lineUpGS"), ("GA", "@lineUpGA"), ("WA", "@lineUpWA"), 
-                                      ("C", "@lineUpC"), ("WD", "@lineUpWD"), ("GD", "@lineUpGD"), ("GK", "@lineUpGK"),
-                                      ("Minutes Played", "@durations"), ("Plus/Minus per 15 Mins", "@plusMinus")]))
-    
-    #Add bars
-    figPlotAbs[tt].vbar(x = 'analyseLineUps', top = 'plusMinus', width=0.6,
-                        color = colourDict[plotSquadNames[tt]], source = figSourceAbs[tt])
-    figPlotPer[tt].vbar(x = 'analyseLineUps', top = 'plusMinus', width=0.6,
-                        color = colourDict[plotSquadNames[tt]], source = figSourcePer[tt])
-    
-    #Set figure parameters
-    # figPlot[tt].y_range.start = 0
-    figPlotAbs[tt].x_range.range_padding = 0.1
-    figPlotAbs[tt].xaxis.major_label_orientation = 1
-    figPlotAbs[tt].xgrid.grid_line_color = None
-    figPlotAbs[tt].title.align = 'center'
-    figPlotAbs[tt].yaxis.axis_label = 'Total Plus/Minus'
-    figPlotAbs[tt].xaxis.major_label_text_font_size = '0pt'  # current solution to turn off long x-tick labels
-    figPlotAbs[tt].xaxis.major_tick_line_color = None  # turn off x-axis major ticks
-    
-    # figPlot[tt].y_range.start = 0
-    figPlotPer[tt].x_range.range_padding = 0.1
-    figPlotPer[tt].xaxis.major_label_orientation = 1
-    figPlotPer[tt].xgrid.grid_line_color = None
-    figPlotPer[tt].title.align = 'center'
-    figPlotPer[tt].title.text_font_size = '8pt'
-    figPlotPer[tt].yaxis.axis_label = 'Total Plus/Minus (per 15 minutes)'
-    figPlotPer[tt].xaxis.major_label_text_font_size = '0pt'  # current solution to turn off long x-tick labels
-    figPlotPer[tt].xaxis.major_tick_line_color = None  # turn off x-axis major ticks
-    
-    # #Show figure
-    # show(figPlotAbs[tt])
-    # show(figPlotPer[tt])
-    
-#Create the gridplot
-gridAbs = gridplot([[figPlotAbs[0], figPlotAbs[1], figPlotAbs[2], figPlotAbs[3]],
-                    [figPlotAbs[4], figPlotAbs[5], figPlotAbs[6], figPlotAbs[7]]],
-                   plot_height = 300, plot_width = 400)
-gridPer = gridplot([[figPlotPer[0], figPlotPer[1], figPlotPer[2], figPlotPer[3]],
-                    [figPlotPer[4], figPlotPer[5], figPlotPer[6], figPlotPer[7]]],
-                   plot_height = 300, plot_width = 400)
+        #Get the current number of shots for the quarter
+        nShots = int(nShotVals[nn])
+        
+        #Get the standard and super shot attempts based on proportion
+        nSuper = nShots * superShotProps[pp]
+        #Round to ensure a whole number
+        nSuper = int(np.around(nSuper))
+        #Get standard based on difference
+        nStandard = int(nShots - nSuper)
+        
+        #Calculate the actual proportion of the current super shot number
+        actualProp = nSuper / nShots
+        
+        #Set super shot category bin
+        if actualProp <= 0.1:
+            propCat = '0%-10%'
+        elif actualProp > 0.1 and actualProp <= 0.2:
+            propCat = '10%-20%'
+        elif actualProp > 0.2 and actualProp <= 0.3:
+            propCat = '20%-30%'
+        elif actualProp > 0.3 and actualProp <= 0.4:
+            propCat = '30%-40%'
+        elif actualProp > 0.4 and actualProp <= 0.5:
+            propCat = '40%-50%'
+        elif actualProp > 0.5 and actualProp <= 0.6:
+            propCat = '50%-60%'
+        elif actualProp > 0.6 and actualProp <= 0.7:
+            propCat = '60%-70%'
+        elif actualProp > 0.7 and actualProp <= 0.8:
+            propCat = '70%-80%'
+        elif actualProp > 0.8 and actualProp <= 0.9:
+            propCat = '80%-90%'
+        elif actualProp > 0.9:
+            propCat = '90%-100%'
+        
+        #Loop through standard shots and determine score
+        if nStandard > 0:
+            #Sample shot success probability for the shots from beta distribution
+            shotProb = np.random.beta(totalMadeStandard, totalMissedStandard,
+                                      size = nStandard)
+            #Loop through shots            
+            for ss in range(0,nStandard):
+                #Get random number to determine shot success
+                r = random.random()
+                #Check shot success and add to total points if successful
+                if r < shotProb[ss]:
+                    totalPts = totalPts + 1
+            
+        #Loop through super shots and determine score
+        if nSuper > 0:
+            #Sample shot success probability for the shots from beta distribution
+            shotProb = np.random.beta(totalMadeSuper, totalMissedSuper,
+                                      size = nSuper)
+            #Loop through shots            
+            for ss in range(0,nSuper):
+                #Get random number to determine shot success
+                r = random.random()
+                #Check shot success and add to total points if successful
+                if r < shotProb[ss]:
+                    totalPts = totalPts + 2
+        
+        #Store values in dictionary
+        superSimResults['squadId'].append(currSquadId)
+        superSimResults['squadNickname'].append(currSquadName)
+        superSimResults['nShots'].append(nShots)
+        superSimResults['nStandard'].append(nStandard)
+        superSimResults['nSuper'].append(nSuper)
+        superSimResults['superProp'].append(actualProp)
+        superSimResults['superPropCat'].append(propCat)
+        superSimResults['totalPts'].append(totalPts)
+        
 
-# #Show grid
-# show(gridAbs)
-# show(gridPer)
 
-#Export grid as both .png and .html
+#Create test gridplot for first squad
 
-##### TODO: set better naming strings for figures with looping
+#Convert sim dictionary to datafram
+df_superSimResults = pd.DataFrame.from_dict(superSimResults)
 
-#Seems like storing html in same folder causes figures to overwrite?
-#Make directory to store
-os.mkdir('total-absolutePlusMinus-teamLineUps')
-os.chdir('total-absolutePlusMinus-teamLineUps')
 
-#PNG
-export_png(gridAbs, filename = 'total-absolutePlusMinus-teamLineUps.png')
+##### Ridge plot doesn't work that well, scatter may be good
 
-#HTML
-output_file('total-absolutePlusMinus-teamLineUps.html')
-save(gridAbs)
+#Try boxplot
+sns.boxplot(x = 'superPropCat', y = 'totalPts',
+            data = df_superSimResults,
+            palette = "vlag")
 
-#Navigate back up
-os.chdir('..')     
+# # Add in points to show each observation
+# sns.swarmplot(x="distance", y="method", data=planets,
+#               size=2, color=".3", linewidth=0)
 
-#Seems like storing html in same folder causes figures to overwrite?
-#Make directory to store
-os.mkdir('total-per15PlusMinus-teamLineUps')
-os.chdir('total-per15PlusMinus-teamLineUps')
+##### The large variation might be due to the potentially wide ranging
+##### beta distributions...?
 
-#PNG
-export_png(gridPer, filename = 'total-per15PlusMinus-teamLineUps.png')
+##### The strip-plot seaborn example with different colours might work well to distribute
+##### different scores
 
-#HTML
-output_file('total-per15PlusMinus-teamLineUps.html')
-save(gridPer)
+##### Ridge plot probably doesn't work well with such integer based data...
 
-#Navigate back up
-os.chdir('..')  
-    
+# %%
+
+
+
+ 
 # %% Plot player plus/minus
+
+####### UP TO HERE
 
 #Get unique list of players from the lineup dataframe
 plotPlayers = list(df_individualLineUp['playerId'].unique())
