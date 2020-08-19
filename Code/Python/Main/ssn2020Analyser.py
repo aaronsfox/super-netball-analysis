@@ -34,6 +34,22 @@ from bokeh.io import show
 from bokeh.io import export_png
 import json
 
+#Set plot parameters
+from matplotlib import rcParams
+# rcParams['font.family'] = 'sans-serif'
+rcParams['font.sans-serif'] = 'Arial'
+rcParams['font.weight'] = 'bold'
+rcParams['axes.labelsize'] = 12
+rcParams['axes.titlesize'] = 16
+rcParams['axes.linewidth'] = 1.5
+rcParams['axes.labelweight'] = 'bold'
+rcParams['legend.fontsize'] = 10
+rcParams['xtick.major.width'] = 1.5
+rcParams['ytick.major.width'] = 1.5
+rcParams['legend.framealpha'] = 0.0
+rcParams['savefig.dpi'] = 300
+rcParams['savefig.format'] = 'pdf'
+
 #Navigate to supplementary directory and import helper scripts
 os.chdir('..\\Supplementary')
 import ssn2020FigHelper as figHelper
@@ -796,198 +812,1092 @@ figHelper.totalPlusMinusLineUps(teamInfo = teamInfo, df_lineUp = df_lineUp,
 # in this period - and from this simulate how many points teams would expect to get
 # taking different proportions of standard vs. super shots
 
-##### TODO: consider adding a factor that removes the super shot opportunity at a
-##### certain probability (e.g. only 75% of super shots get a chance) --- simulates 
-##### the idea that teams are getting turnovers when trying to set up...
-
 #Set a list of proportions to examine across simulations
 superShotProps = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5,
                   0.6, 0.7, 0.8, 0.9, 1.0]
+    
+#Set number of simulations
+nSims = 1000
 
 #Create dictionary to store data in
 superSimResults = {'squadId': [], 'squadNickname': [],
                    'nShots': [], 'nStandard': [], 'nSuper': [],
                    'superProp': [], 'superPropCat': [], 'totalPts': []}
 
+#Set list to store actual team super shot proportions in
+teamSuperProps = list()
+
+#Get alphabetically ordered teams to loop through
+teamList = list(colourDict.keys())
+
 #Loop through teams
-##### TODO: start with one team
-currSquadId = 8117
-currSquadName = teamInfo['squadNickname'][teamInfo['squadId'].index(currSquadId)]
-
-#Extract a dataframe of shots for the current team during super shot period
-df_currSquadShots = df_scoreFlow.loc[(df_scoreFlow['squadId'] == currSquadId) &
-                                     (df_scoreFlow['periodCategory'] == 'twoPoint'),]
-
-#Loop through rounds, extract frequencies for different shots
-#Get number of rounds
-nRounds = max(df_currSquadShots['roundNo'])
-#Set lists to store data in
-madeStandard = list()
-missedStandard = list()
-madeSuper = list()
-missedSuper = list()
-totalShots = list()
-#Get data from each round
-for rr in range(0,nRounds):
-    #Loop through quarters within rounds too
-    for qq in range(0,4):
-        #Made standard shots
-        madeStandard.append(df_currSquadShots.loc[(df_currSquadShots['roundNo'] == rr+1) & 
-                                                  (df_currSquadShots['period'] == qq+1) & 
-                                                  (df_currSquadShots['scoreName'] == 'goal'),
-                                                  ['roundNo']].count()[0])
-        #Missed standard shots
-        missedStandard.append(df_currSquadShots.loc[(df_currSquadShots['roundNo'] == rr+1) & 
-                                                    (df_currSquadShots['period'] == qq+1) & 
-                                                    (df_currSquadShots['scoreName'] == 'miss'),
-                                                    ['roundNo']].count()[0])
-        #Made super shots
-        madeSuper.append(df_currSquadShots.loc[(df_currSquadShots['roundNo'] == rr+1) & 
-                                               (df_currSquadShots['period'] == qq+1) & 
-                                               (df_currSquadShots['scoreName'] == '2pt Goal'),
-                                               ['roundNo']].count()[0])
-        #Missed standard shots
-        missedSuper.append(df_currSquadShots.loc[(df_currSquadShots['roundNo'] == rr+1) & 
-                                                 (df_currSquadShots['period'] == qq+1) & 
-                                                 (df_currSquadShots['scoreName'] == '2pt Miss'),
-                                                 ['roundNo']].count()[0])
-        #Total shots
-        totalShots.append(madeStandard[rr]+missedStandard[rr]+madeSuper[rr]+missedSuper[rr])
-
-#Calculate mean and standard deviation for total shots per quarter
-totalShotsM = np.mean(totalShots)
-totalShotsSD = np.std(totalShots)
-
-#Create a truncated normal distribution of the total shots mean/SD
-#Truncate it at 0 so that a team can't get less than no shots
-#Randomly sample values from the distribution to use in simulations
-
-#Set number of simulations
-nSims = 1000
-
-#Sample from truncated normal distribution with mean/SD parameters
-nShotVals = stats.truncnorm((0 - totalShotsM) / totalShotsSD,
-                            (np.inf - totalShotsM) / totalShotsSD,
-                            loc = totalShotsM, scale = totalShotsSD).rvs(nSims)
-#Round shot values to nearest whole number
-nShotVals = np.around(nShotVals)
-
-#Calculate made and missed shots from the different zones for beta distributions
-totalMadeStandard = np.sum(madeStandard)
-totalMissedStandard = np.sum(missedStandard)
-totalMadeSuper = np.sum(madeSuper)
-totalMissedSuper = np.sum(missedSuper)
-
-#Loop through the different super shot proportions
-for pp in range(0,len(superShotProps)):
+for tt in range(0,len(teamList)):
     
-    #Loop through the simulations
-    for nn in range(0,nSims):
+    #Set current squad labels
+    currSquadId = teamInfo['squadId'][teamInfo['squadNickname'].index(teamList[tt])]
+    currSquadName = teamInfo['squadNickname'][teamInfo['squadId'].index(currSquadId)]
+
+    #Extract a dataframe of shots for the current team during super shot period
+    df_currSquadShots = df_scoreFlow.loc[(df_scoreFlow['squadId'] == currSquadId) &
+                                         (df_scoreFlow['periodCategory'] == 'twoPoint'),]
+    
+    #Loop through rounds, extract frequencies for different shots
+    #Get number of rounds
+    nRounds = max(df_currSquadShots['roundNo'])
+    #Set lists to store data in
+    madeStandard = list()
+    missedStandard = list()
+    madeSuper = list()
+    missedSuper = list()
+    totalShots = list()
+    #Get data from each round
+    for rr in range(0,nRounds):
+        #Loop through quarters within rounds too
+        for qq in range(0,4):
+            #Made standard shots
+            madeStandard.append(df_currSquadShots.loc[(df_currSquadShots['roundNo'] == rr+1) & 
+                                                      (df_currSquadShots['period'] == qq+1) & 
+                                                      (df_currSquadShots['scoreName'] == 'goal'),
+                                                      ['roundNo']].count()[0])
+            #Missed standard shots
+            missedStandard.append(df_currSquadShots.loc[(df_currSquadShots['roundNo'] == rr+1) & 
+                                                        (df_currSquadShots['period'] == qq+1) & 
+                                                        (df_currSquadShots['scoreName'] == 'miss'),
+                                                        ['roundNo']].count()[0])
+            #Made super shots
+            madeSuper.append(df_currSquadShots.loc[(df_currSquadShots['roundNo'] == rr+1) & 
+                                                   (df_currSquadShots['period'] == qq+1) & 
+                                                   (df_currSquadShots['scoreName'] == '2pt Goal'),
+                                                   ['roundNo']].count()[0])
+            #Missed standard shots
+            missedSuper.append(df_currSquadShots.loc[(df_currSquadShots['roundNo'] == rr+1) & 
+                                                     (df_currSquadShots['period'] == qq+1) & 
+                                                     (df_currSquadShots['scoreName'] == '2pt Miss'),
+                                                     ['roundNo']].count()[0])
+            #Total shots
+            totalShots.append(madeStandard[rr]+missedStandard[rr]+madeSuper[rr]+missedSuper[rr])
+    
+    #Calculate mean and standard deviation for total shots per quarter
+    totalShotsM = np.mean(totalShots)
+    totalShotsSD = np.std(totalShots)
+    
+    #Calculate the current teams actual super shot proportions
+    teamSuperProps.append((np.sum(madeSuper)+np.sum(missedSuper)) / np.sum(totalShots))  
+    
+    #Create a truncated normal distribution of the total shots mean/SD
+    #Truncate it at 0 so that a team can't get less than no shots
+    #Randomly sample values from the distribution to use in simulations
+    
+    #Sample from truncated normal distribution with mean/SD parameters
+    #We choose to sample between +/- two standard deviations here. This might
+    #mean shots sometimes go below zero, but we have a check in place to not
+    #analyse these later
+    lowLim = totalShotsM - (2*totalShotsSD)
+    uppLim = totalShotsM + (2*totalShotsSD)
+    nShotVals = stats.truncnorm((lowLim - totalShotsM) / totalShotsSD,
+                                (uppLim - totalShotsM) / totalShotsSD,
+                                loc = totalShotsM, scale = totalShotsSD).rvs(nSims)
+    #Round shot values to nearest whole number
+    nShotVals = np.around(nShotVals)
+    
+    #Calculate made and missed shots from the different zones for beta distributions
+    totalMadeStandard = np.sum(madeStandard)
+    totalMissedStandard = np.sum(missedStandard)
+    totalMadeSuper = np.sum(madeSuper)
+    totalMissedSuper = np.sum(missedSuper)
+    
+    #Loop through the different super shot proportions
+    for pp in range(0,len(superShotProps)):
         
-        #Set total points counter for current iteration
-        totalPts = 0
-        
-        #Get the current number of shots for the quarter
-        nShots = int(nShotVals[nn])
-        
-        #Get the standard and super shot attempts based on proportion
-        nSuper = nShots * superShotProps[pp]
-        #Round to ensure a whole number
-        nSuper = int(np.around(nSuper))
-        #Get standard based on difference
-        nStandard = int(nShots - nSuper)
-        
-        #Calculate the actual proportion of the current super shot number
-        actualProp = nSuper / nShots
-        
-        #Set super shot category bin
-        if actualProp <= 0.1:
-            propCat = '0%-10%'
-        elif actualProp > 0.1 and actualProp <= 0.2:
-            propCat = '10%-20%'
-        elif actualProp > 0.2 and actualProp <= 0.3:
-            propCat = '20%-30%'
-        elif actualProp > 0.3 and actualProp <= 0.4:
-            propCat = '30%-40%'
-        elif actualProp > 0.4 and actualProp <= 0.5:
-            propCat = '40%-50%'
-        elif actualProp > 0.5 and actualProp <= 0.6:
-            propCat = '50%-60%'
-        elif actualProp > 0.6 and actualProp <= 0.7:
-            propCat = '60%-70%'
-        elif actualProp > 0.7 and actualProp <= 0.8:
-            propCat = '70%-80%'
-        elif actualProp > 0.8 and actualProp <= 0.9:
-            propCat = '80%-90%'
-        elif actualProp > 0.9:
-            propCat = '90%-100%'
-        
-        #Loop through standard shots and determine score
-        if nStandard > 0:
-            #Sample shot success probability for the shots from beta distribution
-            shotProb = np.random.beta(totalMadeStandard, totalMissedStandard,
-                                      size = nStandard)
-            #Loop through shots            
-            for ss in range(0,nStandard):
-                #Get random number to determine shot success
-                r = random.random()
-                #Check shot success and add to total points if successful
-                if r < shotProb[ss]:
-                    totalPts = totalPts + 1
+        #Loop through the simulations
+        for nn in range(0,nSims):
             
-        #Loop through super shots and determine score
-        if nSuper > 0:
-            #Sample shot success probability for the shots from beta distribution
-            shotProb = np.random.beta(totalMadeSuper, totalMissedSuper,
-                                      size = nSuper)
-            #Loop through shots            
-            for ss in range(0,nSuper):
-                #Get random number to determine shot success
-                r = random.random()
-                #Check shot success and add to total points if successful
-                if r < shotProb[ss]:
-                    totalPts = totalPts + 2
-        
-        #Store values in dictionary
-        superSimResults['squadId'].append(currSquadId)
-        superSimResults['squadNickname'].append(currSquadName)
-        superSimResults['nShots'].append(nShots)
-        superSimResults['nStandard'].append(nStandard)
-        superSimResults['nSuper'].append(nSuper)
-        superSimResults['superProp'].append(actualProp)
-        superSimResults['superPropCat'].append(propCat)
-        superSimResults['totalPts'].append(totalPts)
-        
+            #Get the current number of shots for the quarter
+            nShots = int(nShotVals[nn])
+            
+            #Put a check in place to see if any shots are given to the team
+            #Simply don't run the analysis if there aren't any shots
+            if nShots > 0:
+            
+                #Set total points counter for current iteration
+                totalPts = 0
+                
+                #Get the standard and super shot attempts based on proportion
+                nSuper = nShots * superShotProps[pp]
+                #Round to ensure a whole number
+                nSuper = int(np.around(nSuper))
+                #Get standard based on difference
+                nStandard = int(nShots - nSuper)
+            
+                #Calculate the actual proportion of the current super shot number
+                actualProp = nSuper / nShots
+                
+                #Set super shot category bin
+                if actualProp <= 0.1:
+                    propCat = '0%-10%'
+                elif actualProp > 0.1 and actualProp <= 0.2:
+                    propCat = '10%-20%'
+                elif actualProp > 0.2 and actualProp <= 0.3:
+                    propCat = '20%-30%'
+                elif actualProp > 0.3 and actualProp <= 0.4:
+                    propCat = '30%-40%'
+                elif actualProp > 0.4 and actualProp <= 0.5:
+                    propCat = '40%-50%'
+                elif actualProp > 0.5 and actualProp <= 0.6:
+                    propCat = '50%-60%'
+                elif actualProp > 0.6 and actualProp <= 0.7:
+                    propCat = '60%-70%'
+                elif actualProp > 0.7 and actualProp <= 0.8:
+                    propCat = '70%-80%'
+                elif actualProp > 0.8 and actualProp <= 0.9:
+                    propCat = '80%-90%'
+                elif actualProp > 0.9:
+                    propCat = '90%-100%'
+                
+                #Loop through standard shots and determine score
+                if nStandard > 0:
+                    #Sample shot success probability for the shots from beta distribution
+                    shotProb = np.random.beta(totalMadeStandard, totalMissedStandard,
+                                              size = nStandard)
+                    #Loop through shots            
+                    for ss in range(0,nStandard):
+                        #Get random number to determine shot success
+                        r = random.random()
+                        #Check shot success and add to total points if successful
+                        if r < shotProb[ss]:
+                            totalPts = totalPts + 1
+                    
+                #Loop through super shots and determine score
+                if nSuper > 0:
+                    #Sample shot success probability for the shots from beta distribution
+                    shotProb = np.random.beta(totalMadeSuper, totalMissedSuper,
+                                              size = nSuper)
+                    #Loop through shots            
+                    for ss in range(0,nSuper):
+                        #Get random number to determine shot success
+                        r = random.random()
+                        #Check shot success and add to total points if successful
+                        if r < shotProb[ss]:
+                            totalPts = totalPts + 2
+                            
+                #Store values in dictionary
+                superSimResults['squadId'].append(currSquadId)
+                superSimResults['squadNickname'].append(currSquadName)
+                superSimResults['nShots'].append(nShots)
+                superSimResults['nStandard'].append(nStandard)
+                superSimResults['nSuper'].append(nSuper)
+                superSimResults['superProp'].append(actualProp)
+                superSimResults['superPropCat'].append(propCat)
+                superSimResults['totalPts'].append(totalPts)
 
-
-#Create test gridplot for first squad
-
-#Convert sim dictionary to datafram
+#Convert sim dictionary to dataframe
 df_superSimResults = pd.DataFrame.from_dict(superSimResults)
 
+#Create a boxplot of the simulation results
 
-##### Ridge plot doesn't work that well, scatter may be good
+#Initialize the figure
+fig, axes = plt.subplots(nrows = 2, ncols = 4, figsize=(15, 7))
 
-#Try boxplot
-sns.boxplot(x = 'superPropCat', y = 'totalPts',
-            data = df_superSimResults,
-            palette = "vlag")
+#Set an axes look-up variable
+whichAx = [[0,0],[0,1],[0,2],[0,3],
+           [1,0],[1,1],[1,2],[1,3]]
 
-# # Add in points to show each observation
-# sns.swarmplot(x="distance", y="method", data=planets,
-#               size=2, color=".3", linewidth=0)
+#Loop through the teams
+for tt in range(0,len(teamList)):
 
-##### The large variation might be due to the potentially wide ranging
-##### beta distributions...?
+    #Get current squad name
+    currSquadName = teamList[tt]
+    
+    #Create the boxplot
+    gx = sns.boxplot(x = 'superPropCat', y = 'totalPts',
+                     data = df_superSimResults.loc[(df_superSimResults['squadNickname'] == currSquadName),],
+                     whis = [0, 100], width = 0.65,
+                     color = colourDict[currSquadName],
+                     ax = axes[whichAx[tt][0],whichAx[tt][1]])
+    
+    #Set the box plot face and line colours
+    
+    #First, identify the box to keep solid based on teams actual super shot proportions
+    solidBarInd = int(np.floor(teamSuperProps[tt]*10))
+    
+    #Loop through boxes and fix colours
+    for ii in range(0,len(axes[whichAx[tt][0],whichAx[tt][1]].artists)):
+        
+        #Get the current artist
+        artist = axes[whichAx[tt][0],whichAx[tt][1]].artists[ii]
+        
+        #If the bar matches the one we want to keep solid, just change lines to black
+        if ii == solidBarInd:
+            
+            #Set edge colour to black
+            artist.set_edgecolor('k')
+            
+            #Each box has 6 associated Line2D objects (to make the whiskers, fliers, etc.)
+            #Loop over them here, and use black
+            for jj in range(ii*6,ii*6+6):
+                line = axes[whichAx[tt][0],whichAx[tt][1]].lines[jj]
+                line.set_color('k')
+                line.set_mfc('k')
+                line.set_mec('k')
+                
+        else:
+            
+            #Set the linecolor on the artist to the facecolor, and set the facecolor to None
+            col = artist.get_facecolor()
+            artist.set_edgecolor(col)
+            artist.set_facecolor('None')
+            
+            #Each box has 6 associated Line2D objects (to make the whiskers, fliers, etc.)
+            #Loop over them here, and use the same colour as above
+            for jj in range(ii*6,ii*6+6):
+                line = axes[whichAx[tt][0],whichAx[tt][1]].lines[jj]
+                line.set_color(col)
+                line.set_mfc(col)
+                line.set_mec(col)
+    
+    #Set x labels only for bottom row
+    if whichAx[tt][0] == 1:
+        gx.set(xlabel = 'Proportion of Total Shots as Super Shots')
+    else:
+        gx.set(xlabel = '')
+        
+    #Set y label only for first column
+    if whichAx[tt][1] == 0:
+        gx.set(ylabel = 'Simulated Score')
+    else:
+        gx.set(ylabel = '')
+        
+    #Rotate x-tick labels, but only for bottom row
+    if whichAx[tt][0] == 1:
+        axes[whichAx[tt][0],whichAx[tt][1]].tick_params('x', labelrotation = 45)
+    else:
+        axes[whichAx[tt][0],whichAx[tt][1]].set_xticklabels([])
+    
+    #Point ticks in and make short
+    axes[whichAx[tt][0],whichAx[tt][1]].tick_params(axis = 'both',
+                                                    direction = 'in',
+                                                    length = 1.5)
+    
+    #Set title
+    axes[whichAx[tt][0],whichAx[tt][1]].set_title(currSquadName,
+                                                  fontdict = {'fontsize': 12,
+                                                              'fontweight': 'bold'})
 
-##### The strip-plot seaborn example with different colours might work well to distribute
-##### different scores
+#Set tight layout on figure
+fig.tight_layout()
 
-##### Ridge plot probably doesn't work well with such integer based data...
+#Loop through and set y-axes to be consistent
 
-# %%
+#Find maximum value across all axes
+currYmax = 0
+for tt in range(0,len(teamList)):
+    #Get current axes y-max and reset if greater than current
+    if axes[whichAx[tt][0],whichAx[tt][1]].get_ylim()[1] > currYmax:
+        currYmax = axes[whichAx[tt][0],whichAx[tt][1]].get_ylim()[1]
+        
+#Round current y-max to ceiling whole number
+currYmax = np.ceil(currYmax)
 
+#Reset all of the axes ticks to min and new max
+#Also set the tick labels to have 6 ticks here
+for tt in range(0,len(teamList)):
+    axes[whichAx[tt][0],whichAx[tt][1]].set_ylim([axes[whichAx[tt][0],whichAx[tt][1]].get_ylim()[0],
+                                                  currYmax])
+    axes[whichAx[tt][0],whichAx[tt][1]].set_yticks(np.arange(0, currYmax+1, step = currYmax/6))
 
+#Export figure
+
+# #Change directory
+# os.chdir('..\\SuperShotSims')
+
+#Export as PDF and basic png
+plt.savefig('SuperShotSimulations_Standard.png', format = 'png', dpi = 300)
+
+#Close figure
+plt.close()
+
+# %% Super shot period score simulator with RiskFactor
+
+# This analysis repeats the above score simulator, but considers a 'RiskFactor'
+# for whether the super shot opportunity can actually be attempted. This goes 
+# with the theory that teams might be turning the ball over in an attempt to try
+# and get into a super shot position. Here we set a factor that sets the probability
+# that the super shot attempt will be available.
+
+##### TODO: we can package these up together as functions with options...
+
+#Set the risk factor to 0.75, meaning that there is a 25% chance that the 
+#super shot attempt will not get taken
+superRiskFactor = 0.75
+
+#Create dictionary to store data in
+superSimResults_RiskFac = {'squadId': [], 'squadNickname': [],
+                           'nShots': [], 'nStandard': [], 'nSuper': [],
+                           'superProp': [], 'superPropCat': [], 'totalPts': []}
+
+#Loop through teams
+for tt in range(0,len(teamList)):
+    
+    #Set current squad labels
+    currSquadId = teamInfo['squadId'][teamInfo['squadNickname'].index(teamList[tt])]
+    currSquadName = teamInfo['squadNickname'][teamInfo['squadId'].index(currSquadId)]
+
+    #Extract a dataframe of shots for the current team during super shot period
+    df_currSquadShots = df_scoreFlow.loc[(df_scoreFlow['squadId'] == currSquadId) &
+                                         (df_scoreFlow['periodCategory'] == 'twoPoint'),]
+    
+    #Loop through rounds, extract frequencies for different shots
+    #Get number of rounds
+    nRounds = max(df_currSquadShots['roundNo'])
+    #Set lists to store data in
+    madeStandard = list()
+    missedStandard = list()
+    madeSuper = list()
+    missedSuper = list()
+    totalShots = list()
+    #Get data from each round
+    for rr in range(0,nRounds):
+        #Loop through quarters within rounds too
+        for qq in range(0,4):
+            #Made standard shots
+            madeStandard.append(df_currSquadShots.loc[(df_currSquadShots['roundNo'] == rr+1) & 
+                                                      (df_currSquadShots['period'] == qq+1) & 
+                                                      (df_currSquadShots['scoreName'] == 'goal'),
+                                                      ['roundNo']].count()[0])
+            #Missed standard shots
+            missedStandard.append(df_currSquadShots.loc[(df_currSquadShots['roundNo'] == rr+1) & 
+                                                        (df_currSquadShots['period'] == qq+1) & 
+                                                        (df_currSquadShots['scoreName'] == 'miss'),
+                                                        ['roundNo']].count()[0])
+            #Made super shots
+            madeSuper.append(df_currSquadShots.loc[(df_currSquadShots['roundNo'] == rr+1) & 
+                                                   (df_currSquadShots['period'] == qq+1) & 
+                                                   (df_currSquadShots['scoreName'] == '2pt Goal'),
+                                                   ['roundNo']].count()[0])
+            #Missed standard shots
+            missedSuper.append(df_currSquadShots.loc[(df_currSquadShots['roundNo'] == rr+1) & 
+                                                     (df_currSquadShots['period'] == qq+1) & 
+                                                     (df_currSquadShots['scoreName'] == '2pt Miss'),
+                                                     ['roundNo']].count()[0])
+            #Total shots
+            totalShots.append(madeStandard[rr]+missedStandard[rr]+madeSuper[rr]+missedSuper[rr])
+    
+    #Calculate mean and standard deviation for total shots per quarter
+    totalShotsM = np.mean(totalShots)
+    totalShotsSD = np.std(totalShots)
+
+    #Create a truncated normal distribution of the total shots mean/SD
+    #Truncate it at 0 so that a team can't get less than no shots
+    #Randomly sample values from the distribution to use in simulations
+    
+    #Sample from truncated normal distribution with mean/SD parameters
+    #We choose to sample between +/- two standard deviations here. This might
+    #mean shots sometimes go below zero, but we have a check in place to not
+    #analyse these later
+    lowLim = totalShotsM - (2*totalShotsSD)
+    uppLim = totalShotsM + (2*totalShotsSD)
+    nShotVals = stats.truncnorm((lowLim - totalShotsM) / totalShotsSD,
+                                (uppLim - totalShotsM) / totalShotsSD,
+                                loc = totalShotsM, scale = totalShotsSD).rvs(nSims)
+    #Round shot values to nearest whole number
+    nShotVals = np.around(nShotVals)
+    
+    #Calculate made and missed shots from the different zones for beta distributions
+    totalMadeStandard = np.sum(madeStandard)
+    totalMissedStandard = np.sum(missedStandard)
+    totalMadeSuper = np.sum(madeSuper)
+    totalMissedSuper = np.sum(missedSuper)
+    
+    #Loop through the different super shot proportions
+    for pp in range(0,len(superShotProps)):
+        
+        #Loop through the simulations
+        for nn in range(0,nSims):
+            
+            #Get the current number of shots for the quarter
+            nShots = int(nShotVals[nn])
+            
+            #Put a check in place to see if any shots are given to the team
+            #Simply don't run the analysis if there aren't any shots
+            if nShots > 0:
+            
+                #Set total points counter for current iteration
+                totalPts = 0
+                
+                #Get the standard and super shot attempts based on proportion
+                nSuper = nShots * superShotProps[pp]
+                #Round to ensure a whole number
+                nSuper = int(np.around(nSuper))
+                #Get standard based on difference
+                nStandard = int(nShots - nSuper)
+                
+                #Correct the number of super shots based on the risk factor
+                nSuper_RiskFac = 0
+                for rr in range(0,nSuper):
+                    #Get random number generated for shot attempt
+                    r = random.random()
+                    #Check against risk factor and add to shot number if successful
+                    if r < superRiskFactor:
+                        nSuper_RiskFac = nSuper_RiskFac + 1
+                
+                #Recalculate total number of shots
+                nSuper = nSuper_RiskFac
+                nShots = nStandard + nSuper
+                
+                #Recheck if there are any shots to progress analysis
+                if nShots > 0:
+                
+                    #Calculate the actual proportion of the current super shot number
+                    actualProp = nSuper / nShots
+                    
+                    #Set super shot category bin
+                    if actualProp <= 0.1:
+                        propCat = '0%-10%'
+                    elif actualProp > 0.1 and actualProp <= 0.2:
+                        propCat = '10%-20%'
+                    elif actualProp > 0.2 and actualProp <= 0.3:
+                        propCat = '20%-30%'
+                    elif actualProp > 0.3 and actualProp <= 0.4:
+                        propCat = '30%-40%'
+                    elif actualProp > 0.4 and actualProp <= 0.5:
+                        propCat = '40%-50%'
+                    elif actualProp > 0.5 and actualProp <= 0.6:
+                        propCat = '50%-60%'
+                    elif actualProp > 0.6 and actualProp <= 0.7:
+                        propCat = '60%-70%'
+                    elif actualProp > 0.7 and actualProp <= 0.8:
+                        propCat = '70%-80%'
+                    elif actualProp > 0.8 and actualProp <= 0.9:
+                        propCat = '80%-90%'
+                    elif actualProp > 0.9:
+                        propCat = '90%-100%'
+                    
+                    #Loop through standard shots and determine score
+                    if nStandard > 0:
+                        #Sample shot success probability for the shots from beta distribution
+                        shotProb = np.random.beta(totalMadeStandard, totalMissedStandard,
+                                                  size = nStandard)
+                        #Loop through shots            
+                        for ss in range(0,nStandard):
+                            #Get random number to determine shot success
+                            r = random.random()
+                            #Check shot success and add to total points if successful
+                            if r < shotProb[ss]:
+                                totalPts = totalPts + 1
+                        
+                    #Loop through super shots and determine score
+                    if nSuper > 0:
+                        #Sample shot success probability for the shots from beta distribution
+                        shotProb = np.random.beta(totalMadeSuper, totalMissedSuper,
+                                                  size = nSuper)
+                        #Loop through shots            
+                        for ss in range(0,nSuper):
+                            #Get random number to determine shot success
+                            r = random.random()
+                            #Check shot success and add to total points if successful
+                            if r < shotProb[ss]:
+                                totalPts = totalPts + 2
+                                
+                    #Store values in dictionary
+                    superSimResults_RiskFac['squadId'].append(currSquadId)
+                    superSimResults_RiskFac['squadNickname'].append(currSquadName)
+                    superSimResults_RiskFac['nShots'].append(nShots)
+                    superSimResults_RiskFac['nStandard'].append(nStandard)
+                    superSimResults_RiskFac['nSuper'].append(nSuper)
+                    superSimResults_RiskFac['superProp'].append(actualProp)
+                    superSimResults_RiskFac['superPropCat'].append(propCat)
+                    superSimResults_RiskFac['totalPts'].append(totalPts)
+
+#Convert sim dictionary to dataframe
+df_superSimResults_RiskFac = pd.DataFrame.from_dict(superSimResults_RiskFac)
+
+#Create a boxplot of the simulation results
+
+#Initialize the figure
+fig, axes = plt.subplots(nrows = 2, ncols = 4, figsize=(15, 7))
+
+#Loop through the teams
+for tt in range(0,len(teamList)):
+
+    #Get current squad name
+    currSquadName = teamList[tt]
+    
+    #Create the boxplot
+    gx = sns.boxplot(x = 'superPropCat', y = 'totalPts',
+                     data = df_superSimResults_RiskFac.loc[(df_superSimResults_RiskFac['squadNickname'] == currSquadName),],
+                     whis = [0, 100], width = 0.65,
+                     color = colourDict[currSquadName],
+                     ax = axes[whichAx[tt][0],whichAx[tt][1]])
+    
+    #Set the box plot face and line colours
+    
+    #First, identify the box to keep solid based on teams actual super shot proportions
+    solidBarInd = int(np.floor(teamSuperProps[tt]*10))
+    
+    #Loop through boxes and fix colours
+    for ii in range(0,len(axes[whichAx[tt][0],whichAx[tt][1]].artists)):
+        
+        #Get the current artist
+        artist = axes[whichAx[tt][0],whichAx[tt][1]].artists[ii]
+        
+        #If the bar matches the one we want to keep solid, just change lines to black
+        if ii == solidBarInd:
+            
+            #Set edge colour to black
+            artist.set_edgecolor('k')
+            
+            #Each box has 6 associated Line2D objects (to make the whiskers, fliers, etc.)
+            #Loop over them here, and use black
+            for jj in range(ii*6,ii*6+6):
+                line = axes[whichAx[tt][0],whichAx[tt][1]].lines[jj]
+                line.set_color('k')
+                line.set_mfc('k')
+                line.set_mec('k')
+                
+        else:
+            
+            #Set the linecolor on the artist to the facecolor, and set the facecolor to None
+            col = artist.get_facecolor()
+            artist.set_edgecolor(col)
+            artist.set_facecolor('None')
+            
+            #Each box has 6 associated Line2D objects (to make the whiskers, fliers, etc.)
+            #Loop over them here, and use the same colour as above
+            for jj in range(ii*6,ii*6+6):
+                line = axes[whichAx[tt][0],whichAx[tt][1]].lines[jj]
+                line.set_color(col)
+                line.set_mfc(col)
+                line.set_mec(col)
+    
+    #Set x labels only for bottom row
+    if whichAx[tt][0] == 1:
+        gx.set(xlabel = 'Proportion of Total Shots as Super Shots')
+    else:
+        gx.set(xlabel = '')
+        
+    #Set y label only for first column
+    if whichAx[tt][1] == 0:
+        gx.set(ylabel = 'Simulated Score')
+    else:
+        gx.set(ylabel = '')
+        
+    #Rotate x-tick labels, but only for bottom row
+    if whichAx[tt][0] == 1:
+        axes[whichAx[tt][0],whichAx[tt][1]].tick_params('x', labelrotation = 45)
+    else:
+        axes[whichAx[tt][0],whichAx[tt][1]].set_xticklabels([])
+    
+    #Point ticks in and make short
+    axes[whichAx[tt][0],whichAx[tt][1]].tick_params(axis = 'both',
+                                                    direction = 'in',
+                                                    length = 1.5)
+    
+    #Set title
+    axes[whichAx[tt][0],whichAx[tt][1]].set_title(currSquadName,
+                                                  fontdict = {'fontsize': 12,
+                                                              'fontweight': 'bold'})
+
+#Set tight layout on figure
+fig.tight_layout()
+
+#Loop through and set y-axes to be consistent
+
+#Use the same Y max as last time for ease of comparison
+
+#Reset all of the axes ticks to min and new max
+#Also set the tick labels to have 6 ticks here
+for tt in range(0,len(teamList)):
+    axes[whichAx[tt][0],whichAx[tt][1]].set_ylim([axes[whichAx[tt][0],whichAx[tt][1]].get_ylim()[0],
+                                                  currYmax])
+    axes[whichAx[tt][0],whichAx[tt][1]].set_yticks(np.arange(0, currYmax+1, step = currYmax/6))
+
+#Export figure
+
+#Export as PDF and basic png
+plt.savefig('SuperShotSimulations_RiskFactor'+str(int(np.around(superRiskFactor*100)))+'per.png', format = 'png', dpi = 300)
+
+#Close figure
+plt.close()
+
+# %% Super shot period score simulator with RiskFactor & standard supplementer
+
+# This analysis repeats the above RiskFactor analysis, but during the times where
+# the super shot opportunity is missed it supplements it with a standard shot.
+# This emulates scenarios where the team sacrifices the need to go for a super
+# shot for an easier standard shot.
+
+##### TODO: we can package these up together as functions with options...
+
+#Set the risk factor to 0.75, meaning that there is a 25% chance that the 
+#super shot attempt will not get taken
+superRiskFactor = 0.75
+
+#Create dictionary to store data in
+superSimResults_RiskFac_Supp = {'squadId': [], 'squadNickname': [],
+                                'nShots': [], 'nStandard': [], 'nSuper': [],
+                                'superProp': [], 'superPropCat': [], 'totalPts': []}
+
+#Loop through teams
+for tt in range(0,len(teamList)):
+    
+    #Set current squad labels
+    currSquadId = teamInfo['squadId'][teamInfo['squadNickname'].index(teamList[tt])]
+    currSquadName = teamInfo['squadNickname'][teamInfo['squadId'].index(currSquadId)]
+
+    #Extract a dataframe of shots for the current team during super shot period
+    df_currSquadShots = df_scoreFlow.loc[(df_scoreFlow['squadId'] == currSquadId) &
+                                         (df_scoreFlow['periodCategory'] == 'twoPoint'),]
+    
+    #Loop through rounds, extract frequencies for different shots
+    #Get number of rounds
+    nRounds = max(df_currSquadShots['roundNo'])
+    #Set lists to store data in
+    madeStandard = list()
+    missedStandard = list()
+    madeSuper = list()
+    missedSuper = list()
+    totalShots = list()
+    #Get data from each round
+    for rr in range(0,nRounds):
+        #Loop through quarters within rounds too
+        for qq in range(0,4):
+            #Made standard shots
+            madeStandard.append(df_currSquadShots.loc[(df_currSquadShots['roundNo'] == rr+1) & 
+                                                      (df_currSquadShots['period'] == qq+1) & 
+                                                      (df_currSquadShots['scoreName'] == 'goal'),
+                                                      ['roundNo']].count()[0])
+            #Missed standard shots
+            missedStandard.append(df_currSquadShots.loc[(df_currSquadShots['roundNo'] == rr+1) & 
+                                                        (df_currSquadShots['period'] == qq+1) & 
+                                                        (df_currSquadShots['scoreName'] == 'miss'),
+                                                        ['roundNo']].count()[0])
+            #Made super shots
+            madeSuper.append(df_currSquadShots.loc[(df_currSquadShots['roundNo'] == rr+1) & 
+                                                   (df_currSquadShots['period'] == qq+1) & 
+                                                   (df_currSquadShots['scoreName'] == '2pt Goal'),
+                                                   ['roundNo']].count()[0])
+            #Missed standard shots
+            missedSuper.append(df_currSquadShots.loc[(df_currSquadShots['roundNo'] == rr+1) & 
+                                                     (df_currSquadShots['period'] == qq+1) & 
+                                                     (df_currSquadShots['scoreName'] == '2pt Miss'),
+                                                     ['roundNo']].count()[0])
+            #Total shots
+            totalShots.append(madeStandard[rr]+missedStandard[rr]+madeSuper[rr]+missedSuper[rr])
+    
+    #Calculate mean and standard deviation for total shots per quarter
+    totalShotsM = np.mean(totalShots)
+    totalShotsSD = np.std(totalShots)
+
+    #Create a truncated normal distribution of the total shots mean/SD
+    #Truncate it at 0 so that a team can't get less than no shots
+    #Randomly sample values from the distribution to use in simulations
+    
+    #Sample from truncated normal distribution with mean/SD parameters
+    #We choose to sample between +/- two standard deviations here. This might
+    #mean shots sometimes go below zero, but we have a check in place to not
+    #analyse these later
+    lowLim = totalShotsM - (2*totalShotsSD)
+    uppLim = totalShotsM + (2*totalShotsSD)
+    nShotVals = stats.truncnorm((lowLim - totalShotsM) / totalShotsSD,
+                                (uppLim - totalShotsM) / totalShotsSD,
+                                loc = totalShotsM, scale = totalShotsSD).rvs(nSims)
+    #Round shot values to nearest whole number
+    nShotVals = np.around(nShotVals)
+    
+    #Calculate made and missed shots from the different zones for beta distributions
+    totalMadeStandard = np.sum(madeStandard)
+    totalMissedStandard = np.sum(missedStandard)
+    totalMadeSuper = np.sum(madeSuper)
+    totalMissedSuper = np.sum(missedSuper)
+    
+    #Loop through the different super shot proportions
+    for pp in range(0,len(superShotProps)):
+        
+        #Loop through the simulations
+        for nn in range(0,nSims):
+            
+            #Get the current number of shots for the quarter
+            nShots = int(nShotVals[nn])
+            
+            #Put a check in place to see if any shots are given to the team
+            #Simply don't run the analysis if there aren't any shots
+            if nShots > 0:
+            
+                #Set total points counter for current iteration
+                totalPts = 0
+                
+                #Get the standard and super shot attempts based on proportion
+                nSuper = nShots * superShotProps[pp]
+                #Round to ensure a whole number
+                nSuper = int(np.around(nSuper))
+                #Get standard based on difference
+                nStandard = int(nShots - nSuper)
+                
+                #Correct the number of super shots based on the risk factor
+                nSuper_RiskFac = 0
+                for rr in range(0,nSuper):
+                    #Get random number generated for shot attempt
+                    r = random.random()
+                    #Check against risk factor and add to shot number if successful
+                    if r < superRiskFactor:
+                        nSuper_RiskFac = nSuper_RiskFac + 1
+                    else:
+                        #Add the sacrificed shot to standard shots
+                        nStandard = nStandard + 1
+                
+                #Recalculate total number of shots
+                nSuper = nSuper_RiskFac
+                nShots = nStandard + nSuper
+                
+                #Recheck if there are any shots to progress analysis
+                if nShots > 0:
+                
+                    #Calculate the actual proportion of the current super shot number
+                    actualProp = nSuper / nShots
+                    
+                    #Set super shot category bin
+                    if actualProp <= 0.1:
+                        propCat = '0%-10%'
+                    elif actualProp > 0.1 and actualProp <= 0.2:
+                        propCat = '10%-20%'
+                    elif actualProp > 0.2 and actualProp <= 0.3:
+                        propCat = '20%-30%'
+                    elif actualProp > 0.3 and actualProp <= 0.4:
+                        propCat = '30%-40%'
+                    elif actualProp > 0.4 and actualProp <= 0.5:
+                        propCat = '40%-50%'
+                    elif actualProp > 0.5 and actualProp <= 0.6:
+                        propCat = '50%-60%'
+                    elif actualProp > 0.6 and actualProp <= 0.7:
+                        propCat = '60%-70%'
+                    elif actualProp > 0.7 and actualProp <= 0.8:
+                        propCat = '70%-80%'
+                    elif actualProp > 0.8 and actualProp <= 0.9:
+                        propCat = '80%-90%'
+                    elif actualProp > 0.9:
+                        propCat = '90%-100%'
+                    
+                    #Loop through standard shots and determine score
+                    if nStandard > 0:
+                        #Sample shot success probability for the shots from beta distribution
+                        shotProb = np.random.beta(totalMadeStandard, totalMissedStandard,
+                                                  size = nStandard)
+                        #Loop through shots            
+                        for ss in range(0,nStandard):
+                            #Get random number to determine shot success
+                            r = random.random()
+                            #Check shot success and add to total points if successful
+                            if r < shotProb[ss]:
+                                totalPts = totalPts + 1
+                        
+                    #Loop through super shots and determine score
+                    if nSuper > 0:
+                        #Sample shot success probability for the shots from beta distribution
+                        shotProb = np.random.beta(totalMadeSuper, totalMissedSuper,
+                                                  size = nSuper)
+                        #Loop through shots            
+                        for ss in range(0,nSuper):
+                            #Get random number to determine shot success
+                            r = random.random()
+                            #Check shot success and add to total points if successful
+                            if r < shotProb[ss]:
+                                totalPts = totalPts + 2
+                                
+                    #Store values in dictionary
+                    superSimResults_RiskFac_Supp['squadId'].append(currSquadId)
+                    superSimResults_RiskFac_Supp['squadNickname'].append(currSquadName)
+                    superSimResults_RiskFac_Supp['nShots'].append(nShots)
+                    superSimResults_RiskFac_Supp['nStandard'].append(nStandard)
+                    superSimResults_RiskFac_Supp['nSuper'].append(nSuper)
+                    superSimResults_RiskFac_Supp['superProp'].append(actualProp)
+                    superSimResults_RiskFac_Supp['superPropCat'].append(propCat)
+                    superSimResults_RiskFac_Supp['totalPts'].append(totalPts)
+
+#Convert sim dictionary to dataframe
+df_superSimResults_RiskFac_Supp = pd.DataFrame.from_dict(superSimResults_RiskFac_Supp)
+
+#Create a boxplot of the simulation results
+
+#Initialize the figure
+fig, axes = plt.subplots(nrows = 2, ncols = 4, figsize=(15, 7))
+
+#Loop through the teams
+for tt in range(0,len(teamList)):
+
+    #Get current squad name
+    currSquadName = teamList[tt]
+    
+    #Create the boxplot
+    gx = sns.boxplot(x = 'superPropCat', y = 'totalPts',
+                     data = df_superSimResults_RiskFac_Supp.loc[(df_superSimResults_RiskFac_Supp['squadNickname'] == currSquadName),],
+                     whis = [0, 100], width = 0.65,
+                     color = colourDict[currSquadName],
+                     ax = axes[whichAx[tt][0],whichAx[tt][1]])
+    
+    #Set the box plot face and line colours
+    
+    #First, identify the box to keep solid based on teams actual super shot proportions
+    solidBarInd = int(np.floor(teamSuperProps[tt]*10))
+    
+    #Loop through boxes and fix colours
+    for ii in range(0,len(axes[whichAx[tt][0],whichAx[tt][1]].artists)):
+        
+        #Get the current artist
+        artist = axes[whichAx[tt][0],whichAx[tt][1]].artists[ii]
+        
+        #If the bar matches the one we want to keep solid, just change lines to black
+        if ii == solidBarInd:
+            
+            #Set edge colour to black
+            artist.set_edgecolor('k')
+            
+            #Each box has 6 associated Line2D objects (to make the whiskers, fliers, etc.)
+            #Loop over them here, and use black
+            for jj in range(ii*6,ii*6+6):
+                line = axes[whichAx[tt][0],whichAx[tt][1]].lines[jj]
+                line.set_color('k')
+                line.set_mfc('k')
+                line.set_mec('k')
+                
+        else:
+            
+            #Set the linecolor on the artist to the facecolor, and set the facecolor to None
+            col = artist.get_facecolor()
+            artist.set_edgecolor(col)
+            artist.set_facecolor('None')
+            
+            #Each box has 6 associated Line2D objects (to make the whiskers, fliers, etc.)
+            #Loop over them here, and use the same colour as above
+            for jj in range(ii*6,ii*6+6):
+                line = axes[whichAx[tt][0],whichAx[tt][1]].lines[jj]
+                line.set_color(col)
+                line.set_mfc(col)
+                line.set_mec(col)
+    
+    #Set x labels only for bottom row
+    if whichAx[tt][0] == 1:
+        gx.set(xlabel = 'Proportion of Total Shots as Super Shots')
+    else:
+        gx.set(xlabel = '')
+        
+    #Set y label only for first column
+    if whichAx[tt][1] == 0:
+        gx.set(ylabel = 'Simulated Score')
+    else:
+        gx.set(ylabel = '')
+        
+    #Rotate x-tick labels, but only for bottom row
+    if whichAx[tt][0] == 1:
+        axes[whichAx[tt][0],whichAx[tt][1]].tick_params('x', labelrotation = 45)
+    else:
+        axes[whichAx[tt][0],whichAx[tt][1]].set_xticklabels([])
+    
+    #Point ticks in and make short
+    axes[whichAx[tt][0],whichAx[tt][1]].tick_params(axis = 'both',
+                                                    direction = 'in',
+                                                    length = 1.5)
+    
+    #Set title
+    axes[whichAx[tt][0],whichAx[tt][1]].set_title(currSquadName,
+                                                  fontdict = {'fontsize': 12,
+                                                              'fontweight': 'bold'})
+
+#Set tight layout on figure
+fig.tight_layout()
+
+#Loop through and set y-axes to be consistent
+
+#Use the same Y max as last time for ease of comparison
+
+#Reset all of the axes ticks to min and new max
+#Also set the tick labels to have 6 ticks here
+for tt in range(0,len(teamList)):
+    axes[whichAx[tt][0],whichAx[tt][1]].set_ylim([axes[whichAx[tt][0],whichAx[tt][1]].get_ylim()[0],
+                                                  currYmax])
+    axes[whichAx[tt][0],whichAx[tt][1]].set_yticks(np.arange(0, currYmax+1, step = currYmax/6))
+
+#Export figure
+
+#Export as PDF and basic png
+plt.savefig('SuperShotSimulations_RiskFactor'+str(int(np.around(superRiskFactor*100)))+'per_StandardSupp.png', format = 'png', dpi = 300)
+
+#Close figure
+plt.close()
+
+# %% Export summary data for reactable
+
+# The plot below doesn't present the data that well, so we'll test out the R
+# package reactable for creating a summary html table of this data. This requires
+# creating a summary of the results to present. See below code for details.
+# For the table we'll colate into 20% intervals rather than 10%
+
+#Start with the standard simulator
+
+#Set proportional break points to loop through
+propBreakPoints = [[0.00,0.20],[0.20,0.40],[0.40,0.60],[0.60,0.80],[0.80,1.00]]
+
+#Create a dictionary to store values in
+standardSimSummary = {'squadName': [],'meanShots': [], 'lbShots': [], 'ubShots': [],
+                      'meanScore_0_20': [], 'meanScore_20_40': [], 'meanScore_40_60': [],
+                      'meanScore_60_80': [],'meanScore_80_100': [],
+                      'sdScore_0_20': [], 'sdScore_20_40': [], 'sdScore_40_60': [],
+                      'sdScore_60_80': [],'sdScore_80_100': [],
+                      'lbScore_0_20': [], 'lbScore_20_40': [], 'lbScore_40_60': [],
+                      'lbScore_60_80': [],'lbScore_80_100': [],
+                      'ubScore_0_20': [], 'ubScore_20_40': [], 'ubScore_40_60': [],
+                      'ubScore_60_80': [],'ubScore_80_100': []}
+
+#Loop through teams and create the data dictionary
+for tt in range(0,len(teamList)):
+    
+    #Get current squad name
+    standardSimSummary['squadName'].append(teamList[tt])
+    
+    #Get data for the current team
+    df_currSquadData = df_superSimResults.loc[(df_superSimResults['squadNickname'] == teamList[tt]),]
+    
+    #Extract data into appropriate variables
+    
+    #Number of shots
+    d = df_currSquadData['nShots'].to_numpy()
+    standardSimSummary['meanShots'].append(np.mean(d))
+    standardSimSummary['lbShots'].append(np.min(d))
+    standardSimSummary['ubShots'].append(np.max(d))
+    
+    #Loop through proportional break points and collate scoring data
+    for bb in range(0,len(propBreakPoints)):
+        d = df_currSquadData.loc[(df_currSquadData['superProp'] > propBreakPoints[bb][0]) & 
+                                 (df_currSquadData['superProp'] <= propBreakPoints[bb][1]),['totalPts']]['totalPts'].to_numpy()
+        standardSimSummary['meanScore_'+str(int(propBreakPoints[bb][0]*100))+'_'+str(int(propBreakPoints[bb][1]*100))].append(np.mean(d))
+        standardSimSummary['sdScore_'+str(int(propBreakPoints[bb][0]*100))+'_'+str(int(propBreakPoints[bb][1]*100))].append(np.std(d))
+        standardSimSummary['lbScore_'+str(int(propBreakPoints[bb][0]*100))+'_'+str(int(propBreakPoints[bb][1]*100))].append(np.min(d))
+        standardSimSummary['ubScore_'+str(int(propBreakPoints[bb][0]*100))+'_'+str(int(propBreakPoints[bb][1]*100))].append(np.max(d))
+
+#Convert to dataframe
+df_standardSimSummary = pd.DataFrame.from_dict(standardSimSummary)
+
+#Export to CSV
+#####TODO: export to appropriate reactable directory rather than copy-paste
+df_standardSimSummary.to_csv('superSimSummary_afterRound'+str(nRounds)+'.csv')
+
+# %% Merge simulator results together and plot comparison
+
+#Add column distinguishing analysis type to each dataframe
+
+#Standard sim
+analysisType = ['standardSim'] * len(df_superSimResults)
+df_superSimResults['analysisType'] = analysisType
+
+#Standard sim with risk factor
+analysisType = ['standardSim_RiskFac'] * len(df_superSimResults_RiskFac)
+df_superSimResults_RiskFac['analysisType'] = analysisType
+
+#Standard sim with risk factor but standard supplement
+analysisType = ['standardSim_RiskFac_Supp'] * len(df_superSimResults_RiskFac_Supp)
+df_superSimResults_RiskFac_Supp['analysisType'] = analysisType
+
+#Concatenate dataframes together vertically
+df_superSimResults_all = pd.concat([df_superSimResults,
+                                    df_superSimResults_RiskFac,
+                                    df_superSimResults_RiskFac_Supp])
+
+#Plot comparison
+
+##### Plot doesn't look great --- send out dataframes to .csv for reactable in R
+
+# #Export CSV files
+# df_superSimResults.to_csv('superSimResults_afterRound'+str(nRounds)+'.csv')
+# df_superSimResults_RiskFac.to_csv('superSimResults_afterRound'+str(nRounds)+'_RiskFac.csv')
+# df_superSimResults_RiskFac_Supp.to_csv('superSimResults_afterRound'+str(nRounds)+'_RiskFac_StandardSupp.csv')
+
+##### Copy and paste these to reactable folder...
+
+#Initialize the figure
+fig, axes = plt.subplots(nrows = 2, ncols = 4, figsize=(15, 7))
+
+#Loop through the teams
+for tt in range(0,len(teamList)):
+
+    #Get current squad name
+    currSquadName = teamList[tt]
+    
+    #Create the boxplot
+    gx = sns.boxplot(x = 'superPropCat', y = 'totalPts', hue = 'analysisType',
+                     data = df_superSimResults_all.loc[(df_superSimResults_all['squadNickname'] == currSquadName),],
+                     whis = [0, 100], width = 1,
+                     color = colourDict[currSquadName],
+                     ax = axes[whichAx[tt][0],whichAx[tt][1]])
+    
+    #Set the box plot face and line colours
+    
+    #First, identify the box to keep solid based on teams actual super shot proportions
+    solidBarInd = int(np.floor(teamSuperProps[tt]*10))
+    
+    #Loop through boxes and fix colours
+    for ii in range(0,len(axes[whichAx[tt][0],whichAx[tt][1]].artists)):
+        
+        #Get the current artist
+        artist = axes[whichAx[tt][0],whichAx[tt][1]].artists[ii]
+        
+        #If the bar matches the one we want to keep solid, just change lines to black
+        if ii == solidBarInd:
+            
+            #Set edge colour to black
+            artist.set_edgecolor('k')
+            
+            #Each box has 6 associated Line2D objects (to make the whiskers, fliers, etc.)
+            #Loop over them here, and use black
+            for jj in range(ii*6,ii*6+6):
+                line = axes[whichAx[tt][0],whichAx[tt][1]].lines[jj]
+                line.set_color('k')
+                line.set_mfc('k')
+                line.set_mec('k')
+                
+        else:
+            
+            #Set the linecolor on the artist to the facecolor, and set the facecolor to None
+            col = artist.get_facecolor()
+            artist.set_edgecolor(col)
+            artist.set_facecolor('None')
+            
+            #Each box has 6 associated Line2D objects (to make the whiskers, fliers, etc.)
+            #Loop over them here, and use the same colour as above
+            for jj in range(ii*6,ii*6+6):
+                line = axes[whichAx[tt][0],whichAx[tt][1]].lines[jj]
+                line.set_color(col)
+                line.set_mfc(col)
+                line.set_mec(col)
+    
+    #Set x labels only for bottom row
+    if whichAx[tt][0] == 1:
+        gx.set(xlabel = 'Proportion of Total Shots as Super Shots')
+    else:
+        gx.set(xlabel = '')
+        
+    #Set y label only for first column
+    if whichAx[tt][1] == 0:
+        gx.set(ylabel = 'Simulated Score')
+    else:
+        gx.set(ylabel = '')
+        
+    #Rotate x-tick labels, but only for bottom row
+    if whichAx[tt][0] == 1:
+        axes[whichAx[tt][0],whichAx[tt][1]].tick_params('x', labelrotation = 45)
+    else:
+        axes[whichAx[tt][0],whichAx[tt][1]].set_xticklabels([])
+    
+    #Point ticks in and make short
+    axes[whichAx[tt][0],whichAx[tt][1]].tick_params(axis = 'both',
+                                                    direction = 'in',
+                                                    length = 1.5)
+    
+    #Set title
+    axes[whichAx[tt][0],whichAx[tt][1]].set_title(currSquadName,
+                                                  fontdict = {'fontsize': 12,
+                                                              'fontweight': 'bold'})
+
+#Set tight layout on figure
+fig.tight_layout()
 
  
 # %% Plot player plus/minus
