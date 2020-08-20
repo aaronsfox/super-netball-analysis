@@ -1,0 +1,85 @@
+
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+  
+  <head>
+    
+      <meta charset="utf-8">
+      <title>Bokeh Plot</title>
+      
+      
+        
+          
+        
+        
+          
+        <script type="text/javascript" src="https://cdn.bokeh.org/bokeh/release/bokeh-2.1.1.min.js" integrity="sha384-kLr4fYcqcSpbuI95brIH3vnnYCquzzSxHPU6XGQCIkQRGJwhg0StNbj1eegrHs12" crossorigin="anonymous"></script>
+        <script type="text/javascript">
+            Bokeh.set_log_level("info");
+        </script>
+        
+      
+      
+    
+  </head>
+  
+  
+  <body>
+    
+      
+        
+          
+          
+            
+              <div class="bk-root" id="ccb657f7-db14-40a3-8441-453f16cce56f" data-root-id="3844"></div>
+            
+          
+        
+      
+      
+        <script type="application/json" id="4046">
+          {"70b6e1ae-d744-4d2f-967d-79772682b770":{"roots":{"references":[{"attributes":{"fill_color":{"field":"color"},"line_color":{"field":"color"},"top":{"field":"counts"},"width":{"value":0.6},"x":{"field":"players"}},"id":"3866","type":"VBar"},{"attributes":{},"id":"3874","type":"BasicTickFormatter"},{"attributes":{},"id":"3856","type":"CategoricalTicker"},{"attributes":{"axis":{"id":"3858"},"dimension":1,"ticker":null},"id":"3861","type":"Grid"},{"attributes":{},"id":"3872","type":"CategoricalTickFormatter"},{"attributes":{"formatter":{"id":"3872"},"major_label_orientation":1,"ticker":{"id":"3856"}},"id":"3855","type":"CategoricalAxis"},{"attributes":{"align":"center","text":"Total Points from Super Shots"},"id":"3845","type":"Title"},{"attributes":{},"id":"3875","type":"Selection"},{"attributes":{"data_source":{"id":"3843"},"glyph":{"id":"3866"},"hover_glyph":null,"muted_glyph":null,"nonselection_glyph":{"id":"3867"},"selection_glyph":null,"view":{"id":"3869"}},"id":"3868","type":"GlyphRenderer"},{"attributes":{"data":{"color":["#00a68e","#0082cd","#4b2c69","#494b4a","#494b4a","#f57921","#00953b","#4b2c69","#fdb61c","#f57921","#00953b","#00a68e","#e54078","#fdb61c"],"counts":[18,10,8,8,6,6,4,4,4,4,2,2,2,2],"fullNames":["Tegan Philip","Helen Housby","Tippah Dwan","Gabrielle Sinclair","Nyah Allen","Jo Harten","Emma Cosh","Ine-Mari Venter","Steph Wood","Kiera Austin","Jhaniele Fowler","Caitlin Thwaites","Georgie Horjus","Binnian Hunt"],"players":["T.Philip","H.Housby","T.Dwan","G.Sinclair","N.Allen","J.Harten","E.Cosh","I.Venter","S.Wood","K.Austin","J.Fowler","C.Thwaites","G.Horjus","B.Hunt"],"squadNames":["Vixens","Swifts","Firebirds","Magpies","Magpies","GIANTS","Fever","Firebirds","Lightning","GIANTS","Fever","Vixens","Thunderbirds","Lightning"]},"selected":{"id":"3875"},"selection_policy":{"id":"3876"}},"id":"3843","type":"ColumnDataSource"},{"attributes":{"source":{"id":"3843"}},"id":"3869","type":"CDSView"},{"attributes":{},"id":"3851","type":"CategoricalScale"},{"attributes":{},"id":"3876","type":"UnionRenderers"},{"attributes":{"axis":{"id":"3855"},"grid_line_color":null,"ticker":null},"id":"3857","type":"Grid"},{"attributes":{"factors":["T.Philip","H.Housby","T.Dwan","G.Sinclair","N.Allen","J.Harten","E.Cosh","I.Venter","S.Wood","K.Austin","J.Fowler","C.Thwaites","G.Horjus","B.Hunt"],"range_padding":0.1},"id":"3847","type":"FactorRange"},{"attributes":{"below":[{"id":"3855"}],"center":[{"id":"3857"},{"id":"3861"}],"left":[{"id":"3858"}],"plot_height":400,"plot_width":800,"renderers":[{"id":"3868"}],"title":{"id":"3845"},"toolbar":{"id":"3863"},"toolbar_location":null,"x_range":{"id":"3847"},"x_scale":{"id":"3851"},"y_range":{"id":"3849"},"y_scale":{"id":"3853"}},"id":"3844","subtype":"Figure","type":"Plot"},{"attributes":{"callback":null,"tooltips":[["Player","@fullNames"],["Team","@squadNames"],["Total Points from Super Shots","@counts"]]},"id":"3862","type":"HoverTool"},{"attributes":{},"id":"3853","type":"LinearScale"},{"attributes":{},"id":"3859","type":"BasicTicker"},{"attributes":{"active_drag":"auto","active_inspect":"auto","active_multi":null,"active_scroll":"auto","active_tap":"auto","tools":[{"id":"3862"}]},"id":"3863","type":"Toolbar"},{"attributes":{"axis_label":"Total Points","formatter":{"id":"3874"},"ticker":{"id":"3859"}},"id":"3858","type":"LinearAxis"},{"attributes":{"fill_alpha":{"value":0.1},"fill_color":{"field":"color"},"line_alpha":{"value":0.1},"line_color":{"field":"color"},"top":{"field":"counts"},"width":{"value":0.6},"x":{"field":"players"}},"id":"3867","type":"VBar"},{"attributes":{"start":0},"id":"3849","type":"DataRange1d"}],"root_ids":["3844"]},"title":"Bokeh Application","version":"2.1.1"}}
+        </script>
+        <script type="text/javascript">
+          (function() {
+            var fn = function() {
+              Bokeh.safely(function() {
+                (function(root) {
+                  function embed_document(root) {
+                    
+                  var docs_json = document.getElementById('4046').textContent;
+                  var render_items = [{"docid":"70b6e1ae-d744-4d2f-967d-79772682b770","root_ids":["3844"],"roots":{"3844":"ccb657f7-db14-40a3-8441-453f16cce56f"}}];
+                  root.Bokeh.embed.embed_items(docs_json, render_items);
+                
+                  }
+                  if (root.Bokeh !== undefined) {
+                    embed_document(root);
+                  } else {
+                    var attempts = 0;
+                    var timer = setInterval(function(root) {
+                      if (root.Bokeh !== undefined) {
+                        clearInterval(timer);
+                        embed_document(root);
+                      } else {
+                        attempts++;
+                        if (attempts > 100) {
+                          clearInterval(timer);
+                          console.log("Bokeh: ERROR: Unable to run BokehJS code because BokehJS library is missing");
+                        }
+                      }
+                    }, 10, root)
+                  }
+                })(window);
+              });
+            };
+            if (document.readyState != "loading") fn();
+            else document.addEventListener("DOMContentLoaded", fn);
+          })();
+        </script>
+    
+  </body>
+  
+</html>
