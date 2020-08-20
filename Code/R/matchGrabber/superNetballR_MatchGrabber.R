@@ -2,7 +2,10 @@
 #Netball season using the superNetballR package. As such it needs to be
 #installed using:
 
-#remotes::install_github("SteveLane/superNetballR")
+# .libPaths("\\\\aafox.homes.deakin.edu.au/my-home/My Documents/R/win-library/4.0")
+# library(remotes)
+
+# remotes::install_github("SteveLane/superNetballR")
 
 #Load appropriate packages
 library(dplyr)
@@ -57,4 +60,14 @@ write_json(r4_g1,"r4_g1_SSN2020.json")
 write_json(r4_g2,"r4_g2_SSN2020.json")
 write_json(r4_g3,"r4_g3_SSN2020.json")
 write_json(r4_g4,"r4_g4_SSN2020.json")
+
+r5_g1 <- downloadMatch("11108",5,1)
+r5_g2 <- downloadMatch("11108",5,2)
+r5_g3 <- downloadMatch("11108",5,3)
+r5_g4 <- downloadMatch("11108",5,4)
+
+write_json(r5_g1,"r5_g1_SSN2020.json")
+write_json(r5_g2,"r5_g2_SSN2020.json")
+write_json(r5_g3,"r5_g3_SSN2020.json")
+write_json(r5_g4,"r5_g4_SSN2020.json")
 

@@ -1155,12 +1155,12 @@ def totalPlusMinusLineUps(teamInfo = None, df_lineUp = None,
         
         #Add a per minute column to dataframe
         if perPlusMinus is True:
-            perPlusMinus = list()
+            perPlusMinusVal = list()
             for mm in range(0,len(df_lineUpPlusMinus)):
                 perFac = perDivider / df_lineUpPlusMinus['lineUpDuration'][mm]
-                perPlusMinus.append(df_lineUpPlusMinus['lineUpPlusMinus'][mm]*perFac)
+                perPlusMinusVal.append(df_lineUpPlusMinus['lineUpPlusMinus'][mm]*perFac)
             #Append to dataframe
-            df_lineUpPlusMinus['lineUpPerPlusMinus'] = perPlusMinus
+            df_lineUpPlusMinus['lineUpPerPlusMinus'] = perPlusMinusVal
         
         #Create source for figures
         if absPlusMinus is True:

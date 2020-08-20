@@ -54,8 +54,6 @@ rcParams['savefig.format'] = 'pdf'
 os.chdir('..\\Supplementary')
 import ssn2020FigHelper as figHelper
 
-##### TODO: import figHelper script as 'figHelper'
-
 # %% Load in match data
 
 #Navigate to data directory
@@ -745,22 +743,22 @@ bokehOptions = dict(tools = ['wheel_zoom,box_zoom'])
 #Shift to round by round figure directory
 os.chdir('..\\..\\Figures\\TwoPointAnalysis\\RoundByRound')
 
+#Set round to plot
+round2Plot = 5
+
 #Total one vs. two point shots
-round2Plot = 4
 figHelper.totalPointsOneVsTwo(round2Plot = round2Plot, matchInfo = matchInfo,
                               teamInfo = teamInfo, df_scoreFlow = df_scoreFlow,
                               colourDict = colourDict, bokehOptions = bokehOptions,
                               showPlot = False, exportPNG = True, exportHTML = True)
 
 #Quarter by quarter one vs. two point shots
-round2Plot = 4
 figHelper.quarterPointsOneVsTwo(round2Plot = round2Plot, matchInfo = matchInfo,
                                 teamInfo = teamInfo, df_scoreFlow = df_scoreFlow,
                                 colourDict = colourDict, bokehOptions = bokehOptions,
                                 showPlot = False, exportPNG = True, exportHTML = True)
 
 #Ratio of inner vs. outer shots in different periods
-round2Plot = 4
 figHelper.teamShotRatiosInnerVsOuter(round2Plot = round2Plot, matchInfo = matchInfo,
                                      teamInfo = teamInfo, df_scoreFlow = df_scoreFlow,
                                      colourDict = colourDict, bokehOptions = bokehOptions,
@@ -768,22 +766,22 @@ figHelper.teamShotRatiosInnerVsOuter(round2Plot = round2Plot, matchInfo = matchI
 
 # %% Individual player two-point scoring
 
+#Set round to plot
+round2Plot = 5
+
 #Total two-point score
-round2Plot = 4
 figHelper.playerTwoPointTotals(round2Plot = round2Plot, df_scoreFlow = df_scoreFlow,
                                df_playerInfo = df_playerInfo, df_teamInfo = df_teamInfo,
                                colourDict = colourDict, showPlot = False,
                                exportPNG = True, exportHTML = True)
 
 #Differential between two and one point scoring
-round2Plot = 4
 figHelper.playerTwoPointDifferentials(round2Plot = round2Plot, df_scoreFlow = df_scoreFlow,
                                       df_playerInfo = df_playerInfo, df_teamInfo = df_teamInfo,
                                       colourDict = colourDict, showPlot = False,
                                       exportPNG = True, exportHTML = True)
 
 #Relative differential for two vs. one point totals
-round2Plot = 4
 figHelper.playerTwoPointRelativeDifferentials(round2Plot = round2Plot, df_scoreFlow = df_scoreFlow,
                                               df_playerInfo = df_playerInfo, df_teamInfo = df_teamInfo,
                                               colourDict = colourDict, showPlot = False,
@@ -798,10 +796,12 @@ os.chdir('..\\..\\PlusMinusAnalysis')
 
 # %% All matches team line-up plus/minus grid
 
+#### TODO: per dpesn't seem to plot???
+
 #Create plot
 figHelper.totalPlusMinusLineUps(teamInfo = teamInfo, df_lineUp = df_lineUp,
                                 absPlusMinus = True, perPlusMinus = True,
-                                perDivider = 15, minLineUpDuration = 5,
+                                perDivider = 15, minLineUpDuration = 10,
                                 colourDict = colourDict, showPlot = False,
                                 exportPNG = True, exportHTML = True)
 
