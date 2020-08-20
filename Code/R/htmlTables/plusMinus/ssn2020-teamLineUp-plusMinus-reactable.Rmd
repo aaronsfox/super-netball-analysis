@@ -17,15 +17,13 @@ knitr::opts_chunk$set(echo = FALSE)
 
 The introduction of rolling substitutions into Super Netball this year has potentially made identifying the best line-up combinations or most appropriate substituion strategies even more important than previous seasons. The greater number of line-up combinations being used also means metrics like plus/minus (herein referred to as '+/-') can be used more readily in examining Super Netball performance.
 
-For those unfamiliar, +/- tracks the goals scored for and against a team when a player (or an entire line-up) is on the court. The metric appears to have its origins in the National Hockey League, where a [trophy was awared to the +/- leader for the season each year](https://mc.championdata.com/super_netball/) (ceased in 2008). It has, however, become more readily used in sports where more frequent scoring occurs (e.g. [basketball](http://www.espn.com/nba/statistics/rpm)).
+For those unfamiliar, +/- tracks the goals scored for and against a team when a player (or an entire line-up) is on the court. The metric appears to have its origins in the National Hockey League, where a [trophy was awared to the +/- leader for the season each year](https://en.wikipedia.org/wiki/NHL_Plus-Minus_Award) (ceased in 2008). It has, however, become more readily used in sports where more frequent scoring occurs (e.g. [basketball](http://www.espn.com/nba/statistics/rpm)).
 
 Theoretically, +/- represents a measure of how well your team does when you're on or off the court, and can be adapted to consider entire unique line-ups. It's important to consider that an indiviudual player's +/- could be impacted by a number of things unrelated to them. For example, if your team has a dominant centre court player and your role is to relieve them - it may be that the teams performance drops while you're on-court, but only because you've subbed the start player out. Conversely, a player may incur a high +/- because they regularly play with the good players (and don't make huge contributions themselves). It is not a perfect metric, but when considering a large portion of data (e.g. a seasons worth) it can likely identify the best line-ups for each team. An additional application of +/- is to compare the metric when a player is on or off the court. The differential between a players on vs. off +/- may be a good indicator of their importance to their team (i.e. a high positive differential means a team is much better when the player is on-court).
 
 Here we will present two versions of +/- for line-ups and players. First, absolute +/- represents the total score differential for a line-up or player. This doesn't take into account the amount of time the line-up or player is on-court. To account for this, we present a relative +/-. This divides the line-up or players +/- by 15 minutes - and therefore represents the average +/- you could expect for a quarter of play.
 
 ```{r table, echo = FALSE}
-
-##### TODO: colours and formatting not really working, general gist is though --- add search and sort functionality?
 
 #Load libraries
 library(reactable)
@@ -316,7 +314,7 @@ body{
   font-size: 12pt;
 }
 
-.author,.title,.date{
+.author,.date{
     display: none;
 }
 
