@@ -1106,7 +1106,15 @@ def totalPlusMinusLineUps(teamInfo = None, df_lineUp = None,
         #Loop through dataframe and create a new list of combined player names
         combinedLineUpName = list()
         for dd in range(0,len(df_lineUpChecker)):
-            combinedLineUpName.append(", ".join(df_lineUpChecker['lineUpName'][dd]))
+            #Get lineup
+            currLineUp = df_lineUpChecker['lineUpName'][dd]
+            #Check for empty slot in lineup
+            for pp in range(0,len(currLineUp)):
+                if not currLineUp[pp]:
+                    #Replace with an 'N/A'
+                    currLineUp[pp] = 'N/A'
+            #Combine player names
+            combinedLineUpName.append(", ".join(currLineUp))
         #Append to dataframe
         df_lineUpChecker['combinedLineUpName'] = combinedLineUpName
             

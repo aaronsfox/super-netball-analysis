@@ -6,17 +6,22 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE}
+
 #Set the libPath to the conda environment
 .libPaths("C:/Users/aafox/AppData/Local/Continuum/anaconda3/envs/super_netball_analysis_r/Lib/R/library")
 
 knitr::opts_chunk$set(echo = FALSE)
 ```
 
-## R Markdown
+# Super Netball 2020: Plus/Minus Analysis
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+The introduction of rolling substitutions into Super Netball this year has potentially made identifying the best line-up combinations or most appropriate substituion strategies even more important than previous seasons. The greater number of line-up combinations being used also means metrics like plus/minus (herein referred to as '+/-') can be used more readily in examining Super Netball performance.
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+For those unfamiliar, +/- tracks the goals scored for and against a team when a player (or an entire line-up) is on the court. The metric appears to have its origins in the National Hockey League, where a [trophy was awared to the +/- leader for the season each year](https://mc.championdata.com/super_netball/) (ceased in 2008). It has, however, become more readily used in sports where more frequent scoring occurs (e.g. [basketball](http://www.espn.com/nba/statistics/rpm)).
+
+Theoretically, +/- represents a measure of how well your team does when you're on or off the court, and can be adapted to consider entire unique line-ups. It's important to consider that an indiviudual player's +/- could be impacted by a number of things unrelated to them. For example, if your team has a dominant centre court player and your role is to relieve them - it may be that the teams performance drops while you're on-court, but only because you've subbed the start player out. Conversely, a player may incur a high +/- because they regularly play with the good players (and don't make huge contributions themselves). It is not a perfect metric, but when considering a large portion of data (e.g. a seasons worth) it can likely identify the best line-ups for each team. An additional application of +/- is to compare the metric when a player is on or off the court. The differential between a players on vs. off +/- may be a good indicator of their importance to their team (i.e. a high positive differential means a team is much better when the player is on-court).
+
+Here we will present two versions of +/- for line-ups and players. First, absolute +/- represents the total score differential for a line-up or player. This doesn't take into account the amount of time the line-up or player is on-court. To account for this, we present a relative +/-. This divides the line-up or players +/- by 15 minutes - and therefore represents the average +/- you could expect for a quarter of play.
 
 ```{r table, echo = FALSE}
 
@@ -29,18 +34,77 @@ library(htmltools)
 #Read in data
 data <- read.csv("teamLineUps_plusMinus.csv", stringsAsFactors = FALSE)
 
+#Add function for plus minus column formats
+absPlusMinus_column <- function(maxWidth = 125, class = NULL, ...) {
+  colDef(
+    cell = format_plusMinus,
+    maxWidth = maxWidth,
+    class = paste("cell number", class),
+    style = function(value) {
+      scaled <- (value - min(data$absPlusMinus)) / (max(data$absPlusMinus) - min(data$absPlusMinus))
+      if (scaled < 0) {
+        scaled = 0
+      }
+        color <- plusMinus_colour(scaled)
+        style = list(color = "#111", background = plusMinus_colour(scaled))
+      }
+  )
+}
+perPlusMinus_column <- function(maxWidth = 125, class = NULL, ...) {
+  colDef(
+    cell = format_plusMinus,
+    maxWidth = maxWidth,
+    class = paste("cell number", class),
+    style = function(value) {
+      scaled <- (value - min(data$per15PlusMinus)) / (max(data$per15PlusMinus) - min(data$per15PlusMinus))
+      if (scaled < 0) {
+        scaled = 0
+      }
+        color <- plusMinus_colour(scaled)
+        style = list(color = "#111", background = plusMinus_colour(scaled))
+      }
+  )
+}
+
+#Create function for plus minus format
+format_plusMinus <- function(value) {
+  colFormat(digits = 2)
+}
+
+#Create function for colour mapping
+make_color_pal <- function(colors, bias = 1) {
+  get_color <- colorRamp(colors, bias = 2)
+  function(x) rgb(get_color(x), maxColorValue = 255)
+}
+
+#Create plus minus colour map
+plusMinus_colour <- make_color_pal(c("#dc9195", "#e3a9ab", "#e9c1c2", "#edd9d9", "#f1f1f1","#d7e9d9","#bde0c3","#a2d8ac","#86cf96"), bias = 2)
+
 #Create table
-tbl <- reactable(
+lineUp_plusMinus_tbl <- reactable(
   
   #Set data
   data,
   
   #Set pagination
   pagination = TRUE,
+  defaultPageSize = 20,
+  
+  #Set parameters
+  highlight = TRUE,
+  searchable = TRUE,
+  filterable = FALSE,
   
   #Set the default sort colum
   defaultSorted = "per15PlusMinus",
-  defaultSortOrder = "desc",
+  defaultSortOrder = "asc",
+  
+  #Set column groups
+  defaultColGroup = colGroup(headerClass = "group-header"),
+  columnGroups = list(
+    colGroup(name = "Players", columns = c("GS","GA","WA","C","WD","GD","GK")),
+    colGroup(name = "Plus/Minus", columns = c("absPlusMinus","per15PlusMinus"))
+  ),
   
   #Set default column parameters
   defaultColDef = colDef(headerClass = "header", align = "left"),
@@ -52,145 +116,168 @@ tbl <- reactable(
     team = colDef(
       name = "Team",
       style = list(fontSize = "12px", fontWeight = "bold"),
+      headerStyle = list(fontWeight = 700),
       cell = function(value) {
         div(class = "team",
             img(class = "logo", alt = paste(value, "logo"), src = sprintf("Images/%s.png", value))
             #div(class = "team-name", value)
             )
       },
-      minWidth = 25
+      maxWidth = 60
     ),
     
     #Create player position columns
     
     GS = colDef(
       name = "GS",
-      style = list(fontSize = "12px", fontWeight = "bold"),
+      defaultSortOrder = "asc",
+      align = "center",
+      maxWidth = 100,
+      class = "cell group",
+      headerStyle = list(fontWeight = 700),
+      style = list(fontSize = "14px"),
       cell = function(value) {
         div(class = "player-name", value)
       },
-      width = 100
     ),
     
     GA = colDef(
       name = "GA",
-      style = list(fontSize = "12px", fontWeight = "bold"),
+      defaultSortOrder = "asc",
+      align = "center",
+      maxWidth = 100,
+      class = "cell group",
+      headerStyle = list(fontWeight = 700),
+      style = list(fontSize = "14px"),
       cell = function(value) {
         div(class = "player-name", value)
       },
-      width = 100
     ),
     
     WA = colDef(
       name = "WA",
-      style = list(fontSize = "12px", fontWeight = "bold"),
+      defaultSortOrder = "asc",
+      align = "center",
+      maxWidth = 100,
+      class = "cell group",
+      headerStyle = list(fontWeight = 700),
+      style = list(fontSize = "14px"),
       cell = function(value) {
         div(class = "player-name", value)
       },
-      width = 100
     ),
     
     C = colDef(
       name = "C",
-      style = list(fontSize = "12px", fontWeight = "bold"),
+      defaultSortOrder = "asc",
+      align = "center",
+      maxWidth = 100,
+      class = "cell group",
+      headerStyle = list(fontWeight = 700),
+      style = list(fontSize = "14px"),
       cell = function(value) {
         div(class = "player-name", value)
       },
-      width = 100
     ),
     
     WD = colDef(
       name = "WD",
-      style = list(fontSize = "12px", fontWeight = "bold"),
+      defaultSortOrder = "asc",
+      align = "center",
+      maxWidth = 100,
+      class = "cell group",
+      headerStyle = list(fontWeight = 700),
+      style = list(fontSize = "14px"),
       cell = function(value) {
         div(class = "player-name", value)
       },
-      width = 100
     ),
     
     GD = colDef(
       name = "GD",
-      style = list(fontSize = "12px", fontWeight = "bold"),
+      defaultSortOrder = "asc",
+      align = "center",
+      maxWidth = 100,
+      class = "cell group",
+      headerStyle = list(fontWeight = 700),
+      style = list(fontSize = "14px"),
       cell = function(value) {
         div(class = "player-name", value)
       },
-      width = 100
     ),
     
     GK = colDef(
       name = "GK",
-      style = list(fontSize = "12px", fontWeight = "bold"),
+      defaultSortOrder = "asc",
+      align = "center",
+      maxWidth = 100,
+      class = "cell group",
+      headerStyle = list(fontWeight = 700),
+      style = list(fontSize = "14px"),
       cell = function(value) {
         div(class = "player-name", value)
       },
-      width = 100
     ),
     
     #Add duration column
     duration = colDef(
-      name = "Minutes Played",
-      cell = function(value) {
-        width <- paste0(value * 100 / max(data$duration), "%")
-        value <- format(round(value, 2), nsmall = 2)
-        value <- format(value, width = 9, justify = "right")
-        bar <- div(
-          class = "bar-chart",
-          style = list(marginRight = "6px"),
-          div(class = "bar", style = list(width = width, backgroundColor = "#ee255c"))
-        )
-        div(class = "bar-cell", span(class = "number", value), bar)
-      }
+      name = "Mins.",
+      defaultSortOrder = "desc",
+      maxWidth = 55,
+      align = "center",
+      class = "cell number",
+      headerStyle = list(fontWeight = 700),
+      format = colFormat(digits = 1)
+      # cell = function(value) {
+      #   value <- format(round(value, 2), nsmall = 2)
+      #   value <- format(value, width = 9, justify = "right")
+      # 
+      # }
     ),
     
     #Add absolute plus minus column
     absPlusMinus = colDef(
-      name = "Absolute +/-",
-      cell = function(value) {
-        width <- paste0(value * 100 / max(data$absPlusMinus), "%")
-        value <- format(round(value, 2), nsmall = 2)
-        value <- format(value, width = 10, justify = "right")
-        bar <- div(
-          class = "bar-chart",
-          style = list(marginRight = "6px"),
-          if (value > 0) {
-            div(class = "bar", style = list(width = width, backgroundColor = "#44c36d"))
-          } else if (value < 0) {
-            div(class = "bar", style = list(width = width, backgroundColor = "#cd3d3d"))
-          } else {
-            div(class = "bar", style = list(width = width, backgroundColor = "#ee255c"))
-          }
-        )
-        div(class = "bar-cell", span(class = "number", value), bar)
+      name = "Abs. +/-",
+      defaultSortOrder = "desc",
+      format = colFormat(digits = 0),
+      maxWidth = 75,
+      align = "center",
+      class = "border-left",
+      headerStyle = list(fontWeight = 700),
+      style = function(value) {
+        scaled <- (value - min(data$absPlusMinus)) /
+          (max(data$absPlusMinus) - min(data$absPlusMinus))
+      if (scaled < 0) {
+        scaled = 0
       }
-    ),
-     
+        color <- plusMinus_colour(scaled)
+        style = list(color = "#111", background = plusMinus_colour(scaled))
+      }
+  ),
+    
     #Add per plus minus column
     per15PlusMinus = colDef(
-      name = "Per 15 Min. +/-",
-      cell = function(value) {
-        width <- paste0(value * 100 / max(data$per15PlusMinus), "%")
-        value <- format(round(value, 2), nsmall = 2)
-        value <- format(value, width = 10, justify = "right")
-        bar <- div(
-          class = "bar-chart",
-          style = list(marginRight = "6px"),
-          if (value > 0) {
-            div(class = "bar", style = list(width = width, backgroundColor = "#44c36d"))
-          } else if (value < 0) {
-            div(class = "bar", style = list(width = width, backgroundColor = "#cd3d3d"))
-          } else {
-            div(class = "bar", style = list(width = width, backgroundColor = "#ee255c"))
-          }
-        )
-        div(class = "bar-cell", span(class = "number", value), bar)
+      name = "Per. +/-",
+      defaultSortOrder = "desc",
+      format = colFormat(digits = 2),
+      maxWidth = 75,
+      class = "cell number",
+      headerStyle = list(fontWeight = 700),
+      align = "center",
+      style = function(value) {
+        scaled <- (value - min(data$per15PlusMinus)) /
+          (max(data$per15PlusMinus) - min(data$per15PlusMinus))
+      if (scaled < 0) {
+        scaled = 0
       }
-    )
-    
+        color <- plusMinus_colour(scaled)
+        style = list(color = "#111", background = plusMinus_colour(scaled))
+      }
+  )
     
   ), #end columns list
   
   #Set reactable options
-  compact = FALSE,
   showSortIcon = FALSE,
   borderless = TRUE,
   class = "plusMinus-tbl"
@@ -199,11 +286,12 @@ tbl <- reactable(
 
 #Set table options
 div(class = "lineUp-plusMinus",
-  div(class = "lineUp-plusMinus-header",
-    h2(class = "lineUp-plusMinus-title", "Plus/Minus Data from Team Super Netball 2020 Line-Ups"),
-    "Score differential (absolute and per 15 minutes) for line-ups deployed by each team (minimum 10 mins duration played)"
+  div(class = "title",
+    h2("Super Netball 2020: Line-Up Peformance"),
+    "Score differentials across different line-ups used by teams in Super Netball 2020. Data are presented as absolute score differential (abs.), as well as score differential per 15 minutes player (per.). Line-ups must have played a minimum of 10 minutes together to be included. Team (e.g. 'Vixens') or player (e.g. 'Watson') names can be looked up using the search bar."
   ),
-  tbl
+  lineUp_plusMinus_tbl,
+  "Data through 5 rounds of Super Netball 2020."
 )
 
 ```
@@ -212,64 +300,96 @@ div(class = "lineUp-plusMinus",
 
 Source: [Champion Data Match Centre](https://mc.championdata.com/super_netball/)
 
+```{r ref.label="table", eval=FALSE}
+```
+
+```{r}
+tags$link(href = "https://fonts.googleapis.com/css?family=Karla:400,700|Fira+Mono&display=fallback", rel = "stylesheet")
+```
+
 
 ```{css}
-.lineUp-plusMinus {
-  margin: 0 auto;
-  width: 1500px;
+
+/* Whole document: */
+body{
   font-family: Karla, "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-size: 12pt;
 }
 
-.lineUp-plusMinus-header {
+.author,.title,.date{
+    display: none;
+}
+
+.lineUp-plusMinus {
+  font-family: Karla, "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-size: 14px;
+}
+
+.title {
   margin: 18px 0;
   font-size: 16px;
 }
-.lineUp-plusMinus-title {
+
+.title h2 {
   font-size: 20px;
   font-weight: 600;
 }
 
+plusMinus-table {
+  margin-bottom: 20px;
+}
+
+/* Align header text to the bottom */
+.header,
+.group-header {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
 .header {
-  border-bottom: 2px solid #555;
-  font-size: 14px;
+  border-bottom-color: #555;
+  font-size: 13px;
   font-weight: 400;
   text-transform: uppercase;
 }
-.header:hover {
+
+/* Highlight headers when sorting */
+.header:hover,
+.header[aria-sort="ascending"],
+.header[aria-sort="descending"] {
   background-color: #eee;
 }
 
-.bar-cell {
-  display: flex;
-  align-items: center;
-}
 .number {
   font-family: Karla, "Helvetica Neue", Helvetica, Arial, sans-serif;
-  font-size: 14px;
+  font-size: 12px;
 }
 
-.bar {
-  height: 100%;
+.border-left {
+  font-family: Karla, "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-size: 12px;
+  border-left: 2px solid #555;
 }
 
-.bar-chart {
-  flex-grow: 1;
-  margin-left: 6px;
-  height: 14px;
-}
-
-team {
+.team {
   display: flex;
   align-items: right;
 }
 
-team-name {
+.team-name {
   font-size: 14px;
   font-weight: 700;
 }
 
-player-name {
-  font-size: 8px;
+.player-name {
+  font-family: Karla, "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-size: 12px;
+}
+
+.player-name-border {
+  font-size: 12px;
+  border-left: 2px solid #555;
 }
 
 .logo {
@@ -285,7 +405,7 @@ player-name {
 ```{css echo=FALSE}
 /* rmarkdown html documents */
 .main-container {
-  max-width: 1500px !important;
+  max-width: 1054px !important;
 }
 
 h1.title {
@@ -294,7 +414,7 @@ h1.title {
 
 /* pkgdown articles */
 .contents {
-  width: 1500px;
+  width: 1054px;
 }
 
 .page-header {

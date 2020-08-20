@@ -554,18 +554,18 @@ for ff in range(0,len(jsonFileList)):
                     lineUpData['plusMinus'].append(plusMinus)
                 else:
                     #Set points for the lineup
-                    lineUpData['pointsFor'].append(df_scoreChecker.loc[(df_scoreChecker['squadId'] == lineUpSquadId1) &
+                    lineUpData['pointsFor'].append(df_scoreChecker.loc[(df_scoreChecker['squadId'] == currLineUpSquadId) &
                                                                    (df_scoreChecker['matchSeconds'] > uniqueSubs[uu]+1),
                                                                    ['scorePoints']].sum()['scorePoints'])
                     #Set points against the lineup
-                    lineUpData['pointsAgainst'].append(df_scoreChecker.loc[(df_scoreChecker['squadId'] != lineUpSquadId1) &
+                    lineUpData['pointsAgainst'].append(df_scoreChecker.loc[(df_scoreChecker['squadId'] != currLineUpSquadId) &
                                                                    (df_scoreChecker['matchSeconds'] > uniqueSubs[uu]+1),
                                                                    ['scorePoints']].sum()['scorePoints'])
                     #Calculate plus/minus
-                    plusMinus = df_scoreChecker.loc[(df_scoreChecker['squadId'] == lineUpSquadId1) &
+                    plusMinus = df_scoreChecker.loc[(df_scoreChecker['squadId'] == currLineUpSquadId) &
                                                     (df_scoreChecker['matchSeconds'] > uniqueSubs[uu]+1),
                                                     ['scorePoints']].sum()['scorePoints'] - \
-                        df_scoreChecker.loc[(df_scoreChecker['squadId'] != lineUpSquadId1) &
+                        df_scoreChecker.loc[(df_scoreChecker['squadId'] != currLineUpSquadId) &
                                             (df_scoreChecker['matchSeconds'] > uniqueSubs[uu]+1),
                                             ['scorePoints']].sum()['scorePoints']
                     lineUpData['plusMinus'].append(plusMinus)
