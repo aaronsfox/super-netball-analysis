@@ -1,0 +1,305 @@
+---
+title: "Plus/Minus Data for Super Netball 2020 Team Line-Ups"
+author: "Aaron Fox"
+date: "20/08/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+#Set the libPath to the conda environment
+.libPaths("C:/Users/aafox/AppData/Local/Continuum/anaconda3/envs/super_netball_analysis_r/Lib/R/library")
+
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r table, echo = FALSE}
+
+##### TODO: colours and formatting not really working, general gist is though --- add search and sort functionality?
+
+#Load libraries
+library(reactable)
+library(htmltools)
+
+#Read in data
+data <- read.csv("teamLineUps_plusMinus.csv", stringsAsFactors = FALSE)
+
+#Create table
+tbl <- reactable(
+  
+  #Set data
+  data,
+  
+  #Set pagination
+  pagination = TRUE,
+  
+  #Set the default sort colum
+  defaultSorted = "per15PlusMinus",
+  defaultSortOrder = "desc",
+  
+  #Set default column parameters
+  defaultColDef = colDef(headerClass = "header", align = "left"),
+  
+  #Create a list of the columns
+  columns = list(
+    
+    #Create the team column
+    team = colDef(
+      name = "Team",
+      style = list(fontSize = "12px", fontWeight = "bold"),
+      cell = function(value) {
+        div(class = "team",
+            img(class = "logo", alt = paste(value, "logo"), src = sprintf("Images/%s.png", value))
+            #div(class = "team-name", value)
+            )
+      },
+      minWidth = 25
+    ),
+    
+    #Create player position columns
+    
+    GS = colDef(
+      name = "GS",
+      style = list(fontSize = "12px", fontWeight = "bold"),
+      cell = function(value) {
+        div(class = "player-name", value)
+      },
+      width = 100
+    ),
+    
+    GA = colDef(
+      name = "GA",
+      style = list(fontSize = "12px", fontWeight = "bold"),
+      cell = function(value) {
+        div(class = "player-name", value)
+      },
+      width = 100
+    ),
+    
+    WA = colDef(
+      name = "WA",
+      style = list(fontSize = "12px", fontWeight = "bold"),
+      cell = function(value) {
+        div(class = "player-name", value)
+      },
+      width = 100
+    ),
+    
+    C = colDef(
+      name = "C",
+      style = list(fontSize = "12px", fontWeight = "bold"),
+      cell = function(value) {
+        div(class = "player-name", value)
+      },
+      width = 100
+    ),
+    
+    WD = colDef(
+      name = "WD",
+      style = list(fontSize = "12px", fontWeight = "bold"),
+      cell = function(value) {
+        div(class = "player-name", value)
+      },
+      width = 100
+    ),
+    
+    GD = colDef(
+      name = "GD",
+      style = list(fontSize = "12px", fontWeight = "bold"),
+      cell = function(value) {
+        div(class = "player-name", value)
+      },
+      width = 100
+    ),
+    
+    GK = colDef(
+      name = "GK",
+      style = list(fontSize = "12px", fontWeight = "bold"),
+      cell = function(value) {
+        div(class = "player-name", value)
+      },
+      width = 100
+    ),
+    
+    #Add duration column
+    duration = colDef(
+      name = "Minutes Played",
+      cell = function(value) {
+        width <- paste0(value * 100 / max(data$duration), "%")
+        value <- format(round(value, 2), nsmall = 2)
+        value <- format(value, width = 9, justify = "right")
+        bar <- div(
+          class = "bar-chart",
+          style = list(marginRight = "6px"),
+          div(class = "bar", style = list(width = width, backgroundColor = "#ee255c"))
+        )
+        div(class = "bar-cell", span(class = "number", value), bar)
+      }
+    ),
+    
+    #Add absolute plus minus column
+    absPlusMinus = colDef(
+      name = "Absolute +/-",
+      cell = function(value) {
+        width <- paste0(value * 100 / max(data$absPlusMinus), "%")
+        value <- format(round(value, 2), nsmall = 2)
+        value <- format(value, width = 10, justify = "right")
+        bar <- div(
+          class = "bar-chart",
+          style = list(marginRight = "6px"),
+          if (value > 0) {
+            div(class = "bar", style = list(width = width, backgroundColor = "#44c36d"))
+          } else if (value < 0) {
+            div(class = "bar", style = list(width = width, backgroundColor = "#cd3d3d"))
+          } else {
+            div(class = "bar", style = list(width = width, backgroundColor = "#ee255c"))
+          }
+        )
+        div(class = "bar-cell", span(class = "number", value), bar)
+      }
+    ),
+     
+    #Add per plus minus column
+    per15PlusMinus = colDef(
+      name = "Per 15 Min. +/-",
+      cell = function(value) {
+        width <- paste0(value * 100 / max(data$per15PlusMinus), "%")
+        value <- format(round(value, 2), nsmall = 2)
+        value <- format(value, width = 10, justify = "right")
+        bar <- div(
+          class = "bar-chart",
+          style = list(marginRight = "6px"),
+          if (value > 0) {
+            div(class = "bar", style = list(width = width, backgroundColor = "#44c36d"))
+          } else if (value < 0) {
+            div(class = "bar", style = list(width = width, backgroundColor = "#cd3d3d"))
+          } else {
+            div(class = "bar", style = list(width = width, backgroundColor = "#ee255c"))
+          }
+        )
+        div(class = "bar-cell", span(class = "number", value), bar)
+      }
+    )
+    
+    
+  ), #end columns list
+  
+  #Set reactable options
+  compact = FALSE,
+  showSortIcon = FALSE,
+  borderless = TRUE,
+  class = "plusMinus-tbl"
+  
+) #end reactable
+
+#Set table options
+div(class = "lineUp-plusMinus",
+  div(class = "lineUp-plusMinus-header",
+    h2(class = "lineUp-plusMinus-title", "Plus/Minus Data from Team Super Netball 2020 Line-Ups"),
+    "Score differential (absolute and per 15 minutes) for line-ups deployed by each team (minimum 10 mins duration played)"
+  ),
+  tbl
+)
+
+```
+
+---
+
+Source: [Champion Data Match Centre](https://mc.championdata.com/super_netball/)
+
+
+```{css}
+.lineUp-plusMinus {
+  margin: 0 auto;
+  width: 1500px;
+  font-family: Karla, "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+.lineUp-plusMinus-header {
+  margin: 18px 0;
+  font-size: 16px;
+}
+.lineUp-plusMinus-title {
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.header {
+  border-bottom: 2px solid #555;
+  font-size: 14px;
+  font-weight: 400;
+  text-transform: uppercase;
+}
+.header:hover {
+  background-color: #eee;
+}
+
+.bar-cell {
+  display: flex;
+  align-items: center;
+}
+.number {
+  font-family: Karla, "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-size: 14px;
+}
+
+.bar {
+  height: 100%;
+}
+
+.bar-chart {
+  flex-grow: 1;
+  margin-left: 6px;
+  height: 14px;
+}
+
+team {
+  display: flex;
+  align-items: right;
+}
+
+team-name {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+player-name {
+  font-size: 8px;
+}
+
+.logo {
+  margin-right: 8px;
+  margin-top: 1px;
+  margin-bottom: 1px;
+  height: 30px;
+}
+
+```
+
+
+```{css echo=FALSE}
+/* rmarkdown html documents */
+.main-container {
+  max-width: 1500px !important;
+}
+
+h1.title {
+  display: none;
+}
+
+/* pkgdown articles */
+.contents {
+  width: 1500px;
+}
+
+.page-header {
+  display: none;
+}
+```
+
+
