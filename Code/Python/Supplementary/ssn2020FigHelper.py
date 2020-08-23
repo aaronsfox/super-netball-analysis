@@ -24,7 +24,6 @@ from bokeh.models import FactorRange, ColumnDataSource, Legend, HoverTool
 from bokeh.transform import factor_cmap
 from bokeh.io import show
 from bokeh.io import export_png
-import json
 
 # %% totalPointsOneVsTwo
 
@@ -1308,4 +1307,373 @@ def totalPlusMinusLineUps(teamInfo = None, df_lineUp = None,
             #Navigate back up to original directory
             os.chdir('..')
 
+# %% playerPlusMinus
+
+def playerPlusMinus(teamInfo = None, playerInfo = None, df_individualLineUp = None,
+                    absPlusMinus = True, perPlusMinus = True,
+                    perDivider = 15, minDuration = 10, nPlayers = 20,
+                    colourDict = None, showPlot = False,
+                    exportPNG = True, exportHTML = True):
+
+    # Function for plotting the absolute and per plus minus for players across 
+    # all currently completed games.
+    #
+    # Input:    teamInfo - dictionary of team info pulled from data import
+    #           playerInfo - dictionary of player info pulled from data import
+    #           df_individualLineUp - dataframe of individual lineup data pulled from data import
+    #           absPlusMinus - boolean of whether to calculate absolute plus/minus
+    #           perPlusMinus - boolean of whether to calculate per mins plus/minus
+    #           perDivider - factor (in minutes) to calculate per mins plus/minus
+    #           minDuration - minimum no. of minutes to include a player
+    #           nPlayers - number of players to plot from the leader
+    #           colourDict - dictionary matching team nicknames to colour plots
+    
+    #Check inputs
+    if teamInfo is None:
+        raise ValueError('Team info dictionary is required.')
+        
+    if playerInfo is None:
+        raise ValueError('Player info dictionary is required.')
+    
+    if df_individualLineUp is None:
+        raise ValueError('The dataframe with individual lineup data from data import is required.')
+    
+    if colourDict is None:
+        #Use default colour scheme
+        colourDict = {'Fever': '#00953b',
+                      'Firebirds': '#4b2c69',
+                      'GIANTS': '#f57921',
+                      'Lightning': '#fdb61c',
+                      'Magpies': '#494b4a',
+                      'Swifts': '#0082cd',
+                      'Thunderbirds': '#e54078',
+                      'Vixens': '#00a68e'}
+    
+    #Get unique list of players from the lineup dataframe
+    plotPlayers = list(df_individualLineUp['playerId'].unique())
+    
+    #Loop through players and extract total plus minus data
+    #Set blank lists to store data in
+    playerDuration = list()
+    playerPlusMinus = list()
+    playerPlusMinusPer15 = list()
+    analysePlayer = list()
+    analyseColour = list()
+    analyseSquad = list()
+    for pp in range(0,len(plotPlayers)):
+        
+        #Extract current player to dataframe
+        df_currPlayer = df_individualLineUp.loc[(df_individualLineUp['playerId'] == plotPlayers[pp]) &
+                                                (df_individualLineUp['playerPosition'] != 'S'),
+                                                ['playerId','durationSeconds','plusMinus']]
+        df_currPlayer.reset_index(drop=True, inplace=True)
+        
+        #Check if player total is greater than minimum minutes and get data if so
+        if sum(df_currPlayer['durationSeconds']) > (minDuration*60):
+            #Append duration and plus/minus
+            playerDuration.append(sum(df_currPlayer['durationSeconds'])/60)
+            playerPlusMinus.append(sum(df_currPlayer['plusMinus']))
+            #Calculate per plus minus
+            perFac = perDivider / (sum(df_currPlayer['durationSeconds']/60))
+            playerPlusMinusPer15.append(sum(df_currPlayer['plusMinus'])*perFac)
+            #Get current player and append
+            analysePlayer.append(playerInfo['displayName'][playerInfo['playerId'].index(plotPlayers[pp])])
+            #Get squad ID colour for player
+            currSquadId = playerInfo['squadId'][playerInfo['playerId'].index(plotPlayers[pp])]
+            analyseColour.append(colourDict[teamInfo['squadNickname'][teamInfo['squadId'].index(currSquadId)]])
+            analyseSquad.append(teamInfo['squadNickname'][teamInfo['squadId'].index(currSquadId)])
+            
+            
+            
+    #Place player plus minus data in dataframe and sort
+    df_playerPlusMinus = pd.DataFrame(list(zip(analysePlayer,analyseColour,analyseSquad,
+                                               playerDuration,playerPlusMinus,playerPlusMinusPer15)),
+                                      columns = ['analysePlayer','analyseColour','analyseSquad',
+                                                 'playerDuration','playerPlusMinus','playerPlusMinusPer15'])
+    df_playerPlusMinus.sort_values(by = 'playerPlusMinus', inplace = True,
+                                   ascending = False, ignore_index = True)
+     
+    #Create figure for total player plus minus (top 20 players)
+    if absPlusMinus is True:
+        figPlotAbs = list()
+        figSourceAbs = list()
+        
+        #Create source for figure
+        figSourceAbs.append(ColumnDataSource(data = dict(players = list(df_playerPlusMinus['analysePlayer'].iloc[0:nPlayers]),
+                                                         counts = list(df_playerPlusMinus['playerPlusMinus'].iloc[0:nPlayers]),
+                                                         duration = list(df_playerPlusMinus['playerDuration'].iloc[0:nPlayers]),
+                                                         squad = list(df_playerPlusMinus['analyseSquad'].iloc[0:nPlayers]),
+                                                         colours = tuple(df_playerPlusMinus['analyseColour'].iloc[0:nPlayers]))))
+        
+        #Create figure
+        figPlotAbs.append(figure(x_range = list(df_playerPlusMinus['analysePlayer'].iloc[0:nPlayers]), plot_height = 400, plot_width = 800,
+                                 title = 'Top '+str(nPlayers)+' Players for Total Plus/Minus (min. '+str(minDuration)+' minutes played)',
+                                 toolbar_location = None,
+                                 tools = 'hover', 
+                                 tooltips = [("Player", "@players"), ("Team", "@squad"), ("Total Minutes", "@duration"), ("Player Total Plus/Minus", "@counts")]))
+        
+        #Add bars
+        figPlotAbs[0].vbar(x = 'players', top = 'counts', width=0.6,
+                        color = 'colours', source = figSourceAbs[0])
+        
+        #Set figure parameters
+        figPlotAbs[0].y_range.start = 0
+        figPlotAbs[0].x_range.range_padding = 0.1
+        figPlotAbs[0].xaxis.major_label_orientation = 1
+        figPlotAbs[0].xgrid.grid_line_color = None
+        figPlotAbs[0].title.align = 'center'
+        figPlotAbs[0].yaxis.axis_label = 'Total Plus/Minus'
+        
+        # #Show figure
+        # show(figPlotAbs[0])
+        
+    #Create per plus minus figure
+    if perPlusMinus is True:
+        
+        #Create figure for total player plus minus (top 20 players)
+        figPlotPer = list()
+        figSourcePer = list()
+        
+        #Create source for figure
+        figSourcePer.append(ColumnDataSource(data = dict(players = list(df_playerPlusMinus['analysePlayer'].iloc[0:nPlayers]),
+                                                         counts = list(df_playerPlusMinus['playerPlusMinusPer15'].iloc[0:nPlayers]),
+                                                         duration = list(df_playerPlusMinus['playerDuration'].iloc[0:nPlayers]),
+                                                         squad = list(df_playerPlusMinus['analyseSquad'].iloc[0:nPlayers]),
+                                                         colours = tuple(df_playerPlusMinus['analyseColour'].iloc[0:nPlayers]))))
+        
+        #Create figure
+        figPlotPer.append(figure(x_range = list(df_playerPlusMinus['analysePlayer'].iloc[0:nPlayers]), plot_height = 400, plot_width = 800,
+                                 title = 'Top '+str(nPlayers)+' Players for Total Plus/Minus Per '+str(perDivider)+' Minutes (min. '+str(minDuration)+' minutes played)',
+                                 toolbar_location = None,
+                                 tools = 'hover', 
+                                 tooltips = [("Player", "@players"), ("Team", "@squad"), ("Total Minutes", "@duration"), ("Player Total Plus/Minus Per "+str(perDivider), "@counts")]))
+        
+        #Add bars
+        figPlotPer[0].vbar(x = 'players', top = 'counts', width=0.6,
+                        color = 'colours', source = figSourcePer[0])
+        
+        #Set figure parameters
+        figPlotPer[0].y_range.start = 0
+        figPlotPer[0].x_range.range_padding = 0.1
+        figPlotPer[0].xaxis.major_label_orientation = 1
+        figPlotPer[0].xgrid.grid_line_color = None
+        figPlotPer[0].title.align = 'center'
+        figPlotPer[0].yaxis.axis_label = 'Total Plus/Minus Per '+str(perDivider)+' Minutes Played'
+        
+        # #Show figure
+        # show(figPlotPer[0])
+    
+    #Export figure as PNG and HTML
+    if exportPNG is True or exportHTML is True:
+        
+        #Absolute plus minus
+        if absPlusMinus is True:
+        
+            #Seems like storing html in same folder causes figures to overwrite?
+            #Make directory to store
+            if os.path.isdir('total-absolutePlusMinus-players') is False:
+                os.mkdir('total-absolutePlusMinus-players')
+            os.chdir('total-absolutePlusMinus-players')
+            
+            #PNG
+            if exportPNG is True:
+                export_png(figPlotAbs[0], filename = 'total-absolutePlusMinus-players.png')
+            
+            #HTML
+            if exportHTML is True:
+                output_file('total-absolutePlusMinus-players.html')
+                save(figPlotAbs[0])
+            
+            #Navigate back up
+            os.chdir('..') 
+            
+        #Per plus minus
+        if perPlusMinus is True:
+            
+            #Make directory to store
+            os.mkdir('total-per'+str(perDivider)+'PlusMinus-players')
+            os.chdir('total-per'+str(perDivider)+'PlusMinus-players')
+            
+            if exportPNG is True:
+                #PNG
+                export_png(figPlotPer[0], filename = 'total-per'+str(perDivider)+'PlusMinus-players.png')
+            
+            if exportHTML is True:
+                #HTML
+                output_file('total-per'+str(perDivider)+'PlusMinus-players.html')
+                save(figPlotPer[0])
+
+            #Navigate back up
+            os.chdir('..') 
+            
+# %% relativePlayerPlusMinus
+
+
+def relativePlayerPlusMinus(teamInfo = None, playerInfo = None, df_individualLineUp = None,
+                            perDivider = 15, minDurationOn = 10,
+                            minDurationOff = 5, nPlayers = 20,
+                            colourDict = None, showPlot = False,
+                            exportPNG = True, exportHTML = True):
+
+    # Function for plotting the relative on vs. off plus/minus for players across 
+    # all currently completed games.
+    #
+    # Input:    teamInfo - dictionary of team info pulled from data import
+    #           playerInfo - dictionary of player info pulled from data import
+    #           df_individualLineUp - dataframe of individual lineup data pulled from data import
+    #           absPlusMinus - boolean of whether to calculate absolute plus/minus
+    #           perPlusMinus - boolean of whether to calculate per mins plus/minus
+    #           perDivider - factor (in minutes) to calculate per mins plus/minus
+    #           minDurationOn - minimum no. of minutes on court to include a player
+    #           minDurationOff - minimum no. of minutes off court to include a player
+    #           nPlayers - number of players to plot from the leader
+    #           colourDict - dictionary matching team nicknames to colour plots
+    
+    #Check inputs
+    if teamInfo is None:
+        raise ValueError('Team info dictionary is required.')
+        
+    if playerInfo is None:
+        raise ValueError('Player info dictionary is required.')
+    
+    if df_individualLineUp is None:
+        raise ValueError('The dataframe with individual lineup data from data import is required.')
+    
+    if colourDict is None:
+        #Use default colour scheme
+        colourDict = {'Fever': '#00953b',
+                      'Firebirds': '#4b2c69',
+                      'GIANTS': '#f57921',
+                      'Lightning': '#fdb61c',
+                      'Magpies': '#494b4a',
+                      'Swifts': '#0082cd',
+                      'Thunderbirds': '#e54078',
+                      'Vixens': '#00a68e'}
+    
+    #Get unique list of players from the lineup dataframe
+    plotPlayers = list(df_individualLineUp['playerId'].unique())
+    
+    #Loop through players and extract total plus minus data
+    #Set blank lists to store data in
+    playerDurationOn = list()
+    playerDurationOff = list()
+    playerPlusMinusOn = list()
+    playerPlusMinusOff = list()
+    playerPlusMinusOnPer15 = list()
+    playerPlusMinusOffPer15 = list()
+    analysePlayer = list()
+    analyseColour = list()
+    analyseSquad = list()
+    for pp in range(0,len(plotPlayers)):
+        
+        #Extract current player to dataframe for on and off
+        df_currPlayerOn = df_individualLineUp.loc[(df_individualLineUp['playerId'] == plotPlayers[pp]) &
+                                                  (df_individualLineUp['playerPosition'] != 'S'),
+                                                  ['playerId','durationSeconds','plusMinus']]
+        df_currPlayerOn.reset_index(drop=True, inplace=True)
+        df_currPlayerOff = df_individualLineUp.loc[(df_individualLineUp['playerId'] == plotPlayers[pp]) &
+                                                   (df_individualLineUp['playerPosition'] == 'S'),
+                                                   ['playerId','durationSeconds','plusMinus']]
+        df_currPlayerOff.reset_index(drop=True, inplace=True)
+        
+        #Check if player total is greater than designated
+        if sum(df_currPlayerOn['durationSeconds']) > (minDurationOn*60) and sum(df_currPlayerOff['durationSeconds']) > (minDurationOff*60):
+            #Append duration and plus/minus when on vs. off
+            playerDurationOn.append(sum(df_currPlayerOn['durationSeconds'])/60)
+            playerPlusMinusOn.append(sum(df_currPlayerOn['plusMinus']))
+            playerDurationOff.append(sum(df_currPlayerOff['durationSeconds'])/60)
+            playerPlusMinusOff.append(sum(df_currPlayerOff['plusMinus']))
+            #On
+            perFac = perDivider / (sum(df_currPlayerOn['durationSeconds']/60))
+            playerPlusMinusOnPer15.append(sum(df_currPlayerOn['plusMinus'])*perFac)
+            #Off
+            perFac = perDivider / (sum(df_currPlayerOff['durationSeconds']/60))
+            playerPlusMinusOffPer15.append(sum(df_currPlayerOff['plusMinus'])*perFac)
+            #Get current player and append
+            analysePlayer.append(playerInfo['displayName'][playerInfo['playerId'].index(plotPlayers[pp])])
+            #Get squad ID colour for player
+            currSquadId = playerInfo['squadId'][playerInfo['playerId'].index(plotPlayers[pp])]
+            analyseColour.append(colourDict[teamInfo['squadNickname'][teamInfo['squadId'].index(currSquadId)]])
+            analyseSquad.append(teamInfo['squadNickname'][teamInfo['squadId'].index(currSquadId)])
+            
+            
+            
+    #Place player plus minus data in dataframe and sort
+    df_playerPlusMinusRel = pd.DataFrame(list(zip(analysePlayer,analyseColour,analyseSquad,
+                                                  playerDurationOn,playerPlusMinusOn,playerPlusMinusOnPer15,
+                                                  playerDurationOff,playerPlusMinusOff,playerPlusMinusOffPer15)),
+                                         columns = ['analysePlayer','analyseColour','analyseSquad',
+                                                    'playerDurationOn','playerPlusMinusOn','playerPlusMinusOnPer15',
+                                                    'playerDurationOff','playerPlusMinusOff','playerPlusMinusOffPer15'])
+    
+    #Calculate the relative difference between when the player is off vs. on
+    #This calculation means positive and negative values mean the team does better
+    #versus worse when the player is on, respectively
+    relPerformance = list()
+    relPerformancePer15 = list()
+    for dd in range(0,len(df_playerPlusMinusRel)):
+        relPerformance.append(df_playerPlusMinusRel['playerPlusMinusOn'][dd] - df_playerPlusMinusRel['playerPlusMinusOff'][dd])
+        relPerformancePer15.append(df_playerPlusMinusRel['playerPlusMinusOnPer15'][dd] - df_playerPlusMinusRel['playerPlusMinusOffPer15'][dd])
+    #Append to dataframe
+    df_playerPlusMinusRel['relPerformance'] = relPerformance
+    df_playerPlusMinusRel['relPerformancePer15'] = relPerformancePer15
+    #Resort by relative per 15 performance
+    df_playerPlusMinusRel.sort_values(by = 'relPerformancePer15', inplace = True,
+                                      ascending = False, ignore_index = True)
+     
+    #Create figure for total player plus minus (top 20 players)
+    figPlot = list()
+    figSource = list()
+    
+    #Create source for figure
+    figSource.append(ColumnDataSource(data = dict(players = list(df_playerPlusMinusRel['analysePlayer'].iloc[0:nPlayers]),
+                                                  counts = list(df_playerPlusMinusRel['relPerformancePer15'].iloc[0:nPlayers]),
+                                                  durationOn = list(df_playerPlusMinusRel['playerDurationOn'].iloc[0:nPlayers]),
+                                                  durationOff = list(df_playerPlusMinusRel['playerDurationOff'].iloc[0:nPlayers]),
+                                                  squad = list(df_playerPlusMinusRel['analyseSquad'].iloc[0:nPlayers]),
+                                                  colours = tuple(df_playerPlusMinusRel['analyseColour'].iloc[0:nPlayers]))))
+    
+    #Create figure
+    figPlot.append(figure(x_range = list(df_playerPlusMinusRel['analysePlayer'].iloc[0:nPlayers]), plot_height = 400, plot_width = 800,
+                          title = 'Top '+str(nPlayers)+' Players for Plus/Minus per '+str(perDivider)+' Minute when On vs. Off Court (min. '+str(minDurationOn)+' minutes on & '+str(minDurationOff)+' minutes off court)',
+                          toolbar_location = None,
+                          tools = 'hover', 
+                          tooltips = [("Player", "@players"), ("Team", "@squad"), ("Minutes On-Court", "@durationOn"), ("Minutes Off-Court", "@durationOff"), ("Relative Plus/Minus per "+str(perDivider)+" Minutes", "@counts")]))
+    
+    #Add bars
+    figPlot[0].vbar(x = 'players', top = 'counts', width=0.6,
+                    color = 'colours', source = figSource[0])
+    
+    #Set figure parameters
+    figPlot[0].y_range.start = 0
+    figPlot[0].x_range.range_padding = 0.1
+    figPlot[0].xaxis.major_label_orientation = 1
+    figPlot[0].xgrid.grid_line_color = None
+    figPlot[0].title.align = 'center'
+    figPlot[0].yaxis.axis_label = 'Relative Plus/Minus per '+str(perDivider)+' Minutes'
+    
+    # #Show figure
+    # show(figPlot[0])
+    
+    #Export figure as PNG and HTML
+    if exportPNG is True or exportHTML is True:
+    
+        #Seems like storing html in same folder causes figures to overwrite?
+        #Make directory to store
+        if os.path.isdir('total-relativePer'+str(perDivider)+'PlusMinus-players') is False:
+            os.mkdir('total-relativePer'+str(perDivider)+'PlusMinus-players')
+        os.chdir('total-relativePer'+str(perDivider)+'PlusMinus-players')
+        
+        #PNG
+        if exportPNG is True:
+            export_png(figPlot[0], filename = 'total-relativePer'+str(perDivider)+'PlusMinus-players.png')
+        
+        #HTML
+        if exportHTML is True:
+            output_file('total-relativePer'+str(perDivider)+'PlusMinus-players.html')
+            save(figPlot[0])
+        
+        #Navigate back up
+        os.chdir('..')
+        
 # %%
