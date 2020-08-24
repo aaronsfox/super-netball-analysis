@@ -1,8 +1,8 @@
 ---
 title: "Super Netball Standard vs. Super Shot Simulations"
+author: "Aaron Fox"
+date: "24/08/2020"
 output: html_document
-resource_files:
-  - '.'
 ---
 
 ```{r setup, include=FALSE}

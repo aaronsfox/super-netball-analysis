@@ -287,28 +287,159 @@ for tt in range(0,len(teamList)):
 #Convert sim dictionary to dataframe
 df_superSimResults = pd.DataFrame.from_dict(superSimResults)
 
+# %% Get max scores with different proportions
+
 #Get the proportion category names as a list
 propCats = df_superSimResults['superPropCat'].unique()
 
 #Calculate proportion of results that maximise score in each 10% bin
+
+#Set data dictionary to store max results in to
+maxSuperSimResults = {'squadNickname': [], 
+                      'score': [], 'nShots': [], 'superPropCat': []}
+
+#Loop through teams
 for tt in range(0,len(teamList)):
     
     #Extract current teams data
     df_currTeamSims = df_superSimResults.loc[(df_superSimResults['squadNickname'] == teamList[tt]),]
     
-    #Loop through the super prop categories and get each iterations value in an array
-    simResults = np.ndarray([len(df_currTeamSims)/len(superShotProps),len(propCats)])
+    #Get the number of simulations ran for the current teams shots
+    nTeamSims = int(len(df_currTeamSims)/len(superShotProps))
     
+    #Loop through sims and extract the values for each to compare
+    for nn in range(0,nTeamSims):
+        
+        #Get the results for each super shot proportion
+        currShotResults = list()
+        currShotProp = list()
+        currShotNo = list()
+        for pp in range(0,len(superShotProps)):
+            currShotResults.append(df_currTeamSims.iloc[pp*nTeamSims+nn]['totalPts'])
+            currShotProp.append(df_currTeamSims.iloc[pp*nTeamSims+nn]['superProp'])
+            currShotNo.append(df_currTeamSims.iloc[pp*nTeamSims+nn]['nShots'])
+        
+        #Find the index of the maximum score
+        mx = max(currShotResults)
+        mxInd = [ii for ii, jj in enumerate(currShotResults) if jj == mx]
+        #Check and see if there are more than one max, and take the smaller 
+        #super shot proportion --- this assumes 'less risk'
+        if len(mxInd) > 1:
+            #Grab smaller super shot proportion value index
+            for mm in range(0,len(mxInd)):
+                if mm == 0:
+                    #Just grab the first proportion to compare to the next
+                    currSmallestProp = currShotProp[mxInd[mm]]
+                else:
+                    #Check to see if the next one is a smaller proportion
+                    if currShotProp[mxInd[mm]] < currSmallestProp:
+                        currSmallestProp = currShotProp[mxInd[mm]]
+                        
+            #Reset the mxInd value
+            mxInd = currShotProp.index(currSmallestProp)
+            
+        else:
+            
+            #Set mxInd to int
+            mxInd = int(mxInd[0])                
+        
+        #Set values in data dictionary
+        maxSuperSimResults['squadNickname'].append(teamList[tt])
+        maxSuperSimResults['score'].append(currShotResults[mxInd])
+        maxSuperSimResults['nShots'].append(currShotNo[mxInd])
+        
+        #Identify which bin the max super shot result falls in to, and append
+        if currShotProp[mxInd] <= 0.1:
+            maxSuperSimResults['superPropCat'].append('0%-10%')
+        elif currShotProp[mxInd] > 0.1 and currShotProp[mxInd] <= 0.2:
+            maxSuperSimResults['superPropCat'].append('10%-20%')
+        elif currShotProp[mxInd] > 0.2 and currShotProp[mxInd] <= 0.3:
+            maxSuperSimResults['superPropCat'].append('20%-30%')
+        elif currShotProp[mxInd] > 0.3 and currShotProp[mxInd] <= 0.4:
+            maxSuperSimResults['superPropCat'].append('30%-40%')
+        elif currShotProp[mxInd] > 0.4 and currShotProp[mxInd] <= 0.5:
+            maxSuperSimResults['superPropCat'].append('40%-50%')
+        elif currShotProp[mxInd] > 0.5 and currShotProp[mxInd] <= 0.6:
+            maxSuperSimResults['superPropCat'].append('50%-60%')
+        elif currShotProp[mxInd] > 0.6 and currShotProp[mxInd] <= 0.7:
+            maxSuperSimResults['superPropCat'].append('60%-70%')
+        elif currShotProp[mxInd] > 0.7 and currShotProp[mxInd] <= 0.8:
+            maxSuperSimResults['superPropCat'].append('70%-80%')
+        elif currShotProp[mxInd] > 0.8 and currShotProp[mxInd] <= 0.9:
+            maxSuperSimResults['superPropCat'].append('80%-90%')
+        elif currShotProp[mxInd] > 0.9:
+            maxSuperSimResults['superPropCat'].append('90%-100%')
+
+#Convert max sim dictionary to dataframe
+df_maxSuperSimResults = pd.DataFrame.from_dict(maxSuperSimResults)  
+
+#Get counts in each 20% bin for each team and normalise these to the total 
+#number of sims the team went through
+##### NOTE: this uses 20% bins rather than the current 10% set-up
+
+#Set dictionary to store data into
+summaryMaxSimResults = {'squadNickname': [], '0%-20%': [], '20%-40%': [],
+                        '40%-60%': [], '60%-80%': [], '80%-100%': [],
+                        'meanShots': [], 'minShots': [], 'maxShots': []}
+
+#Loop through teams
+for tt in range(0,len(teamList)):
+    
+    #Extract current teams data
+    df_currTeamSims = df_superSimResults.loc[(df_superSimResults['squadNickname'] == teamList[tt]),]
+    
+    #Get the number of simulations ran for the current teams shots
+    nTeamSims = int(len(df_currTeamSims)/len(superShotProps))
+    
+    #Append squadname to dictionary
+    summaryMaxSimResults['squadNickname'].append(teamList[tt])
+    
+    #Get current team results for each proportion and set in each dictionary list
+    #### NOTE: use of 20% bins
+    summaryMaxSimResults['0%-20%'].append(len(df_maxSuperSimResults.loc[(df_maxSuperSimResults['squadNickname'] == teamList[tt]) &
+                                                                    (df_maxSuperSimResults['superPropCat'].isin(['0%-10%','10%-20%'])),]) / nTeamSims)
+    summaryMaxSimResults['20%-40%'].append(len(df_maxSuperSimResults.loc[(df_maxSuperSimResults['squadNickname'] == teamList[tt]) &
+                                                                    (df_maxSuperSimResults['superPropCat'].isin(['20%-30%','30%-40%'])),]) / nTeamSims)
+    summaryMaxSimResults['40%-60%'].append(len(df_maxSuperSimResults.loc[(df_maxSuperSimResults['squadNickname'] == teamList[tt]) &
+                                                                    (df_maxSuperSimResults['superPropCat'].isin(['40%-50%','50%-60%'])),]) / nTeamSims)
+    summaryMaxSimResults['60%-80%'].append(len(df_maxSuperSimResults.loc[(df_maxSuperSimResults['squadNickname'] == teamList[tt]) &
+                                                                    (df_maxSuperSimResults['superPropCat'].isin(['60%-70%','70%-80%'])),]) / nTeamSims)
+    summaryMaxSimResults['80%-100%'].append(len(df_maxSuperSimResults.loc[(df_maxSuperSimResults['squadNickname'] == teamList[tt]) &
+                                                                    (df_maxSuperSimResults['superPropCat'].isin(['80%-90%','90%-100%'])),]) / nTeamSims)
+    
+    #Get the summary of shot statistics for current team
+    summaryMaxSimResults['meanShots'].append(df_maxSuperSimResults.loc[(df_maxSuperSimResults['squadNickname'] == teamList[tt]),]['nShots'].mean())
+    summaryMaxSimResults['minShots'].append(df_maxSuperSimResults.loc[(df_maxSuperSimResults['squadNickname'] == teamList[tt]),]['nShots'].min())
+    summaryMaxSimResults['maxShots'].append(df_maxSuperSimResults.loc[(df_maxSuperSimResults['squadNickname'] == teamList[tt]),]['nShots'].max())
+    
+#Convert summary dictionary to dataframe
+df_summaryMaxSimResults = pd.DataFrame.from_dict(summaryMaxSimResults)  
+
+#Export summary table to CSV
+maxRound = max(df_matchInfo['roundNo'])
+os.chdir('..\\..\\Code\\R\\htmlTables\\superSims\\Data')
+df_summaryMaxSimResults.to_csv('standardSuperSimProportionSummary_upToRound'+str(maxRound)+'.csv',
+                               index = False)
+
+#Export each teams proportion they actually use
+df_teamSuperProps = pd.DataFrame()
+df_teamSuperProps['squadNickname'] = teamList
+df_teamSuperProps['actualProp'] = teamSuperProps
+df_teamSuperProps.to_csv('actualSuperShotProportion_upToRound'+str(maxRound)+'.csv',
+                         index = False)
+
+# %% Visualise results
+   
     ##### UP TO HERE>>>>>
 
-# #Create a boxplot of the simulation results
+#Create a boxplot of the simulation results
 
 # #Initialize the figure
 # fig, axes = plt.subplots(nrows = 2, ncols = 4, figsize=(15, 7))
 
 # #Set an axes look-up variable
 # whichAx = [[0,0],[0,1],[0,2],[0,3],
-#            [1,0],[1,1],[1,2],[1,3]]
+#             [1,0],[1,1],[1,2],[1,3]]
 
 # #Loop through the teams
 # for tt in range(0,len(teamList)):
@@ -318,10 +449,10 @@ for tt in range(0,len(teamList)):
     
 #     #Create the boxplot
 #     gx = sns.boxplot(x = 'superPropCat', y = 'totalPts',
-#                      data = df_superSimResults.loc[(df_superSimResults['squadNickname'] == currSquadName),],
-#                      whis = [0, 100], width = 0.65,
-#                      color = colourDict[currSquadName],
-#                      ax = axes[whichAx[tt][0],whichAx[tt][1]])
+#                       data = df_superSimResults.loc[(df_superSimResults['squadNickname'] == currSquadName),],
+#                       whis = [0, 100], width = 0.65,
+#                       color = colourDict[currSquadName],
+#                       ax = axes[whichAx[tt][0],whichAx[tt][1]])
     
 #     #Set the box plot face and line colours
     
@@ -415,11 +546,11 @@ for tt in range(0,len(teamList)):
 
 # #Export figure
 
-# # #Change directory
-# # os.chdir('..\\SuperShotSims')
+# #Change directory
+# os.chdir('..\\SuperShotSims')
 
-# #Export as PDF and basic png
-# plt.savefig('SuperShotSimulations_Standard.png', format = 'png', dpi = 300)
+#Export as PDF and basic png
+plt.savefig('SuperShotSimulations_Standard.png', format = 'png', dpi = 300)
 
-# #Close figure
-# plt.close()
+#Close figure
+plt.close()
