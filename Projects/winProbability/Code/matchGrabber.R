@@ -44,3 +44,5 @@ for(yy in 1:length(ssnCompIds)) {
 
 #### TODO: ANZ champs games --- note that sometimes these seem to have
 #### variable match numbers within rounds...
+
+#### Other matches outside of SSN 2017, 2018, 2019 kindly provided by Mitch Mooney
