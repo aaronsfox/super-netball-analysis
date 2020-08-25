@@ -1,0 +1,85 @@
+
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+  
+  <head>
+    
+      <meta charset="utf-8">
+      <title>Bokeh Plot</title>
+      
+      
+        
+          
+        
+        
+          
+        <script type="text/javascript" src="https://cdn.bokeh.org/bokeh/release/bokeh-2.1.1.min.js" integrity="sha384-kLr4fYcqcSpbuI95brIH3vnnYCquzzSxHPU6XGQCIkQRGJwhg0StNbj1eegrHs12" crossorigin="anonymous"></script>
+        <script type="text/javascript">
+            Bokeh.set_log_level("info");
+        </script>
+        
+      
+      
+    
+  </head>
+  
+  
+  <body>
+    
+      
+        
+          
+          
+            
+              <div class="bk-root" id="96a2409d-77e6-45ae-bc45-14de537c32f4" data-root-id="4252"></div>
+            
+          
+        
+      
+      
+        <script type="application/json" id="4454">
+          {"fc9614f7-ad2b-42db-acc4-e09fce7447a4":{"roots":{"references":[{"attributes":{},"id":"4259","type":"CategoricalScale"},{"attributes":{"source":{"id":"4251"}},"id":"4277","type":"CDSView"},{"attributes":{"fill_alpha":{"value":0.1},"fill_color":{"field":"color"},"line_alpha":{"value":0.1},"line_color":{"field":"color"},"top":{"field":"counts"},"width":{"value":0.6},"x":{"field":"players"}},"id":"4275","type":"VBar"},{"attributes":{"below":[{"id":"4263"}],"center":[{"id":"4265"},{"id":"4269"}],"left":[{"id":"4266"}],"plot_height":400,"plot_width":800,"renderers":[{"id":"4276"}],"title":{"id":"4253"},"toolbar":{"id":"4271"},"toolbar_location":null,"x_range":{"id":"4255"},"x_scale":{"id":"4259"},"y_range":{"id":"4257"},"y_scale":{"id":"4261"}},"id":"4252","subtype":"Figure","type":"Plot"},{"attributes":{"formatter":{"id":"4282"},"major_label_orientation":1,"ticker":{"id":"4264"}},"id":"4263","type":"CategoricalAxis"},{"attributes":{"axis":{"id":"4266"},"dimension":1,"ticker":null},"id":"4269","type":"Grid"},{"attributes":{"axis_label":"Points from Super Shots / Points from Standard Shots","formatter":{"id":"4280"},"ticker":{"id":"4267"}},"id":"4266","type":"LinearAxis"},{"attributes":{"data":{"color":["#4b2c69","#494b4a","#e54078","#f57921","#0082cd","#00a68e","#e54078","#f57921","#4b2c69","#00a68e","#00953b","#00a68e","#0082cd","#4b2c69"],"counts":[2.0,1.1111111111111112,1.0,0.7272727272727273,0.6666666666666666,0.6666666666666666,0.4444444444444444,0.42857142857142855,0.35294117647058826,0.2727272727272727,0.08695652173913043,0.08695652173913043,0.06896551724137931,0.05],"fullNames":["Ine-Mari Venter","Gabrielle Sinclair","Sasha Glasgow","Kiera Austin","Helen Housby","Tegan Philip","Georgie Horjus","Jo Harten","Tippah Dwan","Mwai Kumwenda","Jhaniele Fowler","Caitlin Thwaites","Sam Wallace","Romelda Aiken"],"players":["I.Venter","G.Sinclair","S.Glasgow","K.Austin","H.Housby","T.Philip","G.Horjus","J.Harten","T.Dwan","M.Kumwenda","J.Fowler","C.Thwaites","S.Wallace","R.Aiken"],"squadNames":["Firebirds","Magpies","Thunderbirds","GIANTS","Swifts","Vixens","Thunderbirds","GIANTS","Firebirds","Vixens","Fever","Vixens","Swifts","Firebirds"]},"selected":{"id":"4283"},"selection_policy":{"id":"4284"}},"id":"4251","type":"ColumnDataSource"},{"attributes":{},"id":"4283","type":"Selection"},{"attributes":{"align":"center","text":"Relative Differential in Points from Super vs. Standard Shots"},"id":"4253","type":"Title"},{"attributes":{},"id":"4267","type":"BasicTicker"},{"attributes":{},"id":"4261","type":"LinearScale"},{"attributes":{},"id":"4264","type":"CategoricalTicker"},{"attributes":{"axis":{"id":"4263"},"grid_line_color":null,"ticker":null},"id":"4265","type":"Grid"},{"attributes":{},"id":"4284","type":"UnionRenderers"},{"attributes":{"start":0},"id":"4257","type":"DataRange1d"},{"attributes":{"fill_color":{"field":"color"},"line_color":{"field":"color"},"top":{"field":"counts"},"width":{"value":0.6},"x":{"field":"players"}},"id":"4274","type":"VBar"},{"attributes":{"active_drag":"auto","active_inspect":"auto","active_multi":null,"active_scroll":"auto","active_tap":"auto","tools":[{"id":"4270"}]},"id":"4271","type":"Toolbar"},{"attributes":{"data_source":{"id":"4251"},"glyph":{"id":"4274"},"hover_glyph":null,"muted_glyph":null,"nonselection_glyph":{"id":"4275"},"selection_glyph":null,"view":{"id":"4277"}},"id":"4276","type":"GlyphRenderer"},{"attributes":{"callback":null,"tooltips":[["Player","@fullNames"],["Team","@squadNames"],["Ratio of Points from Super:Standard Shots","@counts"]]},"id":"4270","type":"HoverTool"},{"attributes":{},"id":"4282","type":"CategoricalTickFormatter"},{"attributes":{"factors":["I.Venter","G.Sinclair","S.Glasgow","K.Austin","H.Housby","T.Philip","G.Horjus","J.Harten","T.Dwan","M.Kumwenda","J.Fowler","C.Thwaites","S.Wallace","R.Aiken"],"range_padding":0.1},"id":"4255","type":"FactorRange"},{"attributes":{},"id":"4280","type":"BasicTickFormatter"}],"root_ids":["4252"]},"title":"Bokeh Application","version":"2.1.1"}}
+        </script>
+        <script type="text/javascript">
+          (function() {
+            var fn = function() {
+              Bokeh.safely(function() {
+                (function(root) {
+                  function embed_document(root) {
+                    
+                  var docs_json = document.getElementById('4454').textContent;
+                  var render_items = [{"docid":"fc9614f7-ad2b-42db-acc4-e09fce7447a4","root_ids":["4252"],"roots":{"4252":"96a2409d-77e6-45ae-bc45-14de537c32f4"}}];
+                  root.Bokeh.embed.embed_items(docs_json, render_items);
+                
+                  }
+                  if (root.Bokeh !== undefined) {
+                    embed_document(root);
+                  } else {
+                    var attempts = 0;
+                    var timer = setInterval(function(root) {
+                      if (root.Bokeh !== undefined) {
+                        clearInterval(timer);
+                        embed_document(root);
+                      } else {
+                        attempts++;
+                        if (attempts > 100) {
+                          clearInterval(timer);
+                          console.log("Bokeh: ERROR: Unable to run BokehJS code because BokehJS library is missing");
+                        }
+                      }
+                    }, 10, root)
+                  }
+                })(window);
+              });
+            };
+            if (document.readyState != "loading") fn();
+            else document.addEventListener("DOMContentLoaded", fn);
+          })();
+        </script>
+    
+  </body>
+  
+</html>
