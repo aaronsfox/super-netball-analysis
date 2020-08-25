@@ -45,7 +45,7 @@ for file in os.listdir(os.getcwd()):
         
 #Get the scoreflow data for each match
 ##### NOTE: clearly only just focusing on score flow...
-##### Can add other things here too though...e.g. team ratings...
+##### Can add other things here too though...e.g. team ratings (adding now...)...
 ##### TODO: when this starts to get larger --- consider adding to a function...
 
 #Create blank dictionaries to store data in
@@ -64,7 +64,7 @@ scoreFlowData = {'roundNo': [], 'matchNo': [], 'matchId': [],
                  'distanceCode': [], 'positionCode': []}
 
 #Loop through file list and extract data
-for ff in range(574,len(jsonFileList)):
+for ff in range(0,len(jsonFileList)):
     
     #Load the .json data
     with open(jsonFileList[ff], encoding = 'utf-8') as json_file:
@@ -122,6 +122,14 @@ for ff in range(574,len(jsonFileList)):
 #Convert to dataframes
 df_matchInfo = pd.DataFrame.from_dict(matchInfo)
 df_scoreFlow = pd.DataFrame.from_dict(scoreFlowData)
+
+# %% Import team ratings
+
+#Navigate to directory
+os.chdir('..\\TeamRatings')
+
+#Glicko2 ratings
+df_glicko2Ratings = pd.read_csv('glicko2Ratings.csv')
                 
 # %% Convert score flow data to step by step scoring
 
@@ -135,14 +143,22 @@ df_scoreFlow = pd.DataFrame.from_dict(scoreFlowData)
 # (6) awayLast10 - proportion of goals in last 10 goals scored by away (if < 10
 # goals total then the proportion for the game); (7) adjScoreDiff - an adjusted
 # score difference relative to the seconds remaining; (8) secondsRem - seconds 
-# remaining in the match; (9) homeWin - labl value for outcome where 1 is a home
+# remaining in the match; (9) homeWin - e value for outcome where 1 is a home
 # win and -1 is not, a 0 is a draw
+#
+# Glicko rating variables include upper and lower bounds for each team, which
+# equate to a 95% confidence interval in the teams rating (2 * rating deviation).
+# The difference in Glicko rating between the teams is also included, with +ve
+# and -ve values reflecting a better vs. worse home team rating. The single team
+# rating value is also included.
 
 ##### TODO: add variables:
     ##### - next centre pass
-    ##### - team ratings
+    ##### - team ratings (adding now...)
     ##### - lineup info?
     ##### - others...?
+    ##### - round (adding now..)
+        ##### >>> theoretically could put weighting on the ratings (i.e. earlier vs. later rounds)
     
 # An idea for adding extra variables could be to see whether added context helps
 # the model, much like is done in the Sloan conference NFL paper...
@@ -154,6 +170,10 @@ matchIdList = df_scoreFlow['matchId'].unique()
 
 #Set a dictionary to store data into
 scoringData = {'matchId': [], 'homeSquadId': [], 'awaySquadId': [],
+               'homeSquadGlicko': [], 'awaySquadGlicko': [],
+               'homeSquadGlickoUB': [], 'homeSquadGlickoLB': [],
+               'awaySquadGlickoUB': [], 'awaySquadGlickoLB': [],
+               'diffGlickoRating': [], 'roundNo': [],
                'scoreDiff': [], 'currRun': [],
                'homeBiggestRun': [], 'awayBiggestRun': [],
                'homeLast10': [], 'awayLast10': [],
@@ -170,6 +190,36 @@ for mm in range(0,len(matchIdList)):
     #Identify the two squad ID's for the current match
     homeSquad = matchInfo['homeSquadId'][matchInd]
     awaySquad = matchInfo['awaySquadId'][matchInd]
+    
+    #Extract and calculate Glicko rating variables for current match
+    
+    #Get the match competition, year and round
+    currComp = matchInfo['competition'][matchInd]
+    currYear = matchInfo['year'][matchInd]
+    currRound = matchInfo['roundNo'][matchInd]
+    
+    #Extract the data from the glicko2 ratings dataframe
+    homeSquadRating = df_glicko2Ratings.loc[(df_glicko2Ratings['teamId'] == homeSquad) &
+                                            (df_glicko2Ratings['competition'] == currComp) & 
+                                            (df_glicko2Ratings['year'] == currYear) & 
+                                            (df_glicko2Ratings['round'] == currRound),['glicko2Rating','glicko2Deviation']].reset_index()
+    awaySquadRating = df_glicko2Ratings.loc[(df_glicko2Ratings['teamId'] == awaySquad) &
+                                            (df_glicko2Ratings['competition'] == currComp) & 
+                                            (df_glicko2Ratings['year'] == currYear) & 
+                                            (df_glicko2Ratings['round'] == currRound),['glicko2Rating','glicko2Deviation']].reset_index()
+    
+    #Calculate variables to append at each score point
+    homeSquadGlicko = homeSquadRating['glicko2Rating'][0]
+    homeSquadGlickoUB = homeSquadRating['glicko2Rating'][0] + \
+        (2*homeSquadRating['glicko2Deviation'][0])
+    homeSquadGlickoLB = homeSquadRating['glicko2Rating'][0] - \
+        (2*homeSquadRating['glicko2Deviation'][0])
+    awaySquadGlicko = awaySquadRating['glicko2Rating'][0]
+    awaySquadGlickoUB = awaySquadRating['glicko2Rating'][0] + \
+        (2*homeSquadRating['glicko2Deviation'][0])
+    awaySquadGlickoLB = awaySquadRating['glicko2Rating'][0] - \
+        (2*homeSquadRating['glicko2Deviation'][0])
+    diffGlickoRating = homeSquadGlicko - awaySquadGlicko
     
     #Extract the current matches score flow data
     df_currMatchScoreFlow = df_scoreFlow.loc[(df_scoreFlow['matchId'] == matchId),]
@@ -197,6 +247,16 @@ for mm in range(0,len(matchIdList)):
         scoringData['homeSquadId'].append(homeSquad)
         scoringData['awaySquadId'].append(awaySquad)
         scoringData['homeWin'].append(homeWin)
+        scoringData['roundNo'].append(currRound)
+        
+        #Set general glicko variables for current score
+        scoringData['homeSquadGlicko'].append(homeSquadGlicko)
+        scoringData['awaySquadGlicko'].append(awaySquadGlicko)
+        scoringData['homeSquadGlickoUB'].append(homeSquadGlickoUB)
+        scoringData['homeSquadGlickoLB'].append(homeSquadGlickoLB)
+        scoringData['awaySquadGlickoUB'].append(awaySquadGlickoUB)
+        scoringData['awaySquadGlickoLB'].append(awaySquadGlickoLB)
+        scoringData['diffGlickoRating'].append(diffGlickoRating)
         
         #Special case for the first score of each match
         if ss == 0:
@@ -469,7 +529,8 @@ rfTestProbs = rfModel.predict_proba(test)[:, 1]
 evaluateModel(rfTestPredictions, rfTestPredictions,
               rfTrainPredictions, rfTrainProbs)
 
-##### Somehow model got worse with more than 50 games of data!!!!!
+##### Addition of team ratings makes model pretty damn accurate...even without
+##### any parameter adjustment...
 
 #Create the confusion matrix
 confMat = confusion_matrix(test_labels, rfTestPredictions)
@@ -536,8 +597,56 @@ fig.tight_layout()
 ##### In comparison, when predicting probability at ~90%, the actual win probability
 ##### is at ~70%
 
+##### The addition of team ratings, even at their most basic makes the model quite
+##### accurate in its predictions...
+
 ##### Hyperparameter tuning may be a good option:
     ##### https://towardsdatascience.com/hyperparameter-tuning-the-random-forest-in-python-using-scikit-learn-28d2aa77dd74
 
 
-# %%
+# %% Test plot of win probability across a match
+
+#Extract samples from a match ID
+#The selected match here is a somewhat one-sided away team win I think
+sampleMatchId = 80051001
+
+#Extract the score flow data for this match
+sampleMatch = df_scoringData.loc[(df_scoringData['matchId'] == sampleMatchId),]
+
+#Drop the columns we don't need
+sampleMatch.drop(['matchId', 'homeSquadId', 'awaySquadId', 'homeWin'],
+                 axis = 1, inplace = True)
+
+#Get the win probability for the home team based on the model
+sampleMatchProbs = rfModel.predict_proba(sampleMatch)[:, 1]
+
+#Plot probability (< 50% = away probability favour)
+fig = plt.figure()
+plt.plot(sampleMatch['secondsRem'], sampleMatchProbs)
+
+###### This seems to be a pretty unbalanced option in the first palce, the home
+###### team is given barely any chance to win, and then goes down by 15 goals anyway...
+
+#Check on a more balanced match
+#Round 12 Firebirds vs. Steel in the ANZC 2009 (result 52-50, team ratings close)
+#Small home team win -- away team gets up at beginning by ~ 5 goals though
+sampleMatchId = 80051205
+
+#Extract the score flow data for this match
+sampleMatch = df_scoringData.loc[(df_scoringData['matchId'] == sampleMatchId),]
+
+###### Need to check allocation of score flow data as this match seems wrong...?
+
+#Drop the columns we don't need
+sampleMatch.drop(['matchId', 'homeSquadId', 'awaySquadId', 'homeWin'],
+                 axis = 1, inplace = True)
+
+#Get the win probability for the home team based on the model
+sampleMatchProbs = rfModel.predict_proba(sampleMatch)[:, 1]
+
+#Plot probability (< 50% = away probability favour)
+fig = plt.figure()
+plt.plot(sampleMatch['secondsRem'], sampleMatchProbs)
+
+###### The probabilities also don't make sense here? There is barely any difference 
+###### at the beginning yet it predicts a 100% home win probability???
