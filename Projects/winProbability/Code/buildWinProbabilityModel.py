@@ -12,6 +12,13 @@ This code develops a win probability model using a random forest implementation.
 
 TODO: add more detailed notes...
 
+TODO: could also consider RF regression for margin prediction...
+
+TODO: current model contains 2020 data --- not accurate due to super shot
+and needs to be removed!!!!!
+
+TODO: the home team and away team biggest runs are wrong
+
 Resources:
     
     https://towardsdatascience.com/an-implementation-and-explanation-of-the-random-forest-in-python-77bf308a9b76
@@ -26,6 +33,7 @@ import os
 import json
 import math
 import numpy as np
+import random
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import precision_score, recall_score, roc_auc_score, roc_curve, confusion_matrix
@@ -222,7 +230,8 @@ for mm in range(0,len(matchIdList)):
     diffGlickoRating = homeSquadGlicko - awaySquadGlicko
     
     #Extract the current matches score flow data
-    df_currMatchScoreFlow = df_scoreFlow.loc[(df_scoreFlow['matchId'] == matchId),]
+    df_currMatchScoreFlow = df_scoreFlow.loc[(df_scoreFlow['matchId'] == matchId) &
+                                             (df_scoreFlow['scorePoints'] == 1),]
     df_currMatchScoreFlow.reset_index(inplace = True)
     
     #Check and see if the home team won the match
@@ -385,31 +394,39 @@ df_scoringData = pd.DataFrame.from_dict(scoringData)
 
 #Set random seed to ensure reproducible runs
 rSeed = 123
+random.seed(rSeed)
+
+#Set a 70:30 split of the match ID's for training and test datasets
+#Calculate number of matches for training set
+nTrainingMatches = round(len(matchIdList)*0.7)
+trainMatchIdList = random.sample(list(matchIdList),nTrainingMatches)
+testMatchIdList = list(np.setdiff1d(list(matchIdList),trainMatchIdList))
+
+#Get the data for the model
 
 #First we'll take out any draws in the dataset for simplicity, and relable home
 #wins as 1 and losses as zero
 df_modelData = df_scoringData.loc[(df_scoringData['homeWin'].isin([-1,1])),]
 
-#Create a dataframe for the model with only the necessary variables
-##### NOTE: this is where dataframes can be combined if needed
+#Extract the training & test data based on the match list
+train = df_modelData.loc[(df_modelData['matchId'].isin(trainMatchIdList)),]
+test = df_modelData.loc[(df_modelData['matchId'].isin(testMatchIdList)),]
+train.reset_index(inplace = True, drop = True)
+test.reset_index(inplace = True, drop = True)
 
-#Drop the columns we don't want
-df_modelData.drop(['matchId', 'homeSquadId', 'awaySquadId'],
-                  axis = 1, inplace = True)
+#Get the labels for the training and test datasets
+#First replace the home win variable as 1 and 0 for win/loss
+train['homeWin'].replace(to_replace = -1, value = 0, inplace = True)
+test['homeWin'].replace(to_replace = -1, value = 0, inplace = True)
+#Extract the labels for the two datasets
+trainLabels = np.array(train.pop('homeWin'))
+testLabels = np.array(test.pop('homeWin'))
 
-#Replace the -1 for losses with zero
-df_modelData['homeWin'].replace(to_replace = -1, value = 0, inplace = True)
-
-#Extract the labels for the homeWin variable
-labels = np.array(df_modelData.pop('homeWin'))
-
-#Create the train test split for the model
-#Currently at a 70:30 split
-train, test, train_labels, test_labels = train_test_split(df_modelData,
-                                                          labels, 
-                                                          stratify = labels,
-                                                          test_size = 0.3, 
-                                                          random_state = rSeed)
+#Drop the columns we don't want from the datasets
+train.drop(['matchId', 'homeSquadId', 'awaySquadId'],
+           axis = 1, inplace = True)
+test.drop(['matchId', 'homeSquadId', 'awaySquadId'],
+          axis = 1, inplace = True)
 
 #Create the random forest model with 100 trees
 ##### TODO: adjust hyperparameters...
@@ -424,7 +441,7 @@ rfModel = RandomForestClassifier(n_estimators = 100,
                                  n_jobs = -1, verbose = 1)
 
 #Fit the model on the training data
-rfModel.fit(train, train_labels)
+rfModel.fit(train, trainLabels)
 
 #Print some details about forest
 n_nodes = []
@@ -444,27 +461,27 @@ def evaluateModel(predictions, probs, train_predictions, train_probs):
     
     baseline = {}
     
-    baseline['recall'] = recall_score(test_labels, [1 for _ in range(len(test_labels))])
-    baseline['precision'] = precision_score(test_labels, [1 for _ in range(len(test_labels))])
+    baseline['recall'] = recall_score(testLabels, [1 for _ in range(len(testLabels))])
+    baseline['precision'] = precision_score(testLabels, [1 for _ in range(len(testLabels))])
     baseline['roc'] = 0.5
     
     results = {}
     
-    results['recall'] = recall_score(test_labels, predictions)
-    results['precision'] = precision_score(test_labels, predictions)
-    results['roc'] = roc_auc_score(test_labels, probs)
+    results['recall'] = recall_score(testLabels, predictions)
+    results['precision'] = precision_score(testLabels, predictions)
+    results['roc'] = roc_auc_score(testLabels, probs)
     
     train_results = {}
-    train_results['recall'] = recall_score(train_labels, train_predictions)
-    train_results['precision'] = precision_score(train_labels, train_predictions)
-    train_results['roc'] = roc_auc_score(train_labels, train_probs)
+    train_results['recall'] = recall_score(trainLabels, train_predictions)
+    train_results['precision'] = precision_score(trainLabels, train_predictions)
+    train_results['roc'] = roc_auc_score(trainLabels, train_probs)
     
     for metric in ['recall', 'precision', 'roc']:
         print(f'{metric.capitalize()} Baseline: {round(baseline[metric], 2)} Test: {round(results[metric], 2)} Train: {round(train_results[metric], 2)}')
     
     # Calculate false positive rates and true positive rates
-    base_fpr, base_tpr, _ = roc_curve(test_labels, [1 for _ in range(len(test_labels))])
-    model_fpr, model_tpr, _ = roc_curve(test_labels, probs)
+    base_fpr, base_tpr, _ = roc_curve(testLabels, [1 for _ in range(len(testLabels))])
+    model_fpr, model_tpr, _ = roc_curve(testLabels, probs)
 
     plt.figure(figsize = (8, 6))
     plt.rcParams['font.size'] = 16
@@ -529,13 +546,18 @@ rfTestProbs = rfModel.predict_proba(test)[:, 1]
 evaluateModel(rfTestPredictions, rfTestPredictions,
               rfTrainPredictions, rfTrainProbs)
 
-##### Addition of team ratings makes model pretty damn accurate...even without
-##### any parameter adjustment...
+##### Addition of team ratings makes model do alright --- ROC of 0.79
 
 #Create the confusion matrix
-confMat = confusion_matrix(test_labels, rfTestPredictions)
+confMat = confusion_matrix(testLabels, rfTestPredictions)
 plotConfusionMatrix(confMat, classes = ['Loss', 'Win'], normalize = True,
                     title = 'Match Outcome Confusion Matrix')
+
+#### Given errors in runs, model still does fine without them when tested...
+
+##### Confusion matrix looks OK, but given we expect our win/loss prediction 
+##### to actually be wrong sometimes (i.e. with in-game probability), not sure
+##### how 'good' this needs to be???
 
 #Check feature importance
 featureImportance = pd.DataFrame({'feature': list(train.columns),
@@ -572,7 +594,7 @@ for pp in range(0,len(probBins)-1):
     avgPredProb.append(np.mean(rfTestProbs[valInds[0]]))
     
     #Extract the win/loss variable from the test set based on the indices
-    binWins = test_labels[valInds[0]]
+    binWins = testLabels[valInds[0]]
     
     #Calculate the rate of wins in the current bin relative to the total, append to list
     actualProb.append(np.count_nonzero(binWins == 1) / len(binWins))
@@ -597,7 +619,7 @@ fig.tight_layout()
 ##### In comparison, when predicting probability at ~90%, the actual win probability
 ##### is at ~70%
 
-##### The addition of team ratings, even at their most basic makes the model quite
+##### The addition of team ratings, even at their most basic makes the model fairly
 ##### accurate in its predictions...
 
 ##### Hyperparameter tuning may be a good option:
@@ -607,46 +629,86 @@ fig.tight_layout()
 # %% Test plot of win probability across a match
 
 #Extract samples from a match ID
-#The selected match here is a somewhat one-sided away team win I think
-sampleMatchId = 80051001
+#Grab the first match from the test probability set
+sampleMatchId = testMatchIdList[0]
 
-#Extract the score flow data for this match
-sampleMatch = df_scoringData.loc[(df_scoringData['matchId'] == sampleMatchId),]
+#Figure out which match this is
+df_sampleMatch = df_matchInfo.loc[(df_matchInfo['id'] == sampleMatchId),]
 
-#Drop the columns we don't need
-sampleMatch.drop(['matchId', 'homeSquadId', 'awaySquadId', 'homeWin'],
-                 axis = 1, inplace = True)
+##### This looks like a somewhat imbalanced match between the Magic and Steel
+##### (i.e. a 7 goal win to the Magic [home team]). Given it is round 2 though,
+##### both teams had an identical glicko2 rating given they both won their first
+##### games 
 
-#Get the win probability for the home team based on the model
-sampleMatchProbs = rfModel.predict_proba(sampleMatch)[:, 1]
+#Check the score flow for this match
+df_sampleScoringData = df_scoringData.loc[(df_scoringData['matchId'] == sampleMatchId),]
 
-#Plot probability (< 50% = away probability favour)
-fig = plt.figure()
-plt.plot(sampleMatch['secondsRem'], sampleMatchProbs)
+##### The Steel get out to a bit of a lead early on in the match, but then the Magic
+##### take over, holding the lead and pushing it out towards the end of the match
 
-###### This seems to be a pretty unbalanced option in the first palce, the home
-###### team is given barely any chance to win, and then goes down by 15 goals anyway...
+#Figure out which rows in the test probabilities correspond to this match
+testMatchIdVals = df_modelData.loc[(df_modelData['matchId'].isin(testMatchIdList)),
+                                   ['matchId']]
+testMatchIdVals.reset_index(inplace = True)
+idMask = testMatchIdVals['matchId'] == sampleMatchId
 
-#Check on a more balanced match
-#Round 12 Firebirds vs. Steel in the ANZC 2009 (result 52-50, team ratings close)
-#Small home team win -- away team gets up at beginning by ~ 5 goals though
-sampleMatchId = 80051205
-
-#Extract the score flow data for this match
-sampleMatch = df_scoringData.loc[(df_scoringData['matchId'] == sampleMatchId),]
-
-###### Need to check allocation of score flow data as this match seems wrong...?
-
-#Drop the columns we don't need
-sampleMatch.drop(['matchId', 'homeSquadId', 'awaySquadId', 'homeWin'],
-                 axis = 1, inplace = True)
-
-#Get the win probability for the home team based on the model
-sampleMatchProbs = rfModel.predict_proba(sampleMatch)[:, 1]
+#Extract the model test probabilities for the current match based on the mask
+#This assumes they are in progressive order in the array, which they should be...
+sampleMatchProbs = rfTestProbs[idMask]
 
 #Plot probability (< 50% = away probability favour)
 fig = plt.figure()
-plt.plot(sampleMatch['secondsRem'], sampleMatchProbs)
+plt.plot(sampleMatchProbs)
 
-###### The probabilities also don't make sense here? There is barely any difference 
-###### at the beginning yet it predicts a 100% home win probability???
+##### The first probabiliyt value seems off for what this game set-up was, the
+##### second value seems like where it should start. The model seems to do what 
+##### it should, albeit it is a bit too reactive to the initial scoreline (i.e.
+##### the Steel got up a bit early, and the Magic's probability was shifted quite
+##### low --- although this could be common for netball). Still, it is reactive in
+##### certain places jumping from 80% to 40% seemingly from one goal --- this could
+##### be due to the model including factors that aren't that contextual to the current
+##### game time (i.e. the Steel's best run in this instance was high from early, but
+##### this should hold less weight in the later match situation). 
+
+# %% Test another plot
+
+#Extract samples from a match ID
+#Grab the first match from the test probability set
+sampleMatchId = testMatchIdList[123]
+
+#Figure out which match this is
+df_sampleMatch = df_matchInfo.loc[(df_matchInfo['id'] == sampleMatchId),]
+
+##### This looks like a close match (3 goal home win) between NSW Swifts and
+##### Adelaide thunderbirds. The home teams rating is a fair bit higher than
+##### the away team here - so should start off somewhat imbalanced.
+
+#Check the score flow for this match
+df_sampleScoringData = df_scoringData.loc[(df_scoringData['matchId'] == sampleMatchId),]
+
+##### The Steel get out to a bit of a lead early on in the match, but then the Magic
+##### take over, holding the lead and pushing it out towards the end of the match
+
+#Figure out which rows in the test probabilities correspond to this match
+testMatchIdVals = df_modelData.loc[(df_modelData['matchId'].isin(testMatchIdList)),
+                                   ['matchId']]
+testMatchIdVals.reset_index(inplace = True)
+idMask = testMatchIdVals['matchId'] == sampleMatchId
+
+#Extract the model test probabilities for the current match based on the mask
+#This assumes they are in progressive order in the array, which they should be...
+sampleMatchProbs = rfTestProbs[idMask]
+
+#Plot probability (< 50% = away probability favour)
+fig = plt.figure()
+plt.plot(sampleMatchProbs)
+
+##### The team ratings seem to be taking over in this instance, while despite the
+##### match being close --- the lowly ranked away team is never given a chance. This
+##### could be accurate, but also doesn't seem to fit right with the close nature of
+##### netball and games turning quickly. It could also be the fact that there are a few
+##### variables relating to team rating that could skew model
+
+# %%
+
+##### TODO: There are a few key issues to iron out
