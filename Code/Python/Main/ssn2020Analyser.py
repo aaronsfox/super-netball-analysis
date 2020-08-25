@@ -94,7 +94,6 @@ df_scoreFlow = dataImport['df_scoreFlow']
 df_lineUp = dataImport['df_lineUp']
 df_individualLineUp = dataImport['df_individualLineUp']
 
-
 # %% Plots to consider...
 
 #There's a number of plot options I want to test:
@@ -135,7 +134,7 @@ bokehOptions = dict(tools = ['wheel_zoom,box_zoom'])
 os.chdir('..\\..\\Figures\\TwoPointAnalysis\\RoundByRound')
 
 #Set round to plot
-round2Plot = 5
+round2Plot = 6
 
 #Total one vs. two point shots
 figHelper.totalPointsOneVsTwo(round2Plot = round2Plot, matchInfo = matchInfo,
@@ -158,7 +157,7 @@ figHelper.teamShotRatiosInnerVsOuter(round2Plot = round2Plot, matchInfo = matchI
 # %% Individual player two-point scoring
 
 #Set round to plot
-round2Plot = 5
+round2Plot = 6
 
 #Total two-point score
 figHelper.playerTwoPointTotals(round2Plot = round2Plot, df_scoreFlow = df_scoreFlow,
