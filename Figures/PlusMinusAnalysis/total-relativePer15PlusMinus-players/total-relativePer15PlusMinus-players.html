@@ -1,0 +1,85 @@
+
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+  
+  <head>
+    
+      <meta charset="utf-8">
+      <title>Bokeh Plot</title>
+      
+      
+        
+          
+        
+        
+          
+        <script type="text/javascript" src="https://cdn.bokeh.org/bokeh/release/bokeh-2.1.1.min.js" integrity="sha384-kLr4fYcqcSpbuI95brIH3vnnYCquzzSxHPU6XGQCIkQRGJwhg0StNbj1eegrHs12" crossorigin="anonymous"></script>
+        <script type="text/javascript">
+            Bokeh.set_log_level("info");
+        </script>
+        
+      
+      
+    
+  </head>
+  
+  
+  <body>
+    
+      
+        
+          
+          
+            
+              <div class="bk-root" id="d3ecde46-3517-4d86-8548-ac9c5a314d4c" data-root-id="8236"></div>
+            
+          
+        
+      
+      
+        <script type="application/json" id="8438">
+          {"3d7762a3-80dd-4d42-bb16-4bd18daae54c":{"roots":{"references":[{"attributes":{"formatter":{"id":"8265"},"major_label_orientation":1,"ticker":{"id":"8248"}},"id":"8247","type":"CategoricalAxis"},{"attributes":{"below":[{"id":"8247"}],"center":[{"id":"8249"},{"id":"8253"}],"left":[{"id":"8250"}],"plot_height":400,"plot_width":800,"renderers":[{"id":"8260"}],"title":{"id":"8237"},"toolbar":{"id":"8255"},"toolbar_location":null,"x_range":{"id":"8239"},"x_scale":{"id":"8243"},"y_range":{"id":"8241"},"y_scale":{"id":"8245"}},"id":"8236","subtype":"Figure","type":"Plot"},{"attributes":{},"id":"8251","type":"BasicTicker"},{"attributes":{},"id":"8267","type":"Selection"},{"attributes":{"axis_label":"Relative Plus/Minus per 15 Minutes","formatter":{"id":"8263"},"ticker":{"id":"8251"}},"id":"8250","type":"LinearAxis"},{"attributes":{"source":{"id":"8235"}},"id":"8261","type":"CDSView"},{"attributes":{},"id":"8245","type":"LinearScale"},{"attributes":{"start":0},"id":"8241","type":"DataRange1d"},{"attributes":{"data":{"colours":["#4b2c69","#4b2c69","#4b2c69","#f57921","#e54078","#00a68e","#f57921","#fdb61c","#0082cd","#00a68e","#fdb61c","#0082cd","#e54078","#4b2c69","#00a68e","#4b2c69","#f57921","#00953b","#00a68e","#00953b"],"counts":[12.970489898172051,12.65563977030405,10.229147999532511,7.877695297997765,7.115245898607284,6.770828667580408,5.431868632416975,4.862386914167637,4.852805270929038,4.517666549964888,3.9345963782691022,3.893235313219334,3.3255337157781555,3.2603521000720286,3.1751315414768024,3.1490156968006398,2.6385672620811795,2.3734499811713103,2.3733214329181713,2.2416943339423785],"durationOff":[20.333333333333332,9.616666666666667,55.416666666666664,45.083333333333336,5.85,34.53333333333333,8.016666666666667,11.083333333333334,67.21666666666667,55.78333333333333,35.88333333333333,63.9,131.58333333333334,75.96666666666667,21.166666666666668,65.85,21.516666666666666,49.25,11.683333333333334,20.766666666666666],"durationOn":[401.56666666666666,412.3,366.7,376.4,415.9,387.9,413.3666666666667,411.35,355.78333333333336,366.7,386.73333333333335,359.03333333333336,290.35,346.05,401.3833333333333,356.23333333333335,400.0833333333333,372.71666666666664,410.81666666666666,401.28333333333336],"players":["R.Aiken","K.Jenner","T.Dwan","S.Poolman","S.Sterling","K.Moloney","J.Price","K.Pretorius","P.Hadley","E.Mannix","S.Wood","S.Craig","G.Horjus","M.Cassidy","J.Weston","T.Hinchliffe","K.Austin","V.Charles","K.Eddy","J.Anstiss"],"squad":["Firebirds","Firebirds","Firebirds","GIANTS","Thunderbirds","Vixens","GIANTS","Lightning","Swifts","Vixens","Lightning","Swifts","Thunderbirds","Firebirds","Vixens","Firebirds","GIANTS","Fever","Vixens","Fever"]},"selected":{"id":"8267"},"selection_policy":{"id":"8268"}},"id":"8235","type":"ColumnDataSource"},{"attributes":{"fill_alpha":{"value":0.1},"fill_color":{"field":"colours"},"line_alpha":{"value":0.1},"line_color":{"field":"colours"},"top":{"field":"counts"},"width":{"value":0.6},"x":{"field":"players"}},"id":"8259","type":"VBar"},{"attributes":{},"id":"8268","type":"UnionRenderers"},{"attributes":{"axis":{"id":"8247"},"grid_line_color":null,"ticker":null},"id":"8249","type":"Grid"},{"attributes":{"factors":["R.Aiken","K.Jenner","T.Dwan","S.Poolman","S.Sterling","K.Moloney","J.Price","K.Pretorius","P.Hadley","E.Mannix","S.Wood","S.Craig","G.Horjus","M.Cassidy","J.Weston","T.Hinchliffe","K.Austin","V.Charles","K.Eddy","J.Anstiss"],"range_padding":0.1},"id":"8239","type":"FactorRange"},{"attributes":{"fill_color":{"field":"colours"},"line_color":{"field":"colours"},"top":{"field":"counts"},"width":{"value":0.6},"x":{"field":"players"}},"id":"8258","type":"VBar"},{"attributes":{},"id":"8263","type":"BasicTickFormatter"},{"attributes":{"align":"center","text":"Top 20 Players for Plus/Minus per 15 Minute when On vs. Off Court (min. 10 minutes on &amp; 5 minutes off court)"},"id":"8237","type":"Title"},{"attributes":{"axis":{"id":"8250"},"dimension":1,"ticker":null},"id":"8253","type":"Grid"},{"attributes":{},"id":"8265","type":"CategoricalTickFormatter"},{"attributes":{"data_source":{"id":"8235"},"glyph":{"id":"8258"},"hover_glyph":null,"muted_glyph":null,"nonselection_glyph":{"id":"8259"},"selection_glyph":null,"view":{"id":"8261"}},"id":"8260","type":"GlyphRenderer"},{"attributes":{},"id":"8248","type":"CategoricalTicker"},{"attributes":{},"id":"8243","type":"CategoricalScale"},{"attributes":{"callback":null,"tooltips":[["Player","@players"],["Team","@squad"],["Minutes On-Court","@durationOn"],["Minutes Off-Court","@durationOff"],["Relative Plus/Minus per 15 Minutes","@counts"]]},"id":"8254","type":"HoverTool"},{"attributes":{"active_drag":"auto","active_inspect":"auto","active_multi":null,"active_scroll":"auto","active_tap":"auto","tools":[{"id":"8254"}]},"id":"8255","type":"Toolbar"}],"root_ids":["8236"]},"title":"Bokeh Application","version":"2.1.1"}}
+        </script>
+        <script type="text/javascript">
+          (function() {
+            var fn = function() {
+              Bokeh.safely(function() {
+                (function(root) {
+                  function embed_document(root) {
+                    
+                  var docs_json = document.getElementById('8438').textContent;
+                  var render_items = [{"docid":"3d7762a3-80dd-4d42-bb16-4bd18daae54c","root_ids":["8236"],"roots":{"8236":"d3ecde46-3517-4d86-8548-ac9c5a314d4c"}}];
+                  root.Bokeh.embed.embed_items(docs_json, render_items);
+                
+                  }
+                  if (root.Bokeh !== undefined) {
+                    embed_document(root);
+                  } else {
+                    var attempts = 0;
+                    var timer = setInterval(function(root) {
+                      if (root.Bokeh !== undefined) {
+                        clearInterval(timer);
+                        embed_document(root);
+                      } else {
+                        attempts++;
+                        if (attempts > 100) {
+                          clearInterval(timer);
+                          console.log("Bokeh: ERROR: Unable to run BokehJS code because BokehJS library is missing");
+                        }
+                      }
+                    }, 10, root)
+                  }
+                })(window);
+              });
+            };
+            if (document.readyState != "loading") fn();
+            else document.addEventListener("DOMContentLoaded", fn);
+          })();
+        </script>
+    
+  </body>
+  
+</html>
