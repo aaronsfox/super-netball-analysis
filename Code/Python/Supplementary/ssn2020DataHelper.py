@@ -712,6 +712,104 @@ def getMatchData(jsonFileList = None, df_squadLists = None,
                     
         ##### TODO: extract game statistics data
     
+    
+    
+    
+    
+    
+    # #Summarise substitution data
+    
+    # #Convert to dataframe
+    # df_substitutionData = pd.DataFrame.from_dict(substitutionData)
+    
+    # #Create a new column that converts substitution timing to be relative to
+    # #the quarter in the match (i.e. 0-1, 1-2, 2-3, 3-4)
+    # normSubTime = list()
+    # for ss in range(0,len(df_substitutionData)):
+        
+    #     #Get appropriate match and round timing data
+    #     roundBool = df_substitutionData['roundNo'][ss] == matchInfo['roundNo']
+    #     matchBool = df_substitutionData['matchNo'][ss] == matchInfo['matchNo']
+    #     bothBool = [a and b for a, b in zip(roundBool,matchBool)]
+    #     bothBoolInd = bothBool.index(bothBool == True) - 1
+    #     currPeriodSeconds = matchInfo['periodSeconds'][bothBoolInd]
+        
+    #     #Normalise current substitution data to period seconds
+    #     #Get current period index
+    #     periodInd = df_substitutionData['period'][ss]-1
+    #     #Normalise to seconds and append (ensure adding quarter val too)
+    #     normSubTime.append(df_substitutionData['periodSeconds'][ss] / currPeriodSeconds[periodInd] + periodInd)
+        
+    # #Append to dataframe
+    # df_substitutionData['normSubTime'] = normSubTime
+    
+    # #Calculate some summary substitution statistics
+    
+    # #Get unique squad ID's from substitution data
+    # squadIds = df_substitutionData['squadId'].unique()
+    # df_teamInfo = pd.DataFrame.from_dict(teamInfo)
+
+    # #Print heading
+    # print('Total number of substitutions by teams:')
+    
+    # #Loop through squads
+    # for tt in range(0,len(squadIds)):
+        
+    #     #Get the current squads total points
+    #     totalSubs = len(df_substitutionData.loc[(df_substitutionData['squadId'] == squadIds[tt]) &
+    #                                             (df_substitutionData['fromPos'] == 'S'),])
+        
+    #     #Get the total number of games played
+    #     totalGames = len(df_substitutionData['roundNo'].unique())
+        
+    #     #Calculate subs per game
+    #     perSubs = totalSubs/totalGames
+        
+    #     #Get the current team name
+    #     currTeamName = df_teamInfo.squadName[df_teamInfo['squadId'] == squadIds[tt]].reset_index()['squadName'][0]
+        
+    #     #Print results
+    #     print(currTeamName+': '+str(totalSubs)+' Total Subs ('+str(round(perSubs,2))+' per game)')
+        
+    # #Plot a histogram of normalised sub time to determine details of when they
+    # #are occurring
+    # from matplotlib import pyplot as plt
+    # num_bins = 40
+    # df_currSubs = df_substitutionData.loc[(df_substitutionData['fromPos'] == 'S')]
+    # plt.hist(df_currSubs['normSubTime'], num_bins, facecolor='blue', alpha=0.5)
+    # plt.show()
+    
+    # #Loop through squads and see if any differences
+    # colourDict = {'Fever': '#00953b',
+    #           'Firebirds': '#4b2c69',
+    #           'GIANTS': '#f57921',
+    #           'Lightning': '#fdb61c',
+    #           'Magpies': '#494b4a',
+    #           'Swifts': '#0082cd',
+    #           'Thunderbirds': '#e54078',
+    #           'Vixens': '#00a68e'}
+    
+    # for tt in range(0,len(squadIds)):    
+        
+    #     #Get current team name
+    #     currTeamName = df_teamInfo.squadNickname[df_teamInfo['squadId'] == squadIds[tt]].reset_index()['squadNickname'][0]
+    #     currColour = colourDict[currTeamName]
+        
+    #     #Plot histogram
+    #     num_bins = 40
+    #     plt.figure()
+    #     df_currSubs = df_substitutionData.loc[(df_substitutionData['squadId'] == squadIds[tt]) &
+    #                                           (df_substitutionData['fromPos'] == 'S')]
+    #     plt.hist(df_currSubs['normSubTime'], num_bins, facecolor = currColour, alpha=0.5)
+    #     plt.title(currTeamName)
+    #     plt.show()
+        
+        
+    
+    
+    
+    
+    
     #Export data
     
     #Set a dictionary to pack data in to

@@ -2,13 +2,9 @@
 #Netball season using the superNetballR package. As such it needs to be
 #installed using:
 
-# .libPaths("\\\\aafox.homes.deakin.edu.au/my-home/My Documents/R/win-library/4.0")
 # library(remotes)
 
 # remotes::install_github("SteveLane/superNetballR")
-
-#Set libPaths to the conda environment
-.libPaths("C:/Users/aafox/AppData/Local/Continuum/anaconda3/envs/super_netball_analysis_r/Lib/R/library")
 
 #Load appropriate packages
 library(dplyr)
@@ -25,7 +21,7 @@ library(jsonlite)
 compID = "11108"
 
 #Set round to grab
-getRound = 6 ##### Change this for whichever round is desired
+getRound = 7 ##### Change this for whichever round is desired
 
 #Loop through the four matches and save as .json
 for (mm in 1:4) {

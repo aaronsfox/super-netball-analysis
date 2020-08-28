@@ -134,7 +134,7 @@ bokehOptions = dict(tools = ['wheel_zoom,box_zoom'])
 os.chdir('..\\..\\Figures\\TwoPointAnalysis\\RoundByRound')
 
 #Set round to plot
-round2Plot = 6
+round2Plot = 7
 
 #Total one vs. two point shots
 figHelper.totalPointsOneVsTwo(round2Plot = round2Plot, matchInfo = matchInfo,
@@ -157,7 +157,7 @@ figHelper.teamShotRatiosInnerVsOuter(round2Plot = round2Plot, matchInfo = matchI
 # %% Individual player two-point scoring
 
 #Set round to plot
-round2Plot = 6
+round2Plot = 7
 
 #Total two-point score
 figHelper.playerTwoPointTotals(round2Plot = round2Plot, df_scoreFlow = df_scoreFlow,
@@ -176,6 +176,66 @@ figHelper.playerTwoPointRelativeDifferentials(round2Plot = round2Plot, df_scoreF
                                               df_playerInfo = df_playerInfo, df_teamInfo = df_teamInfo,
                                               colourDict = colourDict, showPlot = False,
                                               exportPNG = True, exportHTML = True)
+
+# %% Calculate some basic season statistics
+
+#Calculate total proportion of score for each team from super vs. standard shots
+
+#Get unique squad ID's from score flow data
+squadIds = df_scoreFlow['squadId'].unique()
+
+#Print heading
+print('Proportion of total score from Super Shots:')
+
+#Loop through squads
+for tt in range(0,len(squadIds)):
+    
+    #Get the current squads total points
+    totalPts = df_scoreFlow.loc[(df_scoreFlow['squadId'] == squadIds[tt]),
+                     ['scorePoints']].sum()[0]
+    
+    #Get the current squads super shot points
+    superPts = df_scoreFlow.loc[(df_scoreFlow['squadId'] == squadIds[tt]) & 
+                                (df_scoreFlow['scoreName'] == '2pt Goal'),
+                                ['scorePoints']].sum()[0]
+    
+    #Calculate proportion
+    currProp = superPts / totalPts * 100
+    
+    #Get the current team name
+    currTeamName = df_teamInfo.squadName[df_teamInfo['squadId'] == squadIds[tt]].reset_index()['squadName'][0]
+    
+    #Print results
+    print(currTeamName+': '+str(round(currProp,2))+'%')
+
+#Calculate total proportion of score for each team from super vs. standard shots
+#but in the Rebel Power 5
+
+#Print heading
+print('Proportion of total score from Super Shots during Rebel Power 5:')
+
+#Loop through squads
+for tt in range(0,len(squadIds)):
+    
+    #Get the current squads total points
+    totalPts = df_scoreFlow.loc[(df_scoreFlow['squadId'] == squadIds[tt]) &
+                                (df_scoreFlow['periodCategory'] == 'twoPoint'),
+                                ['scorePoints']].sum()[0]
+    
+    #Get the current squads super shot points
+    superPts = df_scoreFlow.loc[(df_scoreFlow['squadId'] == squadIds[tt]) & 
+                                (df_scoreFlow['periodCategory'] == 'twoPoint') &
+                                (df_scoreFlow['scoreName'] == '2pt Goal'),
+                                ['scorePoints']].sum()[0]
+    
+    #Calculate proportion
+    currProp = superPts / totalPts * 100
+    
+    #Get the current team name
+    currTeamName = df_teamInfo.squadName[df_teamInfo['squadId'] == squadIds[tt]].reset_index()['squadName'][0]
+    
+    #Print results
+    print(currTeamName+': '+str(round(currProp,2))+'%')
 
 # %% Plus/minus figures
 
@@ -203,6 +263,10 @@ figHelper.relativePlayerPlusMinus(teamInfo = teamInfo, playerInfo = playerInfo,
                                   perDivider = 15, minDurationOn = 10, minDurationOff = 5, nPlayers = 20,
                                   colourDict = colourDict, showPlot = False,
                                   exportPNG = True, exportHTML = True)
+
+# %% Calculate some basic substitution statistics
+
+#### SEE DATA HELPER FUNCTION...
     
 # %% Super shot period score simulator
 

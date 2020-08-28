@@ -3,67 +3,76 @@ Fever,J.Fowler,A.Teague-Neeld,I.Colyer,V.Charles,J.Anstiss,S.Aryang,O.Lewis,17.4
 Thunderbirds,L.Potgieter,G.Horjus,M.Nankivell,H.Petty,S.van der Merwe,L.Guscoth,S.Sterling,10.333333333333334,6,8.709677419354838
 Vixens,M.Kumwenda,T.Philip,L.Watson,K.Moloney,K.Eddy,J.Weston,E.Mannix,26.55,15,8.474576271186441
 Magpies,S.Nelson,N.Allen,M.Browne,M.Jovic,M.Bragg,J.Ward,G.Mentor,12.633333333333333,7,8.311345646437996
-Swifts,S.Wallace,H.Housby,N.Haythornthwaite,M.Proud,P.Hadley,S.Craig,S.Klau,11.133333333333333,5,6.736526946107785
-Thunderbirds,L.Potgieter,G.Horjus,C.Pitman,H.Petty,S.van der Merwe,L.Guscoth,S.Sterling,11.7,5,6.410256410256411
+Swifts,S.Wallace,H.Housby,M.Proud,P.Hadley,S.Craig,M.Turner,S.Klau,14.233333333333333,6,6.323185011709603
+Vixens,T.Philip,C.Thwaites,L.Watson,K.Moloney,K.Eddy,J.Weston,E.Mannix,30.0,11,5.5
 Magpies,S.Nelson,N.Allen,M.Browne,M.Jovic,J.Ward,M.Garrett,G.Mentor,10.933333333333334,4,5.48780487804878
 Fever,J.Fowler,A.Teague-Neeld,V.Charles,J.Anstiss,S.Francis,S.Aryang,O.Lewis,27.366666666666667,10,5.481120584652862
-Lightning,C.Koenen,S.Wood,L.Scherian,M.McAuliffe,L.Langman,K.Pretorius,P.Maweni,17.133333333333333,6,5.252918287937743
 Vixens,M.Kumwenda,T.Philip,L.Watson,K.Moloney,J.Weston,K.Eddy,E.Mannix,14.316666666666666,5,5.238649592549476
 Swifts,S.Wallace,S.Garbin,M.Proud,P.Hadley,S.Craig,L.Moore,S.Klau,17.883333333333333,6,5.032618825722274
-Firebirds,R.Aiken,T.Dwan,L.Dunkley,M.Gardner,G.Simpson,K.Jenner,T.Hinchliffe,12.8,4,4.6875
 Vixens,M.Kumwenda,C.Thwaites,L.Watson,K.Moloney,J.Weston,K.Eddy,E.Mannix,22.85,7,4.595185995623632
 Swifts,S.Garbin,H.Housby,M.Proud,P.Hadley,S.Craig,S.Klau,L.Moore,30.366666666666667,9,4.445664105378705
+Swifts,S.Wallace,H.Housby,N.Haythornthwaite,M.Proud,P.Hadley,S.Craig,S.Klau,13.966666666666667,4,4.2959427207637235
+Firebirds,R.Aiken,T.Dwan,L.Dunkley,M.Gardner,G.Simpson,K.Jenner,T.Hinchliffe,18.666666666666668,5,4.017857142857142
 Lightning,P.Proscovia,C.Koenen,S.Wood,L.Langman,M.McAuliffe,K.Pretorius,P.Maweni,20.133333333333333,5,3.7251655629139075
 Magpies,S.Nelson,G.Sinclair,M.Browne,M.Jovic,M.Bragg,J.Ward,G.Mentor,25.133333333333333,6,3.580901856763926
 Vixens,C.Thwaites,T.Philip,L.Watson,K.Moloney,J.Weston,K.Eddy,E.Mannix,13.116666666666667,3,3.430749682337992
+Fever,J.Fowler,A.Teague-Neeld,I.Colyer,V.Charles,J.Anstiss,S.Francis,C.Bruce,70.91666666666667,16,3.3842538190364273
+Magpies,E.Ryde,G.Sinclair,K.Browne,K.Altmann,M.Bragg,J.Ward,G.Mentor,26.766666666666666,6,3.3623910336239105
 Magpies,S.Nelson,N.Allen,K.Browne,M.Jovic,M.Bragg,J.Ward,G.Mentor,13.383333333333333,3,3.3623910336239105
 Fever,J.Fowler,E.Cosh,I.Colyer,J.Anstiss,S.Francis,S.Aryang,C.Bruce,13.966666666666667,3,3.221957040572793
-Lightning,C.Koenen,S.Wood,L.Scherian,L.Langman,J.Russell,K.Pretorius,P.Maweni,63.31666666666667,13,3.07975783100816
 Vixens,M.Kumwenda,T.Philip,T.Honey,K.Moloney,K.Eddy,J.Weston,E.Mannix,10.05,2,2.9850746268656714
-Vixens,C.Thwaites,T.Philip,L.Watson,K.Moloney,K.Eddy,J.Weston,E.Mannix,124.46666666666667,22,2.6513122656668453
-Vixens,M.Kumwenda,C.Thwaites,L.Watson,K.Moloney,K.Eddy,J.Weston,E.Mannix,49.266666666666666,8,2.435723951285521
+Swifts,S.Wallace,H.Housby,M.Proud,P.Hadley,S.Craig,L.Moore,S.Klau,48.78333333333333,9,2.767338571916638
+Lightning,C.Koenen,S.Wood,L.Scherian,M.McAuliffe,L.Langman,K.Pretorius,P.Maweni,22.066666666666666,4,2.719033232628399
+Lightning,C.Koenen,S.Wood,L.Scherian,L.Langman,J.Russell,K.Pretorius,P.Maweni,73.41666666666667,12,2.4517593643586832
 Lightning,P.Proscovia,S.Wood,L.Scherian,L.Langman,J.Russell,K.Pretorius,P.Maweni,24.7,4,2.4291497975708505
 Vixens,M.Kumwenda,C.Thwaites,L.Watson,K.Moloney,K.Eddy,J.Weston,K.Dehaney,18.85,3,2.387267904509284
-Swifts,S.Wallace,H.Housby,M.Proud,P.Hadley,S.Craig,L.Moore,S.Klau,44.31666666666667,7,2.36931177134261
-Fever,J.Fowler,A.Teague-Neeld,I.Colyer,V.Charles,J.Anstiss,S.Francis,C.Bruce,34.2,5,2.1929824561403506
-Swifts,H.Housby,S.Garbin,N.Haythornthwaite,M.Proud,P.Hadley,S.Craig,S.Klau,15.0,2,2.0
-Lightning,C.Koenen,S.Wood,L.Scherian,L.Langman,M.McAuliffe,K.Pretorius,P.Maweni,143.46666666666667,19,1.9865241635687734
+Vixens,M.Kumwenda,C.Thwaites,L.Watson,K.Moloney,K.Eddy,J.Weston,E.Mannix,64.26666666666667,9,2.1006224066390042
+Swifts,S.Wallace,H.Housby,N.Haythornthwaite,P.Hadley,S.Craig,L.Moore,S.Klau,58.05,8,2.0671834625323
 Thunderbirds,L.Potgieter,G.Horjus,C.Pitman,T.Williams,M.Nankivell,L.Guscoth,S.Sterling,22.866666666666667,3,1.9679300291545188
-Swifts,S.Wallace,H.Housby,N.Haythornthwaite,P.Hadley,S.Craig,L.Moore,S.Klau,54.833333333333336,6,1.641337386018237
-GIANTS,C.Bassett,J.Harten,K.Austin,J.Price,A.Parmenter,K.Manu'a,S.Poolman,119.65,12,1.5043877977434184
+Fever,J.Fowler,K.Stanton,I.Colyer,V.Charles,J.Anstiss,S.Aryang,C.Bruce,23.4,3,1.9230769230769234
+Vixens,C.Thwaites,T.Philip,L.Watson,K.Moloney,K.Eddy,J.Weston,E.Mannix,139.46666666666667,17,1.8283938814531548
+GIANTS,C.Bassett,J.Harten,K.Austin,J.Price,A.Parmenter,K.Manu'a,S.Poolman,160.1,17,1.5927545284197377
 Swifts,S.Wallace,H.Housby,N.Haythornthwaite,M.Proud,S.Craig,L.Moore,S.Klau,10.35,1,1.4492753623188406
 Firebirds,R.Aiken,T.Dwan,J.Mi Mi,M.Cassidy,G.Simpson,K.Jenner,R.Ellis,21.116666666666667,2,1.420678768745067
-Firebirds,R.Aiken,T.Dwan,M.Gardner,M.Cassidy,G.Simpson,K.Jenner,T.Hinchliffe,14.85,1,1.0101010101010102
+Lightning,C.Koenen,S.Wood,L.Scherian,L.Langman,M.McAuliffe,K.Pretorius,P.Maweni,170.31666666666666,15,1.321068597710148
+Swifts,H.Housby,S.Garbin,N.Haythornthwaite,M.Proud,P.Hadley,M.Turner,S.Klau,13.283333333333333,1,1.1292346298619824
+Thunderbirds,L.Potgieter,G.Horjus,C.Pitman,H.Petty,S.van der Merwe,L.Guscoth,S.Sterling,14.15,1,1.0600706713780919
 Swifts,S.Wallace,H.Housby,M.Proud,T.Fraser,P.Hadley,S.Craig,S.Klau,15.0,1,1.0
 Magpies,S.Nelson,G.Sinclair,K.Browne,M.Browne,M.Jovic,M.Garrett,G.Mentor,15.983333333333333,1,0.9384775808133473
-GIANTS,J.Harten,K.Austin,M.Hay,J.Price,A.Parmenter,K.Manu'a,S.Poolman,117.88333333333334,7,0.8907111550968472
-Firebirds,R.Aiken,T.Dwan,J.Mi Mi,M.Cassidy,G.Simpson,K.Jenner,T.Hinchliffe,158.45,8,0.7573366992742191
+Firebirds,R.Aiken,T.Dwan,J.Mi Mi,M.Cassidy,G.Simpson,K.Jenner,T.Hinchliffe,184.76666666666668,10,0.8118347465271513
+Thunderbirds,L.Potgieter,G.Horjus,C.Pitman,M.Nankivell,S.van der Merwe,K.Shimmin,S.Sterling,74.4,4,0.8064516129032258
 Magpies,S.Nelson,G.Sinclair,M.Browne,M.Jovic,M.Bragg,M.Garrett,G.Mentor,21.933333333333334,1,0.6838905775075987
-Thunderbirds,L.Potgieter,G.Horjus,C.Pitman,M.Nankivell,S.van der Merwe,K.Shimmin,S.Sterling,70.03333333333333,2,0.42836744407425037
-Magpies,S.Nelson,G.Sinclair,K.Browne,M.Browne,M.Bragg,J.Ward,G.Mentor,71.83333333333333,2,0.41763341067285387
-Vixens,M.Kumwenda,T.Philip,L.Watson,K.Moloney,K.Eddy,J.Weston,K.Dehaney,13.166666666666666,0,0.0
-Fever,J.Fowler,K.Stanton,I.Colyer,V.Charles,J.Anstiss,S.Aryang,C.Bruce,20.033333333333335,0,0.0
+GIANTS,J.Harten,K.Austin,M.Hay,J.Price,A.Parmenter,K.Manu'a,S.Poolman,137.43333333333334,3,0.32743148193063304
 Lightning,C.Koenen,S.Wood,L.Scherian,J.Russell,L.Langman,K.Pretorius,P.Maweni,11.983333333333333,0,0.0
 Thunderbirds,S.Glasgow,G.Horjus,C.Pitman,H.Petty,M.Nankivell,L.Guscoth,S.Sterling,10.216666666666667,0,0.0
+Swifts,H.Housby,S.Garbin,N.Haythornthwaite,M.Proud,P.Hadley,L.Moore,S.Klau,14.783333333333333,0,0.0
+Lightning,P.Proscovia,C.Koenen,L.Scherian,L.Langman,M.McAuliffe,K.Pretorius,P.Maweni,11.233333333333333,0,0.0
+Vixens,M.Kumwenda,T.Philip,L.Watson,K.Moloney,K.Eddy,J.Weston,K.Dehaney,13.166666666666666,0,0.0
 Firebirds,R.Aiken,T.Dwan,L.Dunkley,M.Cassidy,G.Simpson,K.Jenner,T.Hinchliffe,34.8,-1,-0.4310344827586207
-Thunderbirds,L.Potgieter,G.Horjus,C.Pitman,M.Nankivell,S.van der Merwe,L.Guscoth,S.Sterling,56.46666666666667,-2,-0.5312868949232585
+Firebirds,R.Aiken,T.Dwan,M.Gardner,M.Cassidy,G.Simpson,K.Jenner,T.Hinchliffe,32.11666666666667,-1,-0.467047223663726
+Thunderbirds,L.Potgieter,G.Horjus,C.Pitman,M.Nankivell,S.van der Merwe,L.Guscoth,S.Sterling,90.71666666666667,-3,-0.4960499724416682
 Magpies,S.Nelson,G.Sinclair,K.Browne,M.Jovic,M.Bragg,J.Ward,G.Mentor,26.65,-1,-0.5628517823639775
+Fever,J.Fowler,A.Teague-Neeld,I.Colyer,V.Charles,J.Anstiss,S.Aryang,C.Bruce,24.716666666666665,-1,-0.6068779501011463
+Magpies,S.Nelson,G.Sinclair,K.Browne,M.Browne,M.Bragg,J.Ward,G.Mentor,90.6,-4,-0.6622516556291391
+Swifts,H.Housby,S.Garbin,N.Haythornthwaite,M.Proud,P.Hadley,S.Craig,S.Klau,18.383333333333333,-1,-0.8159564823209429
 Fever,J.Fowler,A.Teague-Neeld,I.Colyer,V.Charles,J.Anstiss,S.Francis,O.Lewis,66.05,-4,-0.9084027252081757
-Magpies,E.Ryde,G.Sinclair,K.Browne,M.Browne,M.Bragg,J.Ward,G.Mentor,42.0,-3,-1.0714285714285714
-Thunderbirds,L.Potgieter,S.Glasgow,C.Pitman,H.Petty,S.van der Merwe,L.Guscoth,S.Sterling,13.65,-1,-1.0989010989010988
 Lightning,C.Koenen,B.Hunt,L.Scherian,M.McAuliffe,L.Langman,K.Pretorius,P.Maweni,12.016666666666667,-1,-1.248266296809986
 Thunderbirds,L.Potgieter,G.Horjus,C.Pitman,T.Williams,S.van der Merwe,K.Shimmin,S.Sterling,11.05,-1,-1.3574660633484161
 Fever,J.Fowler,A.Teague-Neeld,V.Charles,J.Anstiss,S.Francis,S.Aryang,C.Bruce,32.53333333333333,-3,-1.3831967213114755
 GIANTS,C.Bassett,J.Harten,K.Austin,J.Price,A.Parmenter,K.Manu'a,M.McDonell,16.833333333333332,-2,-1.7821782178217822
 Fever,J.Fowler,K.Stanton,I.Colyer,V.Charles,J.Anstiss,S.Francis,C.Bruce,15.366666666666667,-2,-1.9522776572668112
 Thunderbirds,L.Potgieter,S.Gooden,C.Pitman,M.Nankivell,S.van der Merwe,K.Shimmin,S.Sterling,16.133333333333333,-3,-2.7892561983471076
+Magpies,E.Ryde,G.Sinclair,K.Browne,M.Browne,M.Bragg,M.Garrett,G.Mentor,19.183333333333334,-4,-3.1277150304083405
+Magpies,E.Ryde,G.Sinclair,K.Browne,M.Browne,M.Bragg,J.Ward,G.Mentor,48.96666666666667,-11,-3.3696392103471746
+Thunderbirds,L.Potgieter,S.Glasgow,C.Pitman,H.Petty,S.van der Merwe,L.Guscoth,S.Sterling,16.033333333333335,-4,-3.742203742203742
+Thunderbirds,L.Potgieter,S.Glasgow,C.Pitman,M.Nankivell,S.van der Merwe,L.Guscoth,S.Sterling,11.766666666666667,-3,-3.8243626062322944
 Swifts,S.Wallace,S.Garbin,N.Haythornthwaite,M.Proud,S.Craig,L.Moore,S.Klau,10.766666666666667,-3,-4.179566563467492
 Thunderbirds,L.Potgieter,S.Gooden,C.Pitman,H.Petty,M.Nankivell,S.van der Merwe,S.Sterling,21.1,-6,-4.265402843601895
 Swifts,S.Garbin,H.Housby,N.Haythornthwaite,P.Hadley,S.Craig,L.Moore,S.Klau,16.85,-5,-4.451038575667655
 GIANTS,C.Bassett,J.Harten,K.Austin,J.Price,A.Parmenter,A.Brandley,S.Poolman,12.483333333333333,-4,-4.806408544726302
 Lightning,S.Wood,C.Koenen,L.Scherian,L.Langman,J.Russell,K.Pretorius,P.Maweni,10.916666666666666,-4,-5.4961832061068705
 Firebirds,R.Aiken,I.Venter,J.Mi Mi,M.Cassidy,G.Simpson,K.Jenner,T.Hinchliffe,23.766666666666666,-10,-6.3113604488078545
-Magpies,E.Ryde,G.Sinclair,K.Browne,M.Browne,M.Bragg,M.Garrett,G.Mentor,12.266666666666667,-6,-7.336956521739131
+Lightning,P.Proscovia,S.Wood,L.Scherian,L.Langman,M.McAuliffe,K.Pretorius,P.Maweni,10.433333333333334,-5,-7.18849840255591
 Magpies,S.Nelson,G.Sinclair,K.Browne,M.Browne,M.Jovic,J.Ward,G.Mentor,13.716666666666667,-7,-7.654921020656136
 GIANTS,J.Harten,K.Austin,M.Hay,J.Price,A.Parmenter,N/A,S.Poolman,11.683333333333334,-6,-7.703281027104137
-Magpies,S.Nelson,G.Sinclair,K.Browne,K.Altmann,M.Bragg,J.Ward,G.Mentor,11.45,-6,-7.860262008733626
+Magpies,S.Nelson,G.Sinclair,K.Browne,K.Altmann,M.Bragg,J.Ward,G.Mentor,18.916666666666668,-12,-9.515418502202643
