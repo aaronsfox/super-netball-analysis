@@ -1,0 +1,85 @@
+
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+  
+  <head>
+    
+      <meta charset="utf-8">
+      <title>Bokeh Plot</title>
+      
+      
+        
+          
+        
+        
+          
+        <script type="text/javascript" src="https://cdn.bokeh.org/bokeh/release/bokeh-2.1.1.min.js" integrity="sha384-kLr4fYcqcSpbuI95brIH3vnnYCquzzSxHPU6XGQCIkQRGJwhg0StNbj1eegrHs12" crossorigin="anonymous"></script>
+        <script type="text/javascript">
+            Bokeh.set_log_level("info");
+        </script>
+        
+      
+      
+    
+  </head>
+  
+  
+  <body>
+    
+      
+        
+          
+          
+            
+              <div class="bk-root" id="0bee62ce-2731-4597-99bf-2f62ebc2eb93" data-root-id="10344"></div>
+            
+          
+        
+      
+      
+        <script type="application/json" id="10546">
+          {"003e21a7-7fd3-4929-b55e-012469002f15":{"roots":{"references":[{"attributes":{},"id":"10351","type":"CategoricalScale"},{"attributes":{},"id":"10353","type":"LinearScale"},{"attributes":{"callback":null,"tooltips":[["Player","@fullNames"],["Team","@squadNames"],["Differential in Points from Standard vs. Super Shots","@counts"]]},"id":"10362","type":"HoverTool"},{"attributes":{"axis":{"id":"10358"},"dimension":1,"ticker":null},"id":"10361","type":"Grid"},{"attributes":{},"id":"10375","type":"UnionRenderers"},{"attributes":{},"id":"10349","type":"DataRange1d"},{"attributes":{"active_drag":"auto","active_inspect":"auto","active_multi":null,"active_scroll":"auto","active_tap":"auto","tools":[{"id":"10362"}]},"id":"10363","type":"Toolbar"},{"attributes":{},"id":"10359","type":"BasicTicker"},{"attributes":{"axis":{"id":"10355"},"grid_line_color":null,"ticker":null},"id":"10357","type":"Grid"},{"attributes":{},"id":"10373","type":"CategoricalTickFormatter"},{"attributes":{"align":"center","text":"Differential in Points from Super vs. Standard Shots"},"id":"10345","type":"Title"},{"attributes":{"factors":["T.Dwan","I.Venter","N.Allen","J.Harten","G.Sinclair","S.Glasgow","K.Singleton","A.Teague-Neeld","S.Garbin","K.Austin","G.Horjus","C.Bassett","S.Nelson","C.Thwaites","S.Wood","P.Proscovia","T.Philip","L.Potgieter","E.Ryde","C.Koenen","M.Kumwenda","S.Wallace","R.Aiken","J.Fowler"],"range_padding":0.1},"id":"10347","type":"FactorRange"},{"attributes":{},"id":"10371","type":"BasicTickFormatter"},{"attributes":{"fill_color":{"field":"color"},"line_color":{"field":"color"},"top":{"field":"counts"},"width":{"value":0.6},"x":{"field":"players"}},"id":"10366","type":"VBar"},{"attributes":{},"id":"10376","type":"Selection"},{"attributes":{"below":[{"id":"10355"}],"center":[{"id":"10357"},{"id":"10361"}],"left":[{"id":"10358"}],"plot_height":400,"plot_width":800,"renderers":[{"id":"10368"}],"title":{"id":"10345"},"toolbar":{"id":"10363"},"toolbar_location":null,"x_range":{"id":"10347"},"x_scale":{"id":"10351"},"y_range":{"id":"10349"},"y_scale":{"id":"10353"}},"id":"10344","subtype":"Figure","type":"Plot"},{"attributes":{},"id":"10356","type":"CategoricalTicker"},{"attributes":{"source":{"id":"10343"}},"id":"10369","type":"CDSView"},{"attributes":{"fill_alpha":{"value":0.1},"fill_color":{"field":"color"},"line_alpha":{"value":0.1},"line_color":{"field":"color"},"top":{"field":"counts"},"width":{"value":0.6},"x":{"field":"players"}},"id":"10367","type":"VBar"},{"attributes":{"formatter":{"id":"10373"},"major_label_orientation":1,"ticker":{"id":"10356"}},"id":"10355","type":"CategoricalAxis"},{"attributes":{"data_source":{"id":"10343"},"glyph":{"id":"10366"},"hover_glyph":null,"muted_glyph":null,"nonselection_glyph":{"id":"10367"},"selection_glyph":null,"view":{"id":"10369"}},"id":"10368","type":"GlyphRenderer"},{"attributes":{"data":{"color":["#4b2c69","#4b2c69","#494b4a","#f57921","#494b4a","#e54078","#0082cd","#00953b","#0082cd","#f57921","#e54078","#f57921","#494b4a","#00a68e","#fdb61c","#fdb61c","#00a68e","#e54078","#494b4a","#fdb61c","#00a68e","#0082cd","#4b2c69","#00953b"],"counts":[5,4,3,3,1,1,-3,-4,-5,-8,-11,-12,-13,-14,-14,-15,-17,-20,-21,-23,-26,-41,-45,-63],"fullNames":["Tippah Dwan","Ine-Mari Venter","Nyah Allen","Jo Harten","Gabrielle Sinclair","Sasha Glasgow","Kelly Singleton","Alice Teague-Neeld","Sophie Garbin","Kiera Austin","Georgie Horjus","Caitlin Bassett","Shimona Nelson","Caitlin Thwaites","Steph Wood","Peace Proscovia","Tegan Philip","Lenize Potgieter","Emma Ryde","Cara Koenen","Mwai Kumwenda","Sam Wallace","Romelda Aiken","Jhaniele Fowler"],"players":["T.Dwan","I.Venter","N.Allen","J.Harten","G.Sinclair","S.Glasgow","K.Singleton","A.Teague-Neeld","S.Garbin","K.Austin","G.Horjus","C.Bassett","S.Nelson","C.Thwaites","S.Wood","P.Proscovia","T.Philip","L.Potgieter","E.Ryde","C.Koenen","M.Kumwenda","S.Wallace","R.Aiken","J.Fowler"],"squadNames":["Firebirds","Firebirds","Magpies","GIANTS","Magpies","Thunderbirds","Swifts","Fever","Swifts","GIANTS","Thunderbirds","GIANTS","Magpies","Vixens","Lightning","Lightning","Vixens","Thunderbirds","Magpies","Lightning","Vixens","Swifts","Firebirds","Fever"]},"selected":{"id":"10376"},"selection_policy":{"id":"10375"}},"id":"10343","type":"ColumnDataSource"},{"attributes":{"axis_label":"Points from Two-Point Shots - Points from One-Point Shots","formatter":{"id":"10371"},"ticker":{"id":"10359"}},"id":"10358","type":"LinearAxis"}],"root_ids":["10344"]},"title":"Bokeh Application","version":"2.1.1"}}
+        </script>
+        <script type="text/javascript">
+          (function() {
+            var fn = function() {
+              Bokeh.safely(function() {
+                (function(root) {
+                  function embed_document(root) {
+                    
+                  var docs_json = document.getElementById('10546').textContent;
+                  var render_items = [{"docid":"003e21a7-7fd3-4929-b55e-012469002f15","root_ids":["10344"],"roots":{"10344":"0bee62ce-2731-4597-99bf-2f62ebc2eb93"}}];
+                  root.Bokeh.embed.embed_items(docs_json, render_items);
+                
+                  }
+                  if (root.Bokeh !== undefined) {
+                    embed_document(root);
+                  } else {
+                    var attempts = 0;
+                    var timer = setInterval(function(root) {
+                      if (root.Bokeh !== undefined) {
+                        clearInterval(timer);
+                        embed_document(root);
+                      } else {
+                        attempts++;
+                        if (attempts > 100) {
+                          clearInterval(timer);
+                          console.log("Bokeh: ERROR: Unable to run BokehJS code because BokehJS library is missing");
+                        }
+                      }
+                    }, 10, root)
+                  }
+                })(window);
+              });
+            };
+            if (document.readyState != "loading") fn();
+            else document.addEventListener("DOMContentLoaded", fn);
+          })();
+        </script>
+    
+  </body>
+  
+</html>

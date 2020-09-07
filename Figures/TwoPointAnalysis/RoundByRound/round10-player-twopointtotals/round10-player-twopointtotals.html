@@ -1,0 +1,85 @@
+
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+  
+  <head>
+    
+      <meta charset="utf-8">
+      <title>Bokeh Plot</title>
+      
+      
+        
+          
+        
+        
+          
+        <script type="text/javascript" src="https://cdn.bokeh.org/bokeh/release/bokeh-2.1.1.min.js" integrity="sha384-kLr4fYcqcSpbuI95brIH3vnnYCquzzSxHPU6XGQCIkQRGJwhg0StNbj1eegrHs12" crossorigin="anonymous"></script>
+        <script type="text/javascript">
+            Bokeh.set_log_level("info");
+        </script>
+        
+      
+      
+    
+  </head>
+  
+  
+  <body>
+    
+      
+        
+          
+          
+            
+              <div class="bk-root" id="bd055ae5-c226-4ca8-9e76-d98fce537ecc" data-root-id="10752"></div>
+            
+          
+        
+      
+      
+        <script type="application/json" id="10954">
+          {"1ae6e32e-a445-4be4-be57-49bdb1798177":{"roots":{"references":[{"attributes":{"source":{"id":"10751"}},"id":"10777","type":"CDSView"},{"attributes":{},"id":"10783","type":"UnionRenderers"},{"attributes":{},"id":"10784","type":"Selection"},{"attributes":{"below":[{"id":"10763"}],"center":[{"id":"10765"},{"id":"10769"}],"left":[{"id":"10766"}],"plot_height":400,"plot_width":800,"renderers":[{"id":"10776"}],"title":{"id":"10753"},"toolbar":{"id":"10771"},"toolbar_location":null,"x_range":{"id":"10755"},"x_scale":{"id":"10759"},"y_range":{"id":"10757"},"y_scale":{"id":"10761"}},"id":"10752","subtype":"Figure","type":"Plot"},{"attributes":{},"id":"10761","type":"LinearScale"},{"attributes":{},"id":"10767","type":"BasicTicker"},{"attributes":{"start":0},"id":"10757","type":"DataRange1d"},{"attributes":{},"id":"10764","type":"CategoricalTicker"},{"attributes":{"callback":null,"tooltips":[["Player","@fullNames"],["Team","@squadNames"],["Total Points from Super Shots","@counts"]]},"id":"10770","type":"HoverTool"},{"attributes":{"align":"center","text":"Total Points from Super Shots"},"id":"10753","type":"Title"},{"attributes":{"axis":{"id":"10763"},"grid_line_color":null,"ticker":null},"id":"10765","type":"Grid"},{"attributes":{"axis":{"id":"10766"},"dimension":1,"ticker":null},"id":"10769","type":"Grid"},{"attributes":{},"id":"10759","type":"CategoricalScale"},{"attributes":{},"id":"10781","type":"CategoricalTickFormatter"},{"attributes":{"formatter":{"id":"10781"},"major_label_orientation":1,"ticker":{"id":"10764"}},"id":"10763","type":"CategoricalAxis"},{"attributes":{"fill_color":{"field":"color"},"line_color":{"field":"color"},"top":{"field":"counts"},"width":{"value":0.6},"x":{"field":"players"}},"id":"10774","type":"VBar"},{"attributes":{"data":{"color":["#4b2c69","#f57921","#00a68e","#f57921","#494b4a","#00a68e","#0082cd","#fdb61c","#e54078","#0082cd","#494b4a","#00953b"],"counts":[16,14,10,10,10,8,8,8,8,4,4,2],"fullNames":["Tippah Dwan","Jo Harten","Mwai Kumwenda","Kiera Austin","Gabrielle Sinclair","Caitlin Thwaites","Helen Housby","Steph Wood","Georgie Horjus","Sam Wallace","Shimona Nelson","Alice Teague-Neeld"],"players":["T.Dwan","J.Harten","M.Kumwenda","K.Austin","G.Sinclair","C.Thwaites","H.Housby","S.Wood","G.Horjus","S.Wallace","S.Nelson","A.Teague-Neeld"],"squadNames":["Firebirds","GIANTS","Vixens","GIANTS","Magpies","Vixens","Swifts","Lightning","Thunderbirds","Swifts","Magpies","Fever"]},"selected":{"id":"10784"},"selection_policy":{"id":"10783"}},"id":"10751","type":"ColumnDataSource"},{"attributes":{"active_drag":"auto","active_inspect":"auto","active_multi":null,"active_scroll":"auto","active_tap":"auto","tools":[{"id":"10770"}]},"id":"10771","type":"Toolbar"},{"attributes":{"axis_label":"Total Points","formatter":{"id":"10779"},"ticker":{"id":"10767"}},"id":"10766","type":"LinearAxis"},{"attributes":{"data_source":{"id":"10751"},"glyph":{"id":"10774"},"hover_glyph":null,"muted_glyph":null,"nonselection_glyph":{"id":"10775"},"selection_glyph":null,"view":{"id":"10777"}},"id":"10776","type":"GlyphRenderer"},{"attributes":{"fill_alpha":{"value":0.1},"fill_color":{"field":"color"},"line_alpha":{"value":0.1},"line_color":{"field":"color"},"top":{"field":"counts"},"width":{"value":0.6},"x":{"field":"players"}},"id":"10775","type":"VBar"},{"attributes":{},"id":"10779","type":"BasicTickFormatter"},{"attributes":{"factors":["T.Dwan","J.Harten","M.Kumwenda","K.Austin","G.Sinclair","C.Thwaites","H.Housby","S.Wood","G.Horjus","S.Wallace","S.Nelson","A.Teague-Neeld"],"range_padding":0.1},"id":"10755","type":"FactorRange"}],"root_ids":["10752"]},"title":"Bokeh Application","version":"2.1.1"}}
+        </script>
+        <script type="text/javascript">
+          (function() {
+            var fn = function() {
+              Bokeh.safely(function() {
+                (function(root) {
+                  function embed_document(root) {
+                    
+                  var docs_json = document.getElementById('10954').textContent;
+                  var render_items = [{"docid":"1ae6e32e-a445-4be4-be57-49bdb1798177","root_ids":["10752"],"roots":{"10752":"bd055ae5-c226-4ca8-9e76-d98fce537ecc"}}];
+                  root.Bokeh.embed.embed_items(docs_json, render_items);
+                
+                  }
+                  if (root.Bokeh !== undefined) {
+                    embed_document(root);
+                  } else {
+                    var attempts = 0;
+                    var timer = setInterval(function(root) {
+                      if (root.Bokeh !== undefined) {
+                        clearInterval(timer);
+                        embed_document(root);
+                      } else {
+                        attempts++;
+                        if (attempts > 100) {
+                          clearInterval(timer);
+                          console.log("Bokeh: ERROR: Unable to run BokehJS code because BokehJS library is missing");
+                        }
+                      }
+                    }, 10, root)
+                  }
+                })(window);
+              });
+            };
+            if (document.readyState != "loading") fn();
+            else document.addEventListener("DOMContentLoaded", fn);
+          })();
+        </script>
+    
+  </body>
+  
+</html>

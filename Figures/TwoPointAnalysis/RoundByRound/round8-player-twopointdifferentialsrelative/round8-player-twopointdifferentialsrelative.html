@@ -1,0 +1,85 @@
+
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+  
+  <head>
+    
+      <meta charset="utf-8">
+      <title>Bokeh Plot</title>
+      
+      
+        
+          
+        
+        
+          
+        <script type="text/javascript" src="https://cdn.bokeh.org/bokeh/release/bokeh-2.1.1.min.js" integrity="sha384-kLr4fYcqcSpbuI95brIH3vnnYCquzzSxHPU6XGQCIkQRGJwhg0StNbj1eegrHs12" crossorigin="anonymous"></script>
+        <script type="text/javascript">
+            Bokeh.set_log_level("info");
+        </script>
+        
+      
+      
+    
+  </head>
+  
+  
+  <body>
+    
+      
+        
+          
+          
+            
+              <div class="bk-root" id="02fc1ea3-3604-4205-9b4a-4f7f3acf322b" data-root-id="9936"></div>
+            
+          
+        
+      
+      
+        <script type="application/json" id="10138">
+          {"a4ebb379-5605-4a73-87ca-918dbf45798e":{"roots":{"references":[{"attributes":{},"id":"9968","type":"Selection"},{"attributes":{},"id":"9951","type":"BasicTicker"},{"attributes":{"axis":{"id":"9947"},"grid_line_color":null,"ticker":null},"id":"9949","type":"Grid"},{"attributes":{"callback":null,"tooltips":[["Player","@fullNames"],["Team","@squadNames"],["Ratio of Points from Super:Standard Shots","@counts"]]},"id":"9954","type":"HoverTool"},{"attributes":{},"id":"9948","type":"CategoricalTicker"},{"attributes":{"axis_label":"Points from Super Shots / Points from Standard Shots","formatter":{"id":"9963"},"ticker":{"id":"9951"}},"id":"9950","type":"LinearAxis"},{"attributes":{"active_drag":"auto","active_inspect":"auto","active_multi":null,"active_scroll":"auto","active_tap":"auto","tools":[{"id":"9954"}]},"id":"9955","type":"Toolbar"},{"attributes":{"data":{"color":["#fdb61c","#494b4a","#00953b","#f57921","#0082cd","#00953b","#e54078","#4b2c69","#f57921","#0082cd"],"counts":[1.0,0.8571428571428571,0.8571428571428571,0.8421052631578947,0.6666666666666666,0.6666666666666666,0.42105263157894735,0.4,0.17391304347826086,0.13953488372093023],"fullNames":["Steph Wood","Gabrielle Sinclair","Alice Teague-Neeld","Jo Harten","Helen Housby","Kaylia Stanton","Georgie Horjus","Tippah Dwan","Kiera Austin","Sam Wallace"],"players":["S.Wood","G.Sinclair","A.Teague-Neeld","J.Harten","H.Housby","K.Stanton","G.Horjus","T.Dwan","K.Austin","S.Wallace"],"squadNames":["Lightning","Magpies","Fever","GIANTS","Swifts","Fever","Thunderbirds","Firebirds","GIANTS","Swifts"]},"selected":{"id":"9968"},"selection_policy":{"id":"9967"}},"id":"9935","type":"ColumnDataSource"},{"attributes":{"below":[{"id":"9947"}],"center":[{"id":"9949"},{"id":"9953"}],"left":[{"id":"9950"}],"plot_height":400,"plot_width":800,"renderers":[{"id":"9960"}],"title":{"id":"9937"},"toolbar":{"id":"9955"},"toolbar_location":null,"x_range":{"id":"9939"},"x_scale":{"id":"9943"},"y_range":{"id":"9941"},"y_scale":{"id":"9945"}},"id":"9936","subtype":"Figure","type":"Plot"},{"attributes":{"start":0},"id":"9941","type":"DataRange1d"},{"attributes":{"factors":["S.Wood","G.Sinclair","A.Teague-Neeld","J.Harten","H.Housby","K.Stanton","G.Horjus","T.Dwan","K.Austin","S.Wallace"],"range_padding":0.1},"id":"9939","type":"FactorRange"},{"attributes":{},"id":"9963","type":"BasicTickFormatter"},{"attributes":{},"id":"9943","type":"CategoricalScale"},{"attributes":{"fill_color":{"field":"color"},"line_color":{"field":"color"},"top":{"field":"counts"},"width":{"value":0.6},"x":{"field":"players"}},"id":"9958","type":"VBar"},{"attributes":{"align":"center","text":"Relative Differential in Points from Super vs. Standard Shots"},"id":"9937","type":"Title"},{"attributes":{},"id":"9967","type":"UnionRenderers"},{"attributes":{"fill_alpha":{"value":0.1},"fill_color":{"field":"color"},"line_alpha":{"value":0.1},"line_color":{"field":"color"},"top":{"field":"counts"},"width":{"value":0.6},"x":{"field":"players"}},"id":"9959","type":"VBar"},{"attributes":{"data_source":{"id":"9935"},"glyph":{"id":"9958"},"hover_glyph":null,"muted_glyph":null,"nonselection_glyph":{"id":"9959"},"selection_glyph":null,"view":{"id":"9961"}},"id":"9960","type":"GlyphRenderer"},{"attributes":{"source":{"id":"9935"}},"id":"9961","type":"CDSView"},{"attributes":{},"id":"9965","type":"CategoricalTickFormatter"},{"attributes":{"axis":{"id":"9950"},"dimension":1,"ticker":null},"id":"9953","type":"Grid"},{"attributes":{"formatter":{"id":"9965"},"major_label_orientation":1,"ticker":{"id":"9948"}},"id":"9947","type":"CategoricalAxis"},{"attributes":{},"id":"9945","type":"LinearScale"}],"root_ids":["9936"]},"title":"Bokeh Application","version":"2.1.1"}}
+        </script>
+        <script type="text/javascript">
+          (function() {
+            var fn = function() {
+              Bokeh.safely(function() {
+                (function(root) {
+                  function embed_document(root) {
+                    
+                  var docs_json = document.getElementById('10138').textContent;
+                  var render_items = [{"docid":"a4ebb379-5605-4a73-87ca-918dbf45798e","root_ids":["9936"],"roots":{"9936":"02fc1ea3-3604-4205-9b4a-4f7f3acf322b"}}];
+                  root.Bokeh.embed.embed_items(docs_json, render_items);
+                
+                  }
+                  if (root.Bokeh !== undefined) {
+                    embed_document(root);
+                  } else {
+                    var attempts = 0;
+                    var timer = setInterval(function(root) {
+                      if (root.Bokeh !== undefined) {
+                        clearInterval(timer);
+                        embed_document(root);
+                      } else {
+                        attempts++;
+                        if (attempts > 100) {
+                          clearInterval(timer);
+                          console.log("Bokeh: ERROR: Unable to run BokehJS code because BokehJS library is missing");
+                        }
+                      }
+                    }, 10, root)
+                  }
+                })(window);
+              });
+            };
+            if (document.readyState != "loading") fn();
+            else document.addEventListener("DOMContentLoaded", fn);
+          })();
+        </script>
+    
+  </body>
+  
+</html>
