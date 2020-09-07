@@ -21,7 +21,7 @@ library(jsonlite)
 compID = "11108"
 
 #Set round to grab
-getRound = 7 ##### Change this for whichever round is desired
+getRound = 10 ##### Change this for whichever round is desired
 
 #Loop through the four matches and save as .json
 for (mm in 1:4) {

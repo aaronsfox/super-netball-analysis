@@ -8,20 +8,24 @@ output: html_document
 ```{r setup, include=FALSE}
 
 #Set the libPath to the conda environment
-.libPaths("C:/Users/aafox/AppData/Local/Continuum/anaconda3/envs/super_netball_analysis_r/Lib/R/library")
+###.libPaths("C:/Users/aafox/AppData/Local/Continuum/anaconda3/envs/super_netball_analysis_r/Lib/R/library")
 
 knitr::opts_chunk$set(echo = FALSE)
 ```
 
-# Super Netball 2020: Plus/Minus Analysis
+## Suncorp Super Netball 2020: Plus/Minus Analysis
 
-The introduction of rolling substitutions into Super Netball this year has potentially made identifying the best line-up combinations or most appropriate substituion strategies even more important than previous seasons. The greater number of line-up combinations being used also means metrics like plus/minus (herein referred to as '+/-') can be used more readily in examining Super Netball performance.
+![](Images/csr-deakin.png)
 
-For those unfamiliar, +/- tracks the goals scored for and against a team when a player (or an entire line-up) is on the court. The metric appears to have its origins in the National Hockey League, where a [trophy was awared to the +/- leader for the season each year](https://en.wikipedia.org/wiki/NHL_Plus-Minus_Award) (ceased in 2008). It has, however, become more readily used in sports where more frequent scoring occurs (e.g. [basketball](http://www.espn.com/nba/statistics/rpm)).
+**Performance insights by Deakin's Centre for Sport Research. Please feel free to contact the author of this work, Aaron Fox ([aaron.f@deakin.edu.au](mailto:aaron.f@deakin.edu.au)), if you have any questions about the analyses.**
 
-Theoretically, +/- represents a measure of how well your team does when you're on or off the court, and can be adapted to consider entire unique line-ups. It's important to consider that an indiviudual player's +/- could be impacted by a number of things unrelated to them. For example, if your team has a dominant centre court player and your role is to relieve them - it may be that the teams performance drops while you're on-court, but only because you've subbed the start player out. Conversely, a player may incur a high +/- because they regularly play with the good players (and don't make huge contributions themselves). It is not a perfect metric, but when considering a large portion of data (e.g. a seasons worth) it can likely identify the best line-ups for each team. An additional application of +/- is to compare the metric when a player is on or off the court. The differential between a players on vs. off +/- may be a good indicator of their importance to their team (i.e. a high positive differential means a team is much better when the player is on-court).
+The introduction of rolling substitutions into Suncorp Super Netball this year has potentially made identifying the best line-up combinations and most appropriate substitution strategies even more important than previous seasons. The greater number of line-up combinations being used also means metrics like plus/minus (herein referred to as '+/-') can be used more readily in examining Suncorp Super Netball performance.
 
-Here we will present two versions of +/- for line-ups and players. First, absolute +/- represents the total score differential for a line-up or player. This doesn't take into account the amount of time the line-up or player is on-court. To account for this, we present a relative +/-. This divides the line-up or players +/- by 15 minutes - and therefore represents the average +/- you could expect for a quarter of play.
+For those unfamiliar, +/- tracks the goals scored for and against a team when a player (or an entire line-up) is on the court. The metric appears to have its origins in the National Hockey League, where a [trophy was awarded to the +/- leader for the season each year](https://en.wikipedia.org/wiki/NHL_Plus-Minus_Award) (ceased in 2008). It has, however, become more readily used in sports where more frequent scoring occurs (e.g. [basketball](http://www.espn.com/nba/statistics/rpm)).
+
+Theoretically, +/- represents a measure of how well your team does when you're on or off the court, and can be adapted to consider entire unique line-ups. It's important to consider that an individual player's +/- could be impacted by a number of things unrelated to them. For example, if your team has a dominant centre court player and your role is to relieve them - it may be that the team's performance drops while you're on-court, but only because you've subbed the star player out. Conversely, a player may incur a high +/- because they regularly play with the good players (and don't make huge contributions themselves). It is not a perfect metric, but when considering a large portion of data (e.g. a seasons worth) it can likely identify the best line-ups for each team. An additional application of +/- is to compare the metric when a player is on or off the court. The differential between a players on vs. off +/- may be a good indicator of their importance to their team (i.e. a high positive differential means a team is much better when the player is on-court).
+
+Here we will present two versions of +/- for line-ups and players. First, absolute +/- represents the total score differential for a line-up or player. This doesn't take into account the amount of time the line-up or player is on-court. To account for this, we present a relative +/-. This divides the line-up or players +/- by 15 minutes, and therefore represents the average +/- you could expect for a quarter of play.
 
 ```{r tableLineUp, echo = FALSE}
 
@@ -30,7 +34,7 @@ library(reactable)
 library(htmltools)
 
 #Read in data
-data <- read.csv("teamLineUps_plusMinus.csv", stringsAsFactors = FALSE)
+data <- read.csv("data/teamLineUps_plusMinus.csv", stringsAsFactors = FALSE)
 
 #Create function for colour mapping
 make_color_pal <- function(colors, bias = 1) {
@@ -269,8 +273,8 @@ lineUp_plusMinus_tbl <- reactable(
 #Set table options
 div(class = "lineUp-plusMinus",
   div(class = "title",
-    h2("Super Netball 2020: Line-Up +/- Peformance"),
-    "Score differentials across different line-ups used by teams in Super Netball 2020. Data are presented as absolute score differential (abs.), as well as score differential per 15 minutes player (per.). Line-ups must have played a minimum of 10 minutes together to be included. Team (e.g. 'Vixens') or player (e.g. 'Watson') names (including a combination of these) can be looked up using the search bars."
+    h2("Suncorp Super Netball 2020: Line-Up +/- Peformance"),
+    "Score differentials across different line-ups used by teams in Suncorp Super Netball 2020. Data are presented as absolute score differential (abs.), as well as score differential per 15 minutes player (per.). Line-ups must have played a minimum of 10 minutes together to be included. Team (e.g. 'Vixens') or player (e.g. 'Watson') names (including a combination of these) can be looked up using the search bars."
   ),
   lineUp_plusMinus_tbl
 )
@@ -282,7 +286,7 @@ div(class = "lineUp-plusMinus",
 #Individual player table
 
 #Read in data
-dataPlayer <- read.csv("individualPlayer_plusMinus.csv", stringsAsFactors = FALSE)
+dataPlayer <- read.csv("data/individualPlayer_plusMinus.csv", stringsAsFactors = FALSE)
 
 #Create table
 player_plusMinus_tbl <- reactable(
@@ -516,8 +520,8 @@ player_plusMinus_tbl <- reactable(
 #Set table options
 div(class = "lineUp-plusMinus",
   div(class = "title",
-    h2("Super Netball 2020: Player +/- Peformance"),
-    "Score differentials when different players are on vs. off the court in Super Netball 2020. Data are presented as absolute score differential (abs.), as well as score differential per 15 minutes player (per.). The relative differential (diff.) for when the player is on vs. off the court are also presented. Players must have played a minimum of 10 minutes and spent a minimum of 5 minutes off the court to be included. Player (e.g. 'Watson') names can be looked up using the search bar."
+    h2("Suncorp Super Netball 2020: Player +/- Peformance"),
+    "Score differentials when different players are on vs. off the court in SuncorpSuper Netball 2020. Data are presented as absolute score differential (abs.), as well as score differential per 15 minutes player (per.). The relative differential (diff.) for when the player is on vs. off the court are also presented. Players must have played a minimum of 10 minutes and spent a minimum of 5 minutes off the court to be included. Player (e.g. 'Watson') names can be looked up using the search bar."
   ),
   player_plusMinus_tbl
 )
@@ -526,9 +530,9 @@ div(class = "lineUp-plusMinus",
 
 ---
 
-Data through 5 rounds of Super Netball 2020. Source: [Champion Data Match Centre](https://mc.championdata.com/super_netball/)
+Data through 10 rounds of Super Netball 2020. Source: [Champion Data Match Centre](https://mc.championdata.com/super_netball/)
 
-<a rel="license" href="http://creativecommons.org/licenses/by/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by/4.0/80x15.png" /></a><br />This work is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0 International License</a>. Please feel free to contact the author of this work, Aaron Fox ([aaron.f@deakin.edu.au](mailto:aaron.f@deakin.edu.au)), if you have any questions about the analyses.
+<a rel="license" href="http://creativecommons.org/licenses/by/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by/4.0/80x15.png" /></a><br />This work is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0 International License</a>.
 
 ```{r ref.label="table", eval=FALSE}
 ```
@@ -544,6 +548,11 @@ tags$link(href = "https://fonts.googleapis.com/css?family=Karla:400,700|Fira+Mon
 body{
   font-family: Karla, "Helvetica Neue", Helvetica, Arial, sans-serif;
   font-size: 12pt;
+}
+/* Headers */
+h1{
+  font-size: 32px;
+  font-weight: bold;
 }
 
 .author,.date{
@@ -565,7 +574,7 @@ body{
   font-weight: 600;
 }
 
-plusMinus-table {
+.plusMinus-table {
   margin-bottom: 20px;
 }
 
