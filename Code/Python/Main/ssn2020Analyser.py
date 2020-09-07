@@ -78,7 +78,8 @@ dataImport = dataHelper.getMatchData(jsonFileList = jsonFileList,
                                      exportDict = True, exportDf = True,
                                      exportTeamData = True, exportPlayerData = True,
                                      exportMatchData = True, exportScoreData = True,
-                                     exportLineUpData = True)
+                                     exportLineUpData = True, exportPlayerStatsData = True,
+                                     exportTeamStatsData = True)
 
 #Unpack the imported data
 teamInfo = dataImport['teamInfo']
@@ -87,12 +88,16 @@ playerInfo = dataImport['playerInfo']
 scoreFlowData = dataImport['scoreFlowData']
 lineUpData = dataImport['lineUpData']
 individualLineUpData = dataImport['individualLineUpData']
+playerStatsData = dataImport['playerStatsData']
+teamStatsData = dataImport['teamStatsData']
 df_teamInfo = dataImport['df_teamInfo']
 df_matchInfo = dataImport['df_matchInfo']
 df_playerInfo = dataImport['df_playerInfo']
 df_scoreFlow = dataImport['df_scoreFlow']
 df_lineUp = dataImport['df_lineUp']
 df_individualLineUp = dataImport['df_individualLineUp']
+df_playerStatsData = dataImport['df_playerStatsData']
+df_teamStatsData = dataImport['df_teamStatsData']
 
 # %% Plots to consider...
 
@@ -134,7 +139,7 @@ bokehOptions = dict(tools = ['wheel_zoom,box_zoom'])
 os.chdir('..\\..\\Figures\\TwoPointAnalysis\\RoundByRound')
 
 #Set round to plot
-round2Plot = 7
+round2Plot = 10
 
 #Total one vs. two point shots
 figHelper.totalPointsOneVsTwo(round2Plot = round2Plot, matchInfo = matchInfo,
@@ -157,7 +162,7 @@ figHelper.teamShotRatiosInnerVsOuter(round2Plot = round2Plot, matchInfo = matchI
 # %% Individual player two-point scoring
 
 #Set round to plot
-round2Plot = 7
+round2Plot = 10
 
 #Total two-point score
 figHelper.playerTwoPointTotals(round2Plot = round2Plot, df_scoreFlow = df_scoreFlow,
@@ -263,6 +268,323 @@ figHelper.relativePlayerPlusMinus(teamInfo = teamInfo, playerInfo = playerInfo,
                                   perDivider = 15, minDurationOn = 10, minDurationOff = 5, nPlayers = 20,
                                   colourDict = colourDict, showPlot = False,
                                   exportPNG = True, exportHTML = True)
+
+# %% Export data for plus/minus HTML tables
+
+# %% Team line-up data
+
+# This will export the unique line-up data for all teams as a .csv file to convert
+# to a HTML table in R via reactable. Each row of data will be a unique line-up
+# with the columns relating to team, GS, ..., GK, ABS +/-, PER15 +/-, duration.
+# We'll limit the line-ups to those that have had 10 minutes on court together
+# for now. 
+
+#Append the combined lineup name to the line up dataframecombinedLineUpName = list()
+combinedLineUpName = list()
+for dd in range(0,len(df_lineUp)):
+    #Get lineup
+    currLineUp = df_lineUp['lineUpName'][dd]
+    #Check for empty slot in lineup
+    for pp in range(0,len(currLineUp)):
+        if not currLineUp[pp]:
+            #Replace with an 'N/A'
+            currLineUp[pp] = 'N/A'
+    #Combine player names
+    combinedLineUpName.append(", ".join(currLineUp))
+#Append to dataframe
+df_lineUp['combinedLineUpName'] = combinedLineUpName
+
+#Extract the unique line-ups
+uniqueLineUps = df_lineUp['combinedLineUpName'].unique()
+
+#Loop through unique lineups and sum the duration and plus/minus data
+lineUpDuration = list()
+lineUpPlusMinus = list()
+analyseLineUps = list()
+squadLineUps = list()
+minLineUpDuration= 10
+for uu in range(0,len(uniqueLineUps)):
+    #Get a separated dataframe
+    df_currLineUp = df_lineUp.loc[(df_lineUp['combinedLineUpName'] == uniqueLineUps[uu]),]
+    #Sum data and append to list if greater than specified minutes (converted to seconds here)
+    if sum(df_currLineUp['durationSeconds']) >= (minLineUpDuration*60):
+        analyseLineUps.append(uniqueLineUps[uu])
+        lineUpDuration.append(sum(df_currLineUp['durationSeconds']) / 60)
+        lineUpPlusMinus.append(sum(df_currLineUp['plusMinus']))
+        squadLineUps.append(teamInfo['squadNickname'][teamInfo['squadId'].index(df_currLineUp['squadId'].unique()[0])])
+                
+#Split the string of the lineups to put in the columns
+lineUpGS = list()
+lineUpGA = list()
+lineUpWA = list()
+lineUpC = list()
+lineUpWD = list()
+lineUpGD = list()
+lineUpGK = list()
+for aa in range(0,len(analyseLineUps)):
+    #Split and allocate
+    splitLineUp = analyseLineUps[aa].split(', ')
+    lineUpGS.append(splitLineUp[0])
+    lineUpGA.append(splitLineUp[1])
+    lineUpWA.append(splitLineUp[2])
+    lineUpC.append(splitLineUp[3])
+    lineUpWD.append(splitLineUp[4])
+    lineUpGD.append(splitLineUp[5])
+    lineUpGK.append(splitLineUp[6])
+    
+#Convert to dataframe
+df_lineUpPlusMinus = pd.DataFrame(list(zip(squadLineUps,lineUpGS,lineUpGA,lineUpWA,
+                                           lineUpC,lineUpWD,lineUpGD,lineUpGK,
+                                           lineUpDuration,lineUpPlusMinus)),
+                                  columns = ['team','GS','GA','WA','C','WD','GD','GK',
+                                             'duration','absPlusMinus'])
+
+#Add the per 15 plus minus column
+perPlusMinusVal = list()
+perDivider = 15
+for mm in range(0,len(df_lineUpPlusMinus)):
+    perFac = perDivider / df_lineUpPlusMinus['duration'][mm]
+    perPlusMinusVal.append(df_lineUpPlusMinus['absPlusMinus'][mm]*perFac)
+#Append to dataframe
+df_lineUpPlusMinus['per15PlusMinus'] = perPlusMinusVal
+
+#Sort values
+df_lineUpPlusMinus.sort_values(by = 'per15PlusMinus', inplace = True,
+                               ascending = False, ignore_index = True)
+
+#Export data to csv file
+#Navigate to directory
+os.chdir('..\\..\\Code\\R\\htmlTables\\plusMinus')
+#Export
+df_lineUpPlusMinus.to_csv('teamLineUps_plusMinus.csv', index = False)
+
+# %% Player plus/minus data
+
+# This will export the unique players across the competition as a .csv file to
+# convert to a HTML in R via reactable. Each row of data will be a unique player
+# with the columns relating to team, player, duration on, duration off,
+# ABS +/- on court, ABS +/- off, ABS +/- diff, PER15 +/- on court, PER15 +/- off
+# court, PER15 +/- diff
+
+#Get unique list of players
+uniquePlayers = list(df_individualLineUp['playerId'].unique())
+
+#Loop through players and extract total plus minus data
+#Set blank lists to store data in
+playerDurationOn = list()
+playerDurationOff = list()
+playerPlusMinusOn = list()
+playerPlusMinusOff = list()
+playerPlusMinusOnPer15 = list()
+playerPlusMinusOffPer15 = list()
+analysePlayer = list()
+analyseSquad = list()
+minPlayerDurationOn = 10
+minPlayerDurationOff = 5
+perDivider = 15
+for pp in range(0,len(uniquePlayers)):
+    
+    #Extract current player to dataframe for on and off
+    df_currPlayerOn = df_individualLineUp.loc[(df_individualLineUp['playerId'] == uniquePlayers[pp]) &
+                                              (df_individualLineUp['playerPosition'] != 'S'),
+                                              ['playerId','durationSeconds','plusMinus']]
+    df_currPlayerOn.reset_index(drop=True, inplace=True)
+    df_currPlayerOff = df_individualLineUp.loc[(df_individualLineUp['playerId'] == uniquePlayers[pp]) &
+                                               (df_individualLineUp['playerPosition'] == 'S'),
+                                               ['playerId','durationSeconds','plusMinus']]
+    df_currPlayerOff.reset_index(drop=True, inplace=True)
+    
+    #Check if player total is greater than specified minutes and get data if so
+    if sum(df_currPlayerOn['durationSeconds']) > minPlayerDurationOn*60 and sum(df_currPlayerOff['durationSeconds']) > minPlayerDurationOff*60:
+        #Append duration and plus/minus when on vs. off
+        playerDurationOn.append(sum(df_currPlayerOn['durationSeconds'])/60)
+        playerPlusMinusOn.append(sum(df_currPlayerOn['plusMinus']))
+        playerDurationOff.append(sum(df_currPlayerOff['durationSeconds'])/60)
+        playerPlusMinusOff.append(sum(df_currPlayerOff['plusMinus']))
+        #On
+        perFac = perDivider / (sum(df_currPlayerOn['durationSeconds']/60))
+        playerPlusMinusOnPer15.append(sum(df_currPlayerOn['plusMinus'])*perFac)
+        #Off
+        perFac = perDivider / (sum(df_currPlayerOff['durationSeconds']/60))
+        playerPlusMinusOffPer15.append(sum(df_currPlayerOff['plusMinus'])*perFac)
+        #Get current player and append
+        analysePlayer.append(playerInfo['displayName'][playerInfo['playerId'].index(uniquePlayers[pp])])
+        #Get squad ID colour for player
+        currSquadId = playerInfo['squadId'][playerInfo['playerId'].index(uniquePlayers[pp])]
+        analyseSquad.append(teamInfo['squadNickname'][teamInfo['squadId'].index(currSquadId)])
+        
+        
+        
+#Place player plus minus data in dataframe and sort
+df_playerPlusMinusRel = pd.DataFrame(list(zip(analyseSquad,analysePlayer,
+                                              playerDurationOn,playerDurationOff,
+                                              playerPlusMinusOn,playerPlusMinusOff,
+                                              playerPlusMinusOnPer15,playerPlusMinusOffPer15)),
+                                     columns = ['team','player','durationOn','durationOff',
+                                                'absPlusMinusOn','absPlusMinusOff',
+                                                'perPlusMinusOn','perPlusMinusOff'])
+
+#Calculate the relative difference between when the player is off vs. on
+#This calculation means positive and negative values mean the team does better
+#versus worse when the player is on, respectively
+relPerformanceAbs = list()
+relPerformancePer = list()
+for dd in range(0,len(df_playerPlusMinusRel)):
+    relPerformanceAbs.append(df_playerPlusMinusRel['absPlusMinusOn'][dd] - df_playerPlusMinusRel['absPlusMinusOff'][dd])
+    relPerformancePer.append(df_playerPlusMinusRel['perPlusMinusOn'][dd] - df_playerPlusMinusRel['perPlusMinusOff'][dd])
+#Append to dataframe
+df_playerPlusMinusRel['relAbsPlusMinus'] = relPerformanceAbs
+df_playerPlusMinusRel['relPerPlusMinus'] = relPerformancePer
+#Resort by relative per 15 performance
+df_playerPlusMinusRel.sort_values(by = 'relPerPlusMinus', inplace = True,
+                                  ascending = False, ignore_index = True)
+ 
+#Export to CSV
+df_playerPlusMinusRel.to_csv('individualPlayer_plusMinus.csv', index = False)
+
+# %% Calculate player summary and per 15 statistics
+
+#Get unique list of players to examine
+playerStatList = df_playerStatsData['playerId'].unique()
+
+#Set the per divider
+perDivider = 15
+
+#Loop through ID's and get their playing duration
+playerDurationSeconds = []
+for pp in range(0,len(playerStatList)):
+    #Get duration from lineup data
+    playerDurationSeconds.append(df_individualLineUp.loc[(df_individualLineUp['playerId'] == playerStatList[pp]) &
+                                                         (df_individualLineUp['playerPosition'] != 'S'),
+                                                         ['durationSeconds']]['durationSeconds'].sum())
+
+#Set up list of data to collate from player stats
+playerStatsGrab = ['centrePassReceives', 'contactPenalties', 
+                   'deflectionWithGain', 'deflectionWithNoGain',
+                   'deflections', 'disposals', 'feedWithAttempt', 'feeds',
+                   'gain', 'generalPlayTurnovers', 'goalAssists', 
+                   'interceptPassThrown', 'intercepts', 'obstructionPenalties',
+                   'penalties', 'pickups', 'possessions', 'rebounds']
+#Convert list to dictionary to store data in
+playerStatsDictTotal = {'playerId': [], 'playerName': [], 'squadName': [], 'durationMins': [],
+                        'centrePassReceives': [], 'contactPenalties': [], 
+                        'deflectionWithGain': [], 'deflectionWithNoGain': [],
+                        'deflections': [], 'disposals': [], 'feedWithAttempt': [], 'feeds': [],
+                        'gain': [], 'generalPlayTurnovers': [], 'goalAssists': [], 
+                        'interceptPassThrown': [], 'intercepts': [], 'obstructionPenalties': [],
+                        'penalties': [], 'pickups': [], 'possessions': [],
+                        'rebounds': []}
+playerStatsDictPer = {'playerId': [], 'playerName': [], 'squadName': [], 'durationMins': [],
+                      'centrePassReceives': [], 'contactPenalties': [], 
+                      'deflectionWithGain': [], 'deflectionWithNoGain': [],
+                      'deflections': [], 'disposals': [], 'feedWithAttempt': [], 'feeds': [],
+                      'gain': [], 'generalPlayTurnovers': [], 'goalAssists': [], 
+                      'interceptPassThrown': [], 'intercepts': [], 'obstructionPenalties': [],
+                      'penalties': [], 'pickups': [], 'possessions': [],
+                      'rebounds': []}
+
+#Loop through players and extract statistics
+for pp in range(0,len(playerStatList)):
+    
+    #First, check if player has played more than 15 mins total
+    if playerDurationSeconds[pp]/60 > 15:
+        
+        #Extract player and squad details
+        currPlayerId = playerStatList[pp]
+        currPlayerName = playerInfo['displayName'][playerInfo['playerId'].index(currPlayerId)]
+        currPlayerSquadId = playerInfo['squadId'][playerInfo['playerId'].index(currPlayerId)]
+        currSquadName = teamInfo['squadNickname'][teamInfo['squadId'].index(currPlayerSquadId)]
+        
+        #Append player and squad details to dictionary
+        playerStatsDictTotal['playerId'].append(currPlayerId)
+        playerStatsDictTotal['playerName'].append(currPlayerName)
+        playerStatsDictTotal['squadName'].append(currSquadName)
+        playerStatsDictTotal['durationMins'].append(playerDurationSeconds[pp]/60)
+        playerStatsDictPer['playerId'].append(currPlayerId)
+        playerStatsDictPer['playerName'].append(currPlayerName)
+        playerStatsDictPer['squadName'].append(currSquadName)
+        playerStatsDictPer['durationMins'].append(playerDurationSeconds[pp]/60)
+        
+        #Loop through and extract game statistics
+        for ss in range(0,len(playerStatsGrab)):
+            
+            #Extract total stats number for the current player and stat
+            statTotal = df_playerStatsData.loc[(df_playerStatsData['playerId'] == currPlayerId),
+                                               [playerStatsGrab[ss]]][playerStatsGrab[ss]].sum()
+            
+            #Normalise to the per 15 minute
+            perFac = perDivider / (playerDurationSeconds[pp]/60)
+            statNormal = statTotal * perFac
+            
+            #Append to dictionary
+            playerStatsDictTotal[playerStatsGrab[ss]].append(statTotal)
+            playerStatsDictPer[playerStatsGrab[ss]].append(statNormal)
+            
+#Convert dictionary to dataframe
+df_playerStatsMetricsTotal = pd.DataFrame.from_dict(playerStatsDictTotal)
+df_playerStatsMetricsPer = pd.DataFrame.from_dict(playerStatsDictPer)
+
+#Merge dataframes
+df_playerStatsMetricsAll = pd.merge(left = df_playerStatsMetricsTotal, right = df_playerStatsMetricsPer,
+                                    how = 'inner', left_on = 'playerId', right_on = 'playerId')
+
+#Drop the second player and squad name, and duration columns
+df_playerStatsMetricsAll.drop(['playerName_y','squadName_y','durationMins_y'],
+                              axis = 1, inplace = True)
+
+#Rename the original player and squad name columns
+df_playerStatsMetricsAll.rename(columns = {'playerName_x': 'playerName',
+                                           'squadName_x': 'squadName',
+                                           'durationMins_x': 'durationMins'},
+                                inplace = True)
+
+#Loop through remaining columns and rename _x to totals and _y to per
+for col in df_playerStatsMetricsAll.columns: 
+    
+    #Get current column name
+    currColumn = col
+    
+    #Check if it contains one of the triggers for renaming
+    if '_x' in currColumn:
+        #Set the new column name
+        newColumn = currColumn.split('_')[0]+'Total'        
+        #Rename the dataframe column
+        df_playerStatsMetricsAll.rename(columns = {currColumn: newColumn},
+                                        inplace = True)
+    if '_y' in currColumn:        
+        #Set the new column name
+        newColumn = currColumn.split('_')[0]+'Per'        
+        #Rename the dataframe column
+        df_playerStatsMetricsAll.rename(columns = {currColumn: newColumn},
+                                        inplace = True)
+        
+#Split data into attacking and defensive categories
+attackingCols = ['playerId', 'playerName', 'squadName', 'durationMins',
+                 'centrePassReceivesTotal', 'centrePassReceivesPer',
+                 'feedsTotal', 'feedsPer', 'feedWithAttemptTotal', 'feedWithAttemptPer',
+                 'goalAssistsTotal', 'goalAssistsPer',
+                 'generalPlayTurnoversTotal', 'generalPlayTurnoversPer',
+                 'interceptPassThrownTotal', 'interceptPassThrownPer']
+defensiveCols = ['playerId', 'playerName', 'squadName', 'durationMins',
+                 'gainTotal', 'gainPer',
+                 'deflectionsTotal', 'deflectionsPer',
+                 'deflectionWithGainTotal', 'deflectionWithGainPer',
+                 'deflectionWithNoGainTotal', 'deflectionWithNoGainPer',
+                 'contactPenaltiesTotal', 'contactPenaltiesPer',
+                 'obstructionPenaltiesTotal','obstructionPenaltiesPer']
+
+#Extract columns from dataframe
+df_playerStatsMetricsAttacking = df_playerStatsMetricsAll[df_playerStatsMetricsAll.columns.intersection(attackingCols)]
+df_playerStatsMetricsDefensive = df_playerStatsMetricsAll[df_playerStatsMetricsAll.columns.intersection(defensiveCols)]
+
+#Sort by player name
+df_playerStatsMetricsAttacking.sort_values('playerName', inplace = True)
+df_playerStatsMetricsDefensive.sort_values('playerName', inplace = True)
+
+#Export data
+os.chdir('..\\playerStats')
+df_playerStatsMetricsAttacking.to_csv('individualPlayerStats_Attacking.csv', index = False)
+df_playerStatsMetricsDefensive.to_csv('individualPlayerStats_Defensive.csv', index = False)
 
 # %% Calculate some basic substitution statistics
 
@@ -1056,178 +1378,8 @@ for tt in range(0,len(teamList)):
 #Set tight layout on figure
 fig.tight_layout()
 
-# %% Export data for plus/minus HTML tables
 
-# %% Team line-up data
 
-# This will export the unique line-up data for all teams as a .csv file to convert
-# to a HTML table in R via reactable. Each row of data will be a unique line-up
-# with the columns relating to team, GS, ..., GK, ABS +/-, PER15 +/-, duration.
-# We'll limit the line-ups to those that have had 10 minutes on court together
-# for now. 
-
-#Append the combined lineup name to the line up dataframecombinedLineUpName = list()
-combinedLineUpName = list()
-for dd in range(0,len(df_lineUp)):
-    #Get lineup
-    currLineUp = df_lineUp['lineUpName'][dd]
-    #Check for empty slot in lineup
-    for pp in range(0,len(currLineUp)):
-        if not currLineUp[pp]:
-            #Replace with an 'N/A'
-            currLineUp[pp] = 'N/A'
-    #Combine player names
-    combinedLineUpName.append(", ".join(currLineUp))
-#Append to dataframe
-df_lineUp['combinedLineUpName'] = combinedLineUpName
-
-#Extract the unique line-ups
-uniqueLineUps = df_lineUp['combinedLineUpName'].unique()
-
-#Loop through unique lineups and sum the duration and plus/minus data
-lineUpDuration = list()
-lineUpPlusMinus = list()
-analyseLineUps = list()
-squadLineUps = list()
-minLineUpDuration= 10
-for uu in range(0,len(uniqueLineUps)):
-    #Get a separated dataframe
-    df_currLineUp = df_lineUp.loc[(df_lineUp['combinedLineUpName'] == uniqueLineUps[uu]),]
-    #Sum data and append to list if greater than specified minutes (converted to seconds here)
-    if sum(df_currLineUp['durationSeconds']) >= (minLineUpDuration*60):
-        analyseLineUps.append(uniqueLineUps[uu])
-        lineUpDuration.append(sum(df_currLineUp['durationSeconds']) / 60)
-        lineUpPlusMinus.append(sum(df_currLineUp['plusMinus']))
-        squadLineUps.append(teamInfo['squadNickname'][teamInfo['squadId'].index(df_currLineUp['squadId'].unique()[0])])
-                
-#Split the string of the lineups to put in the columns
-lineUpGS = list()
-lineUpGA = list()
-lineUpWA = list()
-lineUpC = list()
-lineUpWD = list()
-lineUpGD = list()
-lineUpGK = list()
-for aa in range(0,len(analyseLineUps)):
-    #Split and allocate
-    splitLineUp = analyseLineUps[aa].split(', ')
-    lineUpGS.append(splitLineUp[0])
-    lineUpGA.append(splitLineUp[1])
-    lineUpWA.append(splitLineUp[2])
-    lineUpC.append(splitLineUp[3])
-    lineUpWD.append(splitLineUp[4])
-    lineUpGD.append(splitLineUp[5])
-    lineUpGK.append(splitLineUp[6])
-    
-#Convert to dataframe
-df_lineUpPlusMinus = pd.DataFrame(list(zip(squadLineUps,lineUpGS,lineUpGA,lineUpWA,
-                                           lineUpC,lineUpWD,lineUpGD,lineUpGK,
-                                           lineUpDuration,lineUpPlusMinus)),
-                                  columns = ['team','GS','GA','WA','C','WD','GD','GK',
-                                             'duration','absPlusMinus'])
-
-#Add the per 15 plus minus column
-perPlusMinusVal = list()
-perDivider = 15
-for mm in range(0,len(df_lineUpPlusMinus)):
-    perFac = perDivider / df_lineUpPlusMinus['duration'][mm]
-    perPlusMinusVal.append(df_lineUpPlusMinus['absPlusMinus'][mm]*perFac)
-#Append to dataframe
-df_lineUpPlusMinus['per15PlusMinus'] = perPlusMinusVal
-
-#Sort values
-df_lineUpPlusMinus.sort_values(by = 'per15PlusMinus', inplace = True,
-                               ascending = False, ignore_index = True)
-
-#Export data to csv file
-#Navigate to directory
-os.chdir('..\\..\\Code\\R\\htmlTables\\plusMinus')
-#Export
-df_lineUpPlusMinus.to_csv('teamLineUps_plusMinus.csv', index = False)
-
-# %% Player plus/minus data
-
-# This will export the unique players across the competition as a .csv file to
-# convert to a HTML in R via reactable. Each row of data will be a unique player
-# with the columns relating to team, player, duration on, duration off,
-# ABS +/- on court, ABS +/- off, ABS +/- diff, PER15 +/- on court, PER15 +/- off
-# court, PER15 +/- diff
-
-#Get unique list of players
-uniquePlayers = list(df_individualLineUp['playerId'].unique())
-
-#Loop through players and extract total plus minus data
-#Set blank lists to store data in
-playerDurationOn = list()
-playerDurationOff = list()
-playerPlusMinusOn = list()
-playerPlusMinusOff = list()
-playerPlusMinusOnPer15 = list()
-playerPlusMinusOffPer15 = list()
-analysePlayer = list()
-analyseSquad = list()
-minPlayerDurationOn = 10
-minPlayerDurationOff = 5
-perDivider = 15
-for pp in range(0,len(uniquePlayers)):
-    
-    #Extract current player to dataframe for on and off
-    df_currPlayerOn = df_individualLineUp.loc[(df_individualLineUp['playerId'] == uniquePlayers[pp]) &
-                                              (df_individualLineUp['playerPosition'] != 'S'),
-                                              ['playerId','durationSeconds','plusMinus']]
-    df_currPlayerOn.reset_index(drop=True, inplace=True)
-    df_currPlayerOff = df_individualLineUp.loc[(df_individualLineUp['playerId'] == uniquePlayers[pp]) &
-                                               (df_individualLineUp['playerPosition'] == 'S'),
-                                               ['playerId','durationSeconds','plusMinus']]
-    df_currPlayerOff.reset_index(drop=True, inplace=True)
-    
-    #Check if player total is greater than specified minutes and get data if so
-    if sum(df_currPlayerOn['durationSeconds']) > minPlayerDurationOn*60 and sum(df_currPlayerOff['durationSeconds']) > minPlayerDurationOff*60:
-        #Append duration and plus/minus when on vs. off
-        playerDurationOn.append(sum(df_currPlayerOn['durationSeconds'])/60)
-        playerPlusMinusOn.append(sum(df_currPlayerOn['plusMinus']))
-        playerDurationOff.append(sum(df_currPlayerOff['durationSeconds'])/60)
-        playerPlusMinusOff.append(sum(df_currPlayerOff['plusMinus']))
-        #On
-        perFac = perDivider / (sum(df_currPlayerOn['durationSeconds']/60))
-        playerPlusMinusOnPer15.append(sum(df_currPlayerOn['plusMinus'])*perFac)
-        #Off
-        perFac = perDivider / (sum(df_currPlayerOff['durationSeconds']/60))
-        playerPlusMinusOffPer15.append(sum(df_currPlayerOff['plusMinus'])*perFac)
-        #Get current player and append
-        analysePlayer.append(playerInfo['displayName'][playerInfo['playerId'].index(uniquePlayers[pp])])
-        #Get squad ID colour for player
-        currSquadId = playerInfo['squadId'][playerInfo['playerId'].index(uniquePlayers[pp])]
-        analyseSquad.append(teamInfo['squadNickname'][teamInfo['squadId'].index(currSquadId)])
-        
-        
-        
-#Place player plus minus data in dataframe and sort
-df_playerPlusMinusRel = pd.DataFrame(list(zip(analyseSquad,analysePlayer,
-                                              playerDurationOn,playerDurationOff,
-                                              playerPlusMinusOn,playerPlusMinusOff,
-                                              playerPlusMinusOnPer15,playerPlusMinusOffPer15)),
-                                     columns = ['team','player','durationOn','durationOff',
-                                                'absPlusMinusOn','absPlusMinusOff',
-                                                'perPlusMinusOn','perPlusMinusOff'])
-
-#Calculate the relative difference between when the player is off vs. on
-#This calculation means positive and negative values mean the team does better
-#versus worse when the player is on, respectively
-relPerformanceAbs = list()
-relPerformancePer = list()
-for dd in range(0,len(df_playerPlusMinusRel)):
-    relPerformanceAbs.append(df_playerPlusMinusRel['absPlusMinusOn'][dd] - df_playerPlusMinusRel['absPlusMinusOff'][dd])
-    relPerformancePer.append(df_playerPlusMinusRel['perPlusMinusOn'][dd] - df_playerPlusMinusRel['perPlusMinusOff'][dd])
-#Append to dataframe
-df_playerPlusMinusRel['relAbsPlusMinus'] = relPerformanceAbs
-df_playerPlusMinusRel['relPerPlusMinus'] = relPerformancePer
-#Resort by relative per 15 performance
-df_playerPlusMinusRel.sort_values(by = 'relPerPlusMinus', inplace = True,
-                                  ascending = False, ignore_index = True)
- 
-#Export to CSV
-df_playerPlusMinusRel.to_csv('individualPlayer_plusMinus.csv', index = False)
 
 
 

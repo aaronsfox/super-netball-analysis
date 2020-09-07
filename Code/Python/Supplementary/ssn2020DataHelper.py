@@ -18,6 +18,7 @@ getting data from the Super Netball 2020 season files.
 import pandas as pd
 pd.options.mode.chained_assignment = None #turn of pandas chained warnings
 import json
+import re
 
 # %% getMatchData
 
@@ -25,7 +26,8 @@ def getMatchData(jsonFileList = None, df_squadLists = None,
                  exportDict = True, exportDf = True,
                  exportTeamData = True, exportPlayerData = True,
                  exportMatchData = True, exportScoreData = True,
-                 exportLineUpData = True):
+                 exportLineUpData = True, exportPlayerStatsData = True,
+                 exportTeamStatsData = True):
     
     # Function for importing the Champion Data .json files for SSN 2020
     #
@@ -77,8 +79,50 @@ def getMatchData(jsonFileList = None, df_squadLists = None,
                             'matchSecondsStart': [], 'matchSecondsEnd': [], 'durationSeconds': [],
                             'pointsFor': [], 'pointsAgainst': [], 'plusMinus': []}
     
+    #Individual player stats
+    playerStatsData = {'playerId': [], 'playerName': [], 'squadId': [],
+                       'roundNo': [], 'matchNo': [], 'matchId': [], 'period' : [],
+                       'attempt_from_zone1': [], 'attempt_from_zone2': [],
+                       'badHands': [], 'badPasses': [], 'blocked': [], 'blocks': [],
+                       'breaks': [], 'centrePassReceives': [], 'centrePassToGoalPerc': [],
+                       'contactPenalties': [], 'deflectionWithGain': [], 'deflectionWithNoGain': [],
+                       'deflections': [], 'disposals': [], 'feedWithAttempt': [], 'feeds': [],
+                       'gain': [], 'gainToGoalPerc': [], 'generalPlayTurnovers': [],
+                       'goalAssists': [], 'goalAttempts': [], 'goalMisses': [],
+                       'goal_from_zone1': [], 'goal_from_zone2': [], 'goals': [],
+                       'interceptPassThrown': [], 'intercepts': [], 'missedGoalTurnover': [],
+                       'netPoints': [], 'obstructionPenalties': [], 'offsides': [],
+                       'passes': [], 'penalties': [], 'pickups': [], 'possessionChanges': [],
+                       'possessions': [], 'rebounds': [], 'tossUpWin': []}
+    
+    #Team stats
+    teamStatsData = {'squadId': [], 'roundNo': [], 'matchNo': [], 'matchId': [], 'period' : [],
+                     'attempt_from_zone1': [], 'attempt_from_zone2': [],
+                     'badHands': [], 'badPasses': [], 'blocked': [], 'blocks': [],
+                     'breaks': [], 'centrePassReceives': [], 'centrePassToGoalPerc': [],
+                     'contactPenalties': [], 'deflectionPossessionGain': [], 'deflectionWithGain': [], 'deflectionWithNoGain': [],
+                     'deflections': [], 'disposals': [], 'feedWithAttempt': [], 'feeds': [],
+                     'gain': [], 'gainToGoalPerc': [], 'generalPlayTurnovers': [],
+                     'goalAssists': [], 'goalAttempts': [], 'goalMisses': [],
+                     'goal_from_zone1': [], 'goal_from_zone2': [], 'goals': [],
+                     'goalsFromCentrePass': [], 'goalsFromGain': [], 'goalsFromTurnovers': [],
+                     'interceptPassThrown': [], 'intercepts': [], 'missedShotConversion': [],
+                     'netPoints': [], 'obstructionPenalties': [], 'offsides': [],
+                     'passes': [], 'penalties': [], 'pickups': [], 'possessionChanges': [],
+                     'possessions': [], 'rebounds': [], 'tossUpWin': []}
+    
     #Create a variable for starting positions
     starterPositions = ['GS','GA','WA','C','WD','GD','GK']
+    
+    #Sort json file list alpha-numerically so that round 1 remains first
+    def sortedNicely(l):
+        """ Sorts the given iterable in the way that is expected.
+        Required arguments:
+        l -- The iterable to be sorted. """
+        convert = lambda text: int(text) if text.isdigit() else text
+        alphanum_key = lambda key: [convert(c) for c in re.split('([0-9]+)', key)]
+        return sorted(l, key = alphanum_key)
+    jsonFileList = sortedNicely(jsonFileList)
     
     #Loop through file list and extract data
     for ff in range(0,len(jsonFileList)):
@@ -710,11 +754,118 @@ def getMatchData(jsonFileList = None, df_squadLists = None,
                                                     ['scorePoints']].sum()['scorePoints']
                             individualLineUpData['plusMinus'].append(plusMinus)
                     
-        ##### TODO: extract game statistics data
+        #Extract game statistic data
+        
+        #### TODO: why did I copy-paste rather than put in loop???????
+        
+        #Loop through the player by period list
+        for pp in range(0,len(data['playerPeriodStats']['player'])):
+            
+            #Get player, round, match details
+            
+            #Extract statistics from current player and period
+            playerStatsData['playerId'].append(data['playerPeriodStats']['player'][pp]['playerId'][0])
+            playerStatsData['playerName'].append(playerInfo['displayName'][playerInfo['playerId'].index(data['playerPeriodStats']['player'][pp]['playerId'][0])])
+            playerStatsData['squadId'].append(data['playerPeriodStats']['player'][pp]['squadId'][0])
+            playerStatsData['matchNo'].append(matchInfo['matchNo'][ff])
+            playerStatsData['matchId'].append(matchInfo['id'][ff])
+            playerStatsData['roundNo'].append(matchInfo['roundNo'][ff])
+            playerStatsData['period'].append(data['playerPeriodStats']['player'][pp]['period'][0])
+            
+            #Extract statistical data
+            playerStatsData['attempt_from_zone1'].append(data['playerPeriodStats']['player'][pp]['attempt_from_zone1'][0])
+            playerStatsData['attempt_from_zone2'].append(data['playerPeriodStats']['player'][pp]['attempt_from_zone2'][0])
+            playerStatsData['badHands'].append(data['playerPeriodStats']['player'][pp]['badHands'][0])
+            playerStatsData['badPasses'].append(data['playerPeriodStats']['player'][pp]['badPasses'][0])
+            playerStatsData['blocked'].append(data['playerPeriodStats']['player'][pp]['blocked'][0])
+            playerStatsData['blocks'].append(data['playerPeriodStats']['player'][pp]['blocks'][0])
+            playerStatsData['breaks'].append(data['playerPeriodStats']['player'][pp]['breaks'][0])
+            playerStatsData['centrePassReceives'].append(data['playerPeriodStats']['player'][pp]['centrePassReceives'][0])
+            playerStatsData['centrePassToGoalPerc'].append(data['playerPeriodStats']['player'][pp]['centrePassToGoalPerc'][0])
+            playerStatsData['contactPenalties'].append(data['playerPeriodStats']['player'][pp]['contactPenalties'][0])
+            playerStatsData['deflectionWithGain'].append(data['playerPeriodStats']['player'][pp]['deflectionWithGain'][0])
+            playerStatsData['deflectionWithNoGain'].append(data['playerPeriodStats']['player'][pp]['deflectionWithNoGain'][0])
+            playerStatsData['deflections'].append(data['playerPeriodStats']['player'][pp]['deflections'][0])
+            playerStatsData['disposals'].append(data['playerPeriodStats']['player'][pp]['disposals'][0])
+            playerStatsData['feedWithAttempt'].append(data['playerPeriodStats']['player'][pp]['feedWithAttempt'][0])
+            playerStatsData['feeds'].append(data['playerPeriodStats']['player'][pp]['feeds'][0])
+            playerStatsData['gain'].append(data['playerPeriodStats']['player'][pp]['gain'][0])
+            playerStatsData['gainToGoalPerc'].append(data['playerPeriodStats']['player'][pp]['gainToGoalPerc'][0])
+            playerStatsData['generalPlayTurnovers'].append(data['playerPeriodStats']['player'][pp]['generalPlayTurnovers'][0])
+            playerStatsData['goalAssists'].append(data['playerPeriodStats']['player'][pp]['goalAssists'][0])
+            playerStatsData['goalAttempts'].append(data['playerPeriodStats']['player'][pp]['goalAttempts'][0])
+            playerStatsData['goalMisses'].append(data['playerPeriodStats']['player'][pp]['goalMisses'][0])
+            playerStatsData['goal_from_zone1'].append(data['playerPeriodStats']['player'][pp]['goal_from_zone1'][0])
+            playerStatsData['goal_from_zone2'].append(data['playerPeriodStats']['player'][pp]['goal_from_zone2'][0])
+            playerStatsData['goals'].append(data['playerPeriodStats']['player'][pp]['goals'][0])
+            playerStatsData['interceptPassThrown'].append(data['playerPeriodStats']['player'][pp]['interceptPassThrown'][0])
+            playerStatsData['intercepts'].append(data['playerPeriodStats']['player'][pp]['intercepts'][0])
+            playerStatsData['missedGoalTurnover'].append(data['playerPeriodStats']['player'][pp]['missedGoalTurnover'][0])
+            playerStatsData['netPoints'].append(data['playerPeriodStats']['player'][pp]['netPoints'][0])
+            playerStatsData['obstructionPenalties'].append(data['playerPeriodStats']['player'][pp]['obstructionPenalties'][0])
+            playerStatsData['offsides'].append(data['playerPeriodStats']['player'][pp]['offsides'][0])
+            playerStatsData['passes'].append(data['playerPeriodStats']['player'][pp]['passes'][0])
+            playerStatsData['penalties'].append(data['playerPeriodStats']['player'][pp]['penalties'][0])
+            playerStatsData['pickups'].append(data['playerPeriodStats']['player'][pp]['pickups'][0])
+            playerStatsData['possessionChanges'].append(data['playerPeriodStats']['player'][pp]['possessionChanges'][0])
+            playerStatsData['possessions'].append(data['playerPeriodStats']['player'][pp]['possessions'][0])
+            playerStatsData['rebounds'].append(data['playerPeriodStats']['player'][pp]['rebounds'][0])
+            playerStatsData['tossUpWin'].append(data['playerPeriodStats']['player'][pp]['tossUpWin'][0])
     
-    
-    
-    
+        #Loop through team and period list
+        for tt in range(0,len(data['teamPeriodStats']['team'])):
+            
+            #Get team, match and period details
+            teamStatsData['squadId'].append(data['teamPeriodStats']['team'][tt]['squadId'][0])
+            teamStatsData['matchNo'].append(matchInfo['matchNo'][ff])
+            teamStatsData['matchId'].append(matchInfo['id'][ff])
+            teamStatsData['roundNo'].append(matchInfo['roundNo'][ff])
+            teamStatsData['period'].append(data['teamPeriodStats']['team'][tt]['period'][0])
+            
+            #Extract statistical data
+            teamStatsData['attempt_from_zone1'].append(data['teamPeriodStats']['team'][tt]['attempt_from_zone1'][0])
+            teamStatsData['attempt_from_zone2'].append(data['teamPeriodStats']['team'][tt]['attempt_from_zone2'][0])
+            teamStatsData['badHands'].append(data['teamPeriodStats']['team'][tt]['badHands'][0])
+            teamStatsData['badPasses'].append(data['teamPeriodStats']['team'][tt]['badPasses'][0])
+            teamStatsData['blocked'].append(data['teamPeriodStats']['team'][tt]['blocked'][0])
+            teamStatsData['blocks'].append(data['teamPeriodStats']['team'][tt]['blocks'][0])
+            teamStatsData['breaks'].append(data['teamPeriodStats']['team'][tt]['breaks'][0])
+            teamStatsData['centrePassReceives'].append(data['teamPeriodStats']['team'][tt]['centrePassReceives'][0])
+            teamStatsData['centrePassToGoalPerc'].append(data['teamPeriodStats']['team'][tt]['centrePassToGoalPerc'][0])
+            teamStatsData['contactPenalties'].append(data['teamPeriodStats']['team'][tt]['contactPenalties'][0])
+            teamStatsData['deflectionPossessionGain'].append(data['teamPeriodStats']['team'][tt]['deflectionPossessionGain'][0])
+            teamStatsData['deflectionWithGain'].append(data['teamPeriodStats']['team'][tt]['deflectionWithGain'][0])
+            teamStatsData['deflectionWithNoGain'].append(data['teamPeriodStats']['team'][tt]['deflectionWithNoGain'][0])
+            teamStatsData['deflections'].append(data['teamPeriodStats']['team'][tt]['deflections'][0])
+            teamStatsData['disposals'].append(data['teamPeriodStats']['team'][tt]['disposals'][0])
+            teamStatsData['feedWithAttempt'].append(data['teamPeriodStats']['team'][tt]['feedWithAttempt'][0])
+            teamStatsData['feeds'].append(data['teamPeriodStats']['team'][tt]['feeds'][0])
+            teamStatsData['gain'].append(data['teamPeriodStats']['team'][tt]['gain'][0])
+            teamStatsData['gainToGoalPerc'].append(data['teamPeriodStats']['team'][tt]['gainToGoalPerc'][0])
+            teamStatsData['generalPlayTurnovers'].append(data['teamPeriodStats']['team'][tt]['generalPlayTurnovers'][0])
+            teamStatsData['goalAssists'].append(data['teamPeriodStats']['team'][tt]['goalAssists'][0])
+            teamStatsData['goalAttempts'].append(data['teamPeriodStats']['team'][tt]['goalAttempts'][0])
+            teamStatsData['goalMisses'].append(data['teamPeriodStats']['team'][tt]['goalMisses'][0])
+            teamStatsData['goal_from_zone1'].append(data['teamPeriodStats']['team'][tt]['goal_from_zone1'][0])
+            teamStatsData['goal_from_zone2'].append(data['teamPeriodStats']['team'][tt]['goal_from_zone2'][0])
+            teamStatsData['goals'].append(data['teamPeriodStats']['team'][tt]['goals'][0])
+            teamStatsData['goalsFromCentrePass'].append(data['teamPeriodStats']['team'][tt]['goalsFromCentrePass'][0])
+            teamStatsData['goalsFromGain'].append(data['teamPeriodStats']['team'][tt]['goalsFromGain'][0])
+            teamStatsData['goalsFromTurnovers'].append(data['teamPeriodStats']['team'][tt]['goalsFromTurnovers'][0])
+            teamStatsData['interceptPassThrown'].append(data['teamPeriodStats']['team'][tt]['interceptPassThrown'][0])
+            teamStatsData['intercepts'].append(data['teamPeriodStats']['team'][tt]['intercepts'][0])
+            teamStatsData['missedShotConversion'].append(data['teamPeriodStats']['team'][tt]['missedShotConversion'][0])
+            teamStatsData['netPoints'].append(data['teamPeriodStats']['team'][tt]['netPoints'][0])
+            teamStatsData['obstructionPenalties'].append(data['teamPeriodStats']['team'][tt]['obstructionPenalties'][0])
+            teamStatsData['offsides'].append(data['teamPeriodStats']['team'][tt]['offsides'][0])
+            teamStatsData['passes'].append(data['teamPeriodStats']['team'][tt]['passes'][0])
+            teamStatsData['penalties'].append(data['teamPeriodStats']['team'][tt]['penalties'][0])
+            teamStatsData['pickups'].append(data['teamPeriodStats']['team'][tt]['pickups'][0])
+            teamStatsData['possessionChanges'].append(data['teamPeriodStats']['team'][tt]['possessionChanges'][0])
+            teamStatsData['possessions'].append(data['teamPeriodStats']['team'][tt]['possessions'][0])
+            teamStatsData['rebounds'].append(data['teamPeriodStats']['team'][tt]['rebounds'][0])
+            teamStatsData['tossUpWin'].append(data['teamPeriodStats']['team'][tt]['tossUpWin'][0])
+
     
     
     # #Summarise substitution data
@@ -867,12 +1018,31 @@ def getMatchData(jsonFileList = None, df_squadLists = None,
         if exportDf is True:
             exportData['df_lineUp'] = df_lineUp
             exportData['df_individualLineUp'] = df_individualLineUp
+            
+    #Player stats data
+    if exportPlayerStatsData is True:
+        #Set to dataframe
+        df_playerStatsData = pd.DataFrame.from_dict(playerStatsData)
+        #Check and return data
+        if exportDict is True:
+            exportData['playerStatsData'] = playerStatsData
+        if exportDf is True:
+            exportData['df_playerStatsData'] = df_playerStatsData
+            
+    #Team stats data
+    if exportTeamStatsData is True:
+        #Set to dataframe
+        df_teamStatsData = pd.DataFrame.from_dict(teamStatsData)
+        #Check and return data
+        if exportDict is True:
+            exportData['teamStatsData'] = teamStatsData
+        if exportDf is True:
+            exportData['df_teamStatsData'] = df_teamStatsData
     
     #Return data dictionary
     return exportData
     
     ##### TODO: other dataframes once extracted
-    ##### e.g. game statistics
     
 # %%
     
