@@ -10,21 +10,42 @@ Created on Mon Sep  7 22:10:29 2020
     
 """
 
+# %% Import packages
+
 from PIL import Image, ImageChops, ImageDraw
+import os
 
-##### CODE WORKS! WITH MANUAL ASPECTS OF COURSE!!!!
-##### NEED TO ADJUST AND USE WITHIN LOOP FOR ALL
+# %% Crop and resave images
 
-##### PERHAPS STORE A CROPPED VERSION OF FILES (i.e. different name)...
+#Get file list
+fileList = list()
+for file in os.listdir(os.getcwd()):
+    if file.endswith('.png'):
+        fileList.append(file)
 
-###### Can't get size right for circle...
-#w = 440, h = 248
-im = Image.open('A.Brazill.png')
-bigsize = (im.size[0], im.size[1])
-mask = Image.new('L', bigsize, 0)
-# ImageDraw.Draw(mask).ellipse((0, 0) + bigsize, fill=255)
-ImageDraw.Draw(mask).ellipse([(220-124,0),(220+124,248)], fill=255)
-# mask = mask.resize(im.size, Image.ANTIALIAS)
-mask = ImageChops.darker(mask, im.split()[-1])
-im.putalpha(mask)
-im.save('cropped.png')
+#Loop through files
+for ff in range(0,len(fileList)):
+
+    #Open image
+    im = Image.open(fileList[ff])
+    
+    #Get image size
+    w = im.size[0]
+    h = im.size[1]
+    
+    #Create mask
+    mask = Image.new('L', (w,h), 0)
+    
+    #Draw the ellipse
+    ImageDraw.Draw(mask).ellipse([((w/2)-(h/2),0),((w/2)+(h/2),h)], fill=255)
+    
+    #Set the transparency on the mask
+    mask = ImageChops.darker(mask, im.split()[-1])
+    
+    #Add mask to image
+    im.putalpha(mask)
+    
+    #Save image
+    im.save(fileList[ff][0:-4]+'_cropped.png')
+    
+# %% ----- End of imageCropper.py ----- %% #
