@@ -98,7 +98,8 @@ playerStatsGrab = ['centrePassReceives', 'contactPenalties',
                    'deflections', 'disposals', 'feedWithAttempt', 'feeds',
                    'gain', 'generalPlayTurnovers', 'goalAssists', 
                    'interceptPassThrown', 'intercepts', 'obstructionPenalties',
-                   'penalties', 'pickups', 'possessions', 'rebounds']
+                   'penalties', 'pickups', 'possessions', 'rebounds',
+                   'goalAttempts', 'goal_from_zone1','goal_from_zone2']
 #Convert list to dictionary to store data in
 playerStatsDictTotal = {'playerId': [], 'playerName': [], 'squadName': [], 'durationMins': [],
                         'centrePassReceives': [], 'contactPenalties': [], 
@@ -107,7 +108,7 @@ playerStatsDictTotal = {'playerId': [], 'playerName': [], 'squadName': [], 'dura
                         'gain': [], 'generalPlayTurnovers': [], 'goalAssists': [], 
                         'interceptPassThrown': [], 'intercepts': [], 'obstructionPenalties': [],
                         'penalties': [], 'pickups': [], 'possessions': [],
-                        'rebounds': []}
+                        'rebounds': [], 'goalAttempts': [], 'goal_from_zone1': [], 'goal_from_zone2': []}
 playerStatsDictPer = {'playerId': [], 'playerName': [], 'squadName': [], 'durationMins': [],
                       'centrePassReceives': [], 'contactPenalties': [], 
                       'deflectionWithGain': [], 'deflectionWithNoGain': [],
@@ -115,7 +116,7 @@ playerStatsDictPer = {'playerId': [], 'playerName': [], 'squadName': [], 'durati
                       'gain': [], 'generalPlayTurnovers': [], 'goalAssists': [], 
                       'interceptPassThrown': [], 'intercepts': [], 'obstructionPenalties': [],
                       'penalties': [], 'pickups': [], 'possessions': [],
-                      'rebounds': []}
+                      'rebounds': [], 'goalAttempts': [], 'goal_from_zone1': [], 'goal_from_zone2': []}
 
 #Loop through players and extract statistics
 for pp in range(0,len(playerStatList)):
@@ -181,13 +182,13 @@ for col in df_playerStatsMetricsAll.columns:
     #Check if it contains one of the triggers for renaming
     if '_x' in currColumn:
         #Set the new column name
-        newColumn = currColumn.split('_')[0]+'Total'        
+        newColumn = currColumn[0:-2]+'Total'        
         #Rename the dataframe column
         df_playerStatsMetricsAll.rename(columns = {currColumn: newColumn},
                                         inplace = True)
     if '_y' in currColumn:        
         #Set the new column name
-        newColumn = currColumn.split('_')[0]+'Per'        
+        newColumn = currColumn[0:-2]+'Per'        
         #Rename the dataframe column
         df_playerStatsMetricsAll.rename(columns = {currColumn: newColumn},
                                         inplace = True)
@@ -198,7 +199,10 @@ attackingCols = ['playerId', 'playerName', 'squadName', 'durationMins',
                  'feedsTotal', 'feedsPer', 'feedWithAttemptTotal', 'feedWithAttemptPer',
                  'goalAssistsTotal', 'goalAssistsPer',
                  'generalPlayTurnoversTotal', 'generalPlayTurnoversPer',
-                 'interceptPassThrownTotal', 'interceptPassThrownPer']
+                 'interceptPassThrownTotal', 'interceptPassThrownPer',
+                 'goalAttemptsTotal','goalAttemptsPer',
+                 'goal_from_zone1Total','goal_from_zone1Per',
+                 'goal_from_zone1Total','goal_from_zone2Per']
 defensiveCols = ['playerId', 'playerName', 'squadName', 'durationMins',
                  'gainTotal', 'gainPer',
                  'deflectionsTotal', 'deflectionsPer',
@@ -230,12 +234,15 @@ deflectionsGain = df_playerStatsMetricsAll['deflectionWithGainPer'].to_numpy()
 deflectionsNoGain = df_playerStatsMetricsAll['deflectionWithNoGainPer'].to_numpy()
 contactPens = df_playerStatsMetricsAll['contactPenaltiesPer'].to_numpy()
 obstructionPens = df_playerStatsMetricsAll['obstructionPenaltiesPer'].to_numpy()
-
+goalAttempts = df_playerStatsMetricsAll['goalAttemptsPer'].to_numpy()
+goalZone1 = df_playerStatsMetricsAll['goal_from_zone1Per'].to_numpy()
+goalZone2 = df_playerStatsMetricsAll['goal_from_zone2Per'].to_numpy()
 
 #Stack all data together
 alldata = np.vstack((cpReceives, feeds, feedsAttempt, goalAssists, turnovers,
                      interceptsThrown, gains, deflections, deflectionsGain,
-                     deflectionsNoGain, contactPens, obstructionPens))
+                     deflectionsNoGain, contactPens, obstructionPens,
+                     goalAttempts, goalZone1, goalZone2))
 
 #Test out varying cluster numbers to identify the most appropriate cluster number
 #We'll test out 2 through 10 clusters here
@@ -269,9 +276,9 @@ ax.plot(np.r_[2:11], fpcs)
 ax.set_xlabel('Number of Cluster Centres')
 ax.set_ylabel('Fuzzy Partition Coefficient (FPC)')
 
-#The above plot suggests that a two cluster solution appears to be the best...
-nClusters = 2
-##### NOTE: 3 cluster solution might produce some more interesting values...
+#The above plot suggests that a three cluster solution appears to be the best...
+#Two clusters was without shooting stats, while with shooting stats we got 3 as best
+nClusters = 3
 
 #Run the cmeans fuzzy clustering using the final nClusters solution
 clusterCentres, memberMatrix, _, _, _, _, fuzzyCoefficient = fuzz.cluster.cmeans(alldata,
@@ -282,19 +289,17 @@ clusterCentres, memberMatrix, _, _, _, _, fuzzyCoefficient = fuzz.cluster.cmeans
                                                                                  seed = 123,
                                                                                  init = None)
 
-#Given only two clusters are used here, each players values in the membership
-#matrix will simply be 1 - the other value, and so are evenly distributed between
-#the two.
-
 #Define a hard membership matrix depending on which cluster the players higher 
 #fuzzy value sits in
 clusteredPlayers = df_playerStatsMetricsAll['playerName'].values
 memberCluster = list()
 for pp in range(0,len(clusteredPlayers)):
-    if memberMatrix[0,pp] >= memberMatrix[1,pp]:
+    if memberMatrix[0,pp] > memberMatrix[1,pp] and memberMatrix[0,pp] > memberMatrix[2,pp]:
         memberCluster.append('Cluster 1')
-    else:
+    elif memberMatrix[1,pp] > memberMatrix[0,pp] and memberMatrix[1,pp] > memberMatrix[2,pp]:
         memberCluster.append('Cluster 2')
+    elif memberMatrix[2,pp] > memberMatrix[0,pp] and memberMatrix[2,pp] > memberMatrix[1,pp]:
+        memberCluster.append('Cluster 3')
         
 #Create a new dataframe that has the per metrics
 newData = np.transpose(alldata)
@@ -302,7 +307,8 @@ df_clusterData = pd.DataFrame(newData,
                               columns = ['cpReceives', 'feeds', 'feedsAttempt',
                                          'goalAssists', 'turnovers', 'interceptsThrown',
                                          'gains', 'deflections', 'deflectionsGain',
-                                         'deflectionsNoGain', 'contactPens', 'obstructionPens'])
+                                         'deflectionsNoGain', 'contactPens', 'obstructionPens',
+                                         'goalAttempts', 'goalZone1', 'goalZone2'])
 
 #Add the player and squad details columns
 df_clusterData['playerId'] = df_playerStatsMetricsAll['playerId'].values
@@ -314,6 +320,7 @@ df_clusterData['durationMins'] = df_playerStatsMetricsAll['durationMins'].values
 df_clusterData['clusterMember'] = memberCluster
 df_clusterData['clusterFuzz1'] = np.transpose(memberMatrix[0,:])
 df_clusterData['clusterFuzz2'] = np.transpose(memberMatrix[1,:])
+df_clusterData['clusterFuzz3'] = np.transpose(memberMatrix[2,:])
 
 #Use the hard cluster member data to get a bit of an idea of the differences 
 #between the clusters, by plotting the data from each of these. Note that these
@@ -324,9 +331,11 @@ df_clusterData['clusterFuzz2'] = np.transpose(memberMatrix[1,:])
 clusterVars = ['cpReceives', 'feeds', 'feedsAttempt',
                'goalAssists', 'turnovers', 'interceptsThrown',
                'gains', 'deflections', 'deflectionsGain',
-               'deflectionsNoGain', 'contactPens', 'obstructionPens']
+               'deflectionsNoGain', 'contactPens', 'obstructionPens',
+               'goalAttempts', 'goalZone1', 'goalZone2']
 
 #Reconfigure dataframe to work with seaborn grouping plots
+##### TODO: make this more efficient...
 value = np.hstack((df_clusterData['cpReceives'].to_numpy(),
                    df_clusterData['feeds'].to_numpy(),
                    df_clusterData['feedsAttempt'].to_numpy(),
@@ -338,7 +347,10 @@ value = np.hstack((df_clusterData['cpReceives'].to_numpy(),
                    df_clusterData['deflectionsGain'].to_numpy(),
                    df_clusterData['deflectionsNoGain'].to_numpy(),
                    df_clusterData['contactPens'].to_numpy(),
-                   df_clusterData['obstructionPens'].to_numpy()))
+                   df_clusterData['obstructionPens'].to_numpy(),
+                   df_clusterData['goalAttempts'].to_numpy(),
+                   df_clusterData['goalZone1'].to_numpy(),
+                   df_clusterData['goalZone2'].to_numpy()))
 var = np.hstack((['cpReceives'] * len(df_clusterData),
                  ['feeds'] * len(df_clusterData),
                  ['feedsAttempt'] * len(df_clusterData),
@@ -350,8 +362,14 @@ var = np.hstack((['cpReceives'] * len(df_clusterData),
                  ['deflectionsGain'] * len(df_clusterData),
                  ['deflectionsNoGain'] * len(df_clusterData),
                  ['contactPens'] * len(df_clusterData),
-                 ['obstructionPens'] * len(df_clusterData)))
+                 ['obstructionPens'] * len(df_clusterData),
+                 ['goalAttempts'] * len(df_clusterData),
+                 ['goalZone1'] * len(df_clusterData),
+                 ['goalZone2'] * len(df_clusterData)))
 clusters = np.hstack((df_clusterData['clusterMember'].to_numpy(),
+                      df_clusterData['clusterMember'].to_numpy(),
+                      df_clusterData['clusterMember'].to_numpy(),
+                      df_clusterData['clusterMember'].to_numpy(),
                       df_clusterData['clusterMember'].to_numpy(),
                       df_clusterData['clusterMember'].to_numpy(),
                       df_clusterData['clusterMember'].to_numpy(),
@@ -371,15 +389,86 @@ sns.boxplot(data = df_clusterDataTransform,
             x = 'variable', y = 'per15Value',
             hue = 'clusterMember')
     
-##### At a basic level, it seems that cluster 1 relates to attacking play, with
-##### higher centre pass receives, feeds, feeds with attempts, goal assists,
-##### turnovers and intercepts thrown. Cluster 2 seems more like defensive play,
-##### with more gains, deflections (all categories) contact and obstruction 
-##### penalties (Cluster 2 is less clear in these increases, but still seem there)
+# At a basic level, it seems like cluster 1 is the shooting cluster, with
+# the goal attempts and a bit of attacking involvement (e.g. feeds, cp_receives,
+# goal assist). Cluster 2 looks to be the defensive cluster, with low attacking
+# variable data and high defensive data (e.g. gains, deflections, contact and
+# obstruction penalties). Cluster 3 looks to be the attacking mid court group,
+# with high values for centre pass receives, feeds, assists etc. (and some scoring).
 
-##### There's probably a lack of distinction here, as goal shooters are getting
-##### put in the defensive category, as they don't have receives and feeds etc.
-##### Adding scoring data might lead to more clusters and better separation
+# %% Test visualising player positioning in clusters
+
+#Set players names to plot
+plotPlayers = ['L.Watson', 'C.Koenen', 'R.Aiken', 'T.Dwan', 'J.Fowler']
+
+#Set colours to plot circles based on player team
+plotColours = ['#00a68e', '#fdb61c', '#4b2c69', '#4b2c69', '#00953b']
+
+#Get each players fuzziness data
+fuzzyData = np.zeros([3,len(plotPlayers)])
+for pp in range(0,len(plotPlayers)):
+    #Cluster 1 fuzzy metric
+    fuzzyData[0,pp] = df_clusterData.loc[(df_clusterData['playerName'] == plotPlayers[pp]),
+                                         ['clusterFuzz1']].to_numpy()[0][0]
+    #Cluster 2 fuzzy metric
+    fuzzyData[1,pp] = df_clusterData.loc[(df_clusterData['playerName'] == plotPlayers[pp]),
+                                         ['clusterFuzz2']].to_numpy()[0][0]
+    #Cluster 3 fuzzy metric
+    fuzzyData[2,pp] = df_clusterData.loc[(df_clusterData['playerName'] == plotPlayers[pp]),
+                                         ['clusterFuzz3']].to_numpy()[0][0]
+
+# The visualisation we want to test involves an equilateral triangle, with the points
+# representing a fuzzy value of 1 for the three different clusters. To figure out a players
+# position in the triangle we run some calculations comparing the relative difference between
+# the different points based on their fuzzy coefficient.
+
+#Start with implementing a standard matplotlib implementation
+fig, ax = plt.subplots(figsize=(10,8))
+
+#Create the triangle. This will have a bottom left corner at (0,0),
+#a bottom right corner at (0,1), and the top point at (1,0.5)
+ax.plot([0,1], [0,0], color = 'k', lw = 2)
+ax.plot([0,0.5], [0,1], color = 'k', lw = 2)
+ax.plot([0.5,1], [1,0], color = 'k', lw = 2)
+
+#We'll set the top point as being cluster 1, the bottom left as
+#cluster 2, and the bottom right as cluster 3
+
+#Calculate the player points (XY)
+xyPoints = np.zeros([len(plotPlayers),2])
+for pp in range(0,len(plotPlayers)):
+    #Get current cluster data
+    c1 = fuzzyData[0,pp]
+    c2 = fuzzyData[1,pp]
+    c3 = fuzzyData[2,pp]
+    #Calculate x-point as being the relative difference between cluster 2 and cluster 3
+    totalC23 = c2 + c3
+    xPos = 1 - c2 / totalC23
+    #Calculate y-point as being the average of the two relative differences between
+    #cluster 2 and 3 versus cluster 1
+    totalC21 = c1 + c2
+    totalC31 = c1 + c3
+    yPos1 = 1 - c2 / totalC21
+    yPos2 = 1 - c3 / totalC31
+    yPos = (yPos1 + yPos2) / 2
+    #Append to array
+    xyPoints[pp,0] = xPos
+    xyPoints[pp,1] = yPos
+    
+#Add xy points
+ax.scatter(xyPoints[:,0], xyPoints[:,1],
+           c = plotColours,
+           marker = 'o')
+
+
+###### TODO: edit above scatter to consider circle size and white fill
+###### TODO: above xyPoints aren't calculating correctly to consider 
+###### point within triangle...
+
+# %%
+
+##### Below Bokeh plot is a simple 2d line solution, not triangular...
+    
 
 # %% Test creating a bokeh plot that places players on a line
 
