@@ -19,6 +19,7 @@ Created on Mon Sep  7 20:53:05 2020
 # %% Import packages
 
 import numpy as np
+import math
 import matplotlib.pyplot as plt
 import seaborn as sns
 import skfuzzy as fuzz
@@ -419,8 +420,9 @@ for pp in range(0,len(plotPlayers)):
 
 # The visualisation we want to test involves an equilateral triangle, with the points
 # representing a fuzzy value of 1 for the three different clusters. To figure out a players
-# position in the triangle we run some calculations comparing the relative difference between
-# the different points based on their fuzzy coefficient.
+# position in the triangle we run some calculations to determine how close the players
+# point should be to each triangle point - and then take the average of these. This considers
+# that 0.5 for each cluster sits in the middle, while a value of 1 sits at the point.
 
 #Start with implementing a standard matplotlib implementation
 fig, ax = plt.subplots(figsize=(10,8))
@@ -437,29 +439,57 @@ ax.plot([0.5,1], [1,0], color = 'k', lw = 2)
 #Calculate the player points (XY)
 xyPoints = np.zeros([len(plotPlayers),2])
 for pp in range(0,len(plotPlayers)):
+    
+    #Set an array for the three points
+    currXY = np.zeros([3,2])
+    
     #Get current cluster data
     c1 = fuzzyData[0,pp]
     c2 = fuzzyData[1,pp]
     c3 = fuzzyData[2,pp]
-    #Calculate x-point as being the relative difference between cluster 2 and cluster 3
-    totalC23 = c2 + c3
-    xPos = 1 - c2 / totalC23
-    #Calculate y-point as being the average of the two relative differences between
-    #cluster 2 and 3 versus cluster 1
-    totalC21 = c1 + c2
-    totalC31 = c1 + c3
-    yPos1 = 1 - c2 / totalC21
-    yPos2 = 1 - c3 / totalC31
-    yPos = (yPos1 + yPos2) / 2
+    
+    #Calculate the cluster 1 xyPoint
+    #This is the most simple, as it is just their coefficient for this cluster
+    #as the y-value, and 0.5 as the X-point
+    currXY[0,0] = 0.5
+    currXY[0,1] = c1
+    
+    #Calculate the cluster 2 xyPoint
+    #This considers a line running from the corner to the opposite side of the
+    #triangle. Given it is an equilateral triangle, the angle of inclination for
+    #this will be 30 degrees. The length of this line will be 1 - their c2 value.
+    #With the angle and length of this line we can work out the horizontal (x-axis)
+    #and vertical lengths (y-axis) for the point using trigonometry
+    #Set known values
+    hypotLen = 1 - c2
+    theta = math.radians(30)
+    #Calculate x-point
+    currXY[1,0] = math.cos(theta)*hypotLen
+    #Calculate the y-point
+    currXY[1,1] = math.sin(theta)*hypotLen
+    
+    #Calculate the cluster 3 xyPoint
+    #This essentially reverses the above calculations given the line is going the
+    #other way, so the x-value needs to be subtracted from 1
+    hypotLen = 1 - c3
+    #Calculate the x-point
+    currXY[2,0] = 1 - math.cos(theta)*hypotLen
+    #Calculate the y-point
+    currXY[2,1] = math.sin(theta)*hypotLen
+    
+    #Take the average of the three points to get the players points
+    avgPts = np.mean(currXY, axis = 0)
+    
     #Append to array
-    xyPoints[pp,0] = xPos
-    xyPoints[pp,1] = yPos
+    xyPoints[pp,0] = avgPts[0]
+    xyPoints[pp,1] = avgPts[1]
     
 #Add xy points
 ax.scatter(xyPoints[:,0], xyPoints[:,1],
            c = plotColours,
            marker = 'o')
 
+##### ABOVE APPROACH IS BETTER, BUT STILL DOESN'T SEEM ENTIRELY RIGHT...
 
 ###### TODO: edit above scatter to consider circle size and white fill
 ###### TODO: above xyPoints aren't calculating correctly to consider 
