@@ -427,80 +427,47 @@ for pp in range(0,len(plotPlayers)):
 #Start with implementing a standard matplotlib implementation
 fig, ax = plt.subplots(figsize=(10,8))
 
+# #Figure out triangle height based on edge length of 1
+# triHeight = math.sqrt(1 - (0.5*0.5))
+
 #Create the triangle. This will have a bottom left corner at (0,0),
 #a bottom right corner at (0,1), and the top point at (1,0.5)
 ax.plot([0,1], [0,0], color = 'k', lw = 2)
+# ax.plot([0,0.5], [0,triHeight], color = 'k', lw = 2)
+# ax.plot([0.5,1], [triHeight,0], color = 'k', lw = 2)
 ax.plot([0,0.5], [0,1], color = 'k', lw = 2)
 ax.plot([0.5,1], [1,0], color = 'k', lw = 2)
 
 #We'll set the top point as being cluster 1, the bottom left as
-#cluster 2, and the bottom right as cluster 3
+#cluster 2, and the bottom right as cluster 3. This means that 
+#the bottom left to top of the triangle is 0-1 for cluster 1,
+#the bottom right to bottom left is 0-1 for cluster 2, and the
+#top to bottom right is 0-1 for cluster 3
 
 #Calculate the player points (XY)
 xyPoints = np.zeros([len(plotPlayers),2])
 for pp in range(0,len(plotPlayers)):
     
-    #Set an array for the three points
-    currXY = np.zeros([3,2])
-    
     #Get current cluster data
     c1 = fuzzyData[0,pp]
-    c2 = fuzzyData[1,pp]
+    # c2 = fuzzyData[1,pp]
     c3 = fuzzyData[2,pp]
     
-    #Calculate the cluster 1 xyPoint
-    #This is the most simple, as it is just their coefficient for this cluster
-    #as the y-value, and 0.5 as the X-point
-    currXY[0,0] = 0.5
-    currXY[0,1] = c1
-    
-    #Calculate the cluster 2 xyPoint
-    #This considers a line running from the corner to the opposite side of the
-    #triangle. Given it is an equilateral triangle, the angle of inclination for
-    #this will be 30 degrees. The length of this line will be 1 - their c2 value.
-    #With the angle and length of this line we can work out the horizontal (x-axis)
-    #and vertical lengths (y-axis) for the point using trigonometry
-    #Set known values
-    hypotLen = 1 - c2
-    theta = math.radians(30)
-    #Calculate x-point
-    currXY[1,0] = math.cos(theta)*hypotLen
-    #Calculate the y-point
-    currXY[1,1] = math.sin(theta)*hypotLen
-    
-    #Calculate the cluster 3 xyPoint
-    #This essentially reverses the above calculations given the line is going the
-    #other way, so the x-value needs to be subtracted from 1
-    hypotLen = 1 - c3
-    #Calculate the x-point
-    currXY[2,0] = 1 - math.cos(theta)*hypotLen
-    #Calculate the y-point
-    currXY[2,1] = math.sin(theta)*hypotLen
-    
-    #Take the average of the three points to get the players points
-    avgPts = np.mean(currXY, axis = 0)
-    
-    #Append to array
-    xyPoints[pp,0] = avgPts[0]
-    xyPoints[pp,1] = avgPts[1]
+    #Calculate x and y position for plot and append to array
+    xyPoints[pp,0] = c3 + (c1/2)
+    xyPoints[pp,1] = c1
     
 #Add xy points
 ax.scatter(xyPoints[:,0], xyPoints[:,1],
            c = plotColours,
            marker = 'o')
 
-##### ABOVE APPROACH IS BETTER, BUT STILL DOESN'T SEEM ENTIRELY RIGHT...
-
-###### TODO: edit above scatter to consider circle size and white fill
-###### TODO: above xyPoints aren't calculating correctly to consider 
-###### point within triangle...
-
 # %%
 
 ##### Below Bokeh plot is a simple 2d line solution, not triangular...
     
 
-# %% Test creating a bokeh plot that places players on a line
+# %% Test creating a bokeh plot
 
 #Set players names to plot
 # plotPlayers = ['L.Watson', 'C.Koenen', 'R.Aiken', 'T.Dwan', 'J.Fowler']
@@ -509,38 +476,75 @@ plotPlayers = list(clusteredPlayers)
 #Set colours to plot circles based on player team
 # plotColours = ['#00a68e', '#fdb61c', '#4b2c69', '#4b2c69', '#00953b']
 
-#Get each players 'attacking' (i.e. cluster 1) fuzzy membership value
-xVal = list()
+#Get each players fuzziness data
+fuzzyData = np.zeros([3,len(plotPlayers)])
 for pp in range(0,len(plotPlayers)):
-    xVal.append(df_clusterData.loc[(df_clusterData['playerName'] == plotPlayers[pp]),
-                                   ['clusterFuzz1']].to_numpy()[0][0])
+    #Cluster 1 fuzzy metric
+    fuzzyData[0,pp] = df_clusterData.loc[(df_clusterData['playerName'] == plotPlayers[pp]),
+                                         ['clusterFuzz1']].to_numpy()[0][0]
+    #Cluster 2 fuzzy metric
+    fuzzyData[1,pp] = df_clusterData.loc[(df_clusterData['playerName'] == plotPlayers[pp]),
+                                         ['clusterFuzz2']].to_numpy()[0][0]
+    #Cluster 3 fuzzy metric
+    fuzzyData[2,pp] = df_clusterData.loc[(df_clusterData['playerName'] == plotPlayers[pp]),
+                                         ['clusterFuzz3']].to_numpy()[0][0]
+
+#Calculate the player points (XY)
+xyPoints = np.zeros([len(plotPlayers),2])
+for pp in range(0,len(plotPlayers)):
     
-#Create consistent y-value of 1
-yVal = [1] * len(xVal)
+    #Get current cluster data
+    c1 = fuzzyData[0,pp]
+    # c2 = fuzzyData[1,pp]
+    c3 = fuzzyData[2,pp]
+    
+    #Calculate x and y position for plot and append to array
+    xyPoints[pp,0] = c3 + (c1/2)
+    xyPoints[pp,1] = c1
+
+#Add colour column
+#Set colour dictionary
+colourDict = {'Fever': '#00953b',
+              'Firebirds': '#4b2c69',
+              'GIANTS': '#f57921',
+              'Lightning': '#fdb61c',
+              'Magpies': '#494b4a',
+              'Swifts': '#0082cd',
+              'Thunderbirds': '#e54078',
+              'Vixens': '#00a68e'}
+#Get team list
+#### TODO: clean up extraction using loc etc.
+plotTeams = df_clusterData['squadName'].values
+plotColours = list()
+for tt in range(0,len(plotTeams)):
+    plotColours.append(colourDict[plotTeams[tt]])
 
 #Put data into dataframe
 # df = pd.DataFrame(list(zip(plotPlayers, plotColours, xVal, yVal)), 
 #                columns = ['playerName', 'plotColour', 'x', 'y'])
-df = pd.DataFrame(list(zip(plotPlayers, xVal, yVal)), 
-               columns = ['playerName', 'x', 'y'])
+df = pd.DataFrame(list(zip(plotPlayers, xyPoints[:,0], xyPoints[:,1], plotColours)), 
+               columns = ['playerName', 'x', 'y', 'teamColour'])
 
 #Create bokeh figure
 from bokeh.layouts import column
 from bokeh.plotting import figure, output_file, show
-from bokeh.transform import jitter
+# from bokeh.transform import jitter
 #Create figure
-p = figure(plot_width = 600, plot_height = 200,
-           title = 'Plot with jitter')
+p = figure(plot_width = 700, plot_height = 500)
 #Turn grids off
 p.xgrid.grid_line_color = None
 p.ygrid.grid_line_color = None
 
-#ADd circles
-p.circle(x = 'x', y = jitter('y',0.01),
+#Add a line renderer for triangle
+p.line([0, 0.5, 1, 0], [0, 1, 0, 0],
+       line_width = 2, line_color = 'black')
+
+#Add circles
+p.circle(x = 'x', y = 'y',
          #radius = 0.1/2,
-         size = 20,
+         size = 10,
          # line_color = 'plotColour',
-         line_color = 'blue',
+         line_color = 'teamColour',
          fill_color = 'white',
          fill_alpha = 0,
          line_width = 1.5,
@@ -549,45 +553,14 @@ p.circle(x = 'x', y = jitter('y',0.01),
 #Show plot
 show(p)
 
-##### The above approach works OK, although some data gets cut-off.
-##### Need to tweak around the jotter, size parameters etc. to get it right
-##### Also turn off axis, add the line at y = 1 or some sort of directional axes
-
-##### More players may also change the above - certainly gets overlap, but get
-##### a result more like you'd expect (still cut-off though)...
-
-##### Also need to consider other statistics with respect to maybe having more clusters...
-
+##### Above approach for plotting points works well enough
+##### TODO: add hovertools, add images, consider team specific,
+##### add icons for triangle points, turn off panning, turn off axes,
+##### consider grid format with multiple team plots
 
 # %%
 
 # %%
-
-# %% Create some mock data that has XY variables for 5 players
-
-#Random X-data
-X = [0.2, -0.3, 0.5, 0.1, 0.2]
-
-#Random Y-data
-Y = [-0.7, 0.4, 0.5, 0.6, -0.4]
-
-#Set player names to plot
-players = ['L.Watson', 'C.Koenen', 'R.Aiken', 'T.Dwan', 'J.Fowler']
-
-#Set colours to plot circles based on player team
-colours = ['#00a68e', '#fdb61c', '#4b2c69', '#4b2c69', '#00953b']
-
-#Concert to dataframe
-df = pd.DataFrame(list(zip(players, colours, X, Y)), 
-                  columns= ['players', 'colours', 'X', 'Y'])
-
-#Get paths to local and online images
-os.chdir('..\\..\\..\\Data\\SuperNetball2020\\Images')
-localImagePaths = list()
-onlineImagePaths = list()
-for pp in range(0,len(players)):
-    localImagePaths.append(os.getcwd()+'\\'+players[pp]+'.png')
-    onlineImagePaths.append('https://aaronsfox.github.io/graphics/ssn-2020/player-images/'+players[pp]+'.png')
 
 # %% Create Bokeh scatter plot
 
