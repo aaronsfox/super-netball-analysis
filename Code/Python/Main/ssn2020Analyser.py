@@ -139,7 +139,7 @@ bokehOptions = dict(tools = ['wheel_zoom,box_zoom'])
 os.chdir('..\\..\\Figures\\TwoPointAnalysis\\RoundByRound')
 
 #Set round to plot
-round2Plot = 10
+round2Plot = 11
 
 #Total one vs. two point shots
 figHelper.totalPointsOneVsTwo(round2Plot = round2Plot, matchInfo = matchInfo,
@@ -162,7 +162,7 @@ figHelper.teamShotRatiosInnerVsOuter(round2Plot = round2Plot, matchInfo = matchI
 # %% Individual player two-point scoring
 
 #Set round to plot
-round2Plot = 10
+round2Plot = 11
 
 #Total two-point score
 figHelper.playerTwoPointTotals(round2Plot = round2Plot, df_scoreFlow = df_scoreFlow,
@@ -250,7 +250,7 @@ os.chdir('..\\..\\PlusMinusAnalysis')
 #Team line-up total plus minus
 figHelper.totalPlusMinusLineUps(teamInfo = teamInfo, df_lineUp = df_lineUp,
                                 absPlusMinus = True, perPlusMinus = True,
-                                perDivider = 15, minLineUpDuration = 10,
+                                perDivider = 15, minLineUpDuration = 15,
                                 colourDict = colourDict, showPlot = False,
                                 exportPNG = True, exportHTML = True)
 
@@ -258,14 +258,14 @@ figHelper.totalPlusMinusLineUps(teamInfo = teamInfo, df_lineUp = df_lineUp,
 figHelper.playerPlusMinus(teamInfo = teamInfo, playerInfo = playerInfo,
                           df_individualLineUp = df_individualLineUp,
                           absPlusMinus = True, perPlusMinus = True,
-                          perDivider = 15, minDuration = 10, nPlayers = 20,
+                          perDivider = 15, minDuration = 15, nPlayers = 20,
                           colourDict = colourDict, showPlot = False,
                           exportPNG = True, exportHTML = True)
 
 #Differential between player plus/minus on vs. off court
 figHelper.relativePlayerPlusMinus(teamInfo = teamInfo, playerInfo = playerInfo,
                                   df_individualLineUp = df_individualLineUp ,
-                                  perDivider = 15, minDurationOn = 10, minDurationOff = 5, nPlayers = 20,
+                                  perDivider = 15, minDurationOn = 15, minDurationOff = 5, nPlayers = 20,
                                   colourDict = colourDict, showPlot = False,
                                   exportPNG = True, exportHTML = True)
 
@@ -276,7 +276,7 @@ figHelper.relativePlayerPlusMinus(teamInfo = teamInfo, playerInfo = playerInfo,
 # This will export the unique line-up data for all teams as a .csv file to convert
 # to a HTML table in R via reactable. Each row of data will be a unique line-up
 # with the columns relating to team, GS, ..., GK, ABS +/-, PER15 +/-, duration.
-# We'll limit the line-ups to those that have had 10 minutes on court together
+# We'll limit the line-ups to those that have had 15 minutes on court together
 # for now. 
 
 #Append the combined lineup name to the line up dataframecombinedLineUpName = list()
@@ -302,7 +302,7 @@ lineUpDuration = list()
 lineUpPlusMinus = list()
 analyseLineUps = list()
 squadLineUps = list()
-minLineUpDuration= 10
+minLineUpDuration= 15
 for uu in range(0,len(uniqueLineUps)):
     #Get a separated dataframe
     df_currLineUp = df_lineUp.loc[(df_lineUp['combinedLineUpName'] == uniqueLineUps[uu]),]
@@ -379,8 +379,8 @@ playerPlusMinusOnPer15 = list()
 playerPlusMinusOffPer15 = list()
 analysePlayer = list()
 analyseSquad = list()
-minPlayerDurationOn = 10
-minPlayerDurationOff = 5
+minPlayerDurationOn = 15
+minPlayerDurationOff = 10
 perDivider = 15
 for pp in range(0,len(uniquePlayers)):
     
@@ -443,6 +443,8 @@ df_playerPlusMinusRel.sort_values(by = 'relPerPlusMinus', inplace = True,
 df_playerPlusMinusRel.to_csv('individualPlayer_plusMinus.csv', index = False)
 
 # %% Calculate player summary and per 15 statistics
+
+##### TODO: add shooting stats to output dataframe
 
 #Get unique list of players to examine
 playerStatList = df_playerStatsData['playerId'].unique()

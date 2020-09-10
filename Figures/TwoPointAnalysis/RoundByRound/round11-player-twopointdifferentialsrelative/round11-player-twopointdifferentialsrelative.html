@@ -1,0 +1,85 @@
+
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+  
+  <head>
+    
+      <meta charset="utf-8">
+      <title>Bokeh Plot</title>
+      
+      
+        
+          
+        
+        
+          
+        <script type="text/javascript" src="https://cdn.bokeh.org/bokeh/release/bokeh-2.1.1.min.js" integrity="sha384-kLr4fYcqcSpbuI95brIH3vnnYCquzzSxHPU6XGQCIkQRGJwhg0StNbj1eegrHs12" crossorigin="anonymous"></script>
+        <script type="text/javascript">
+            Bokeh.set_log_level("info");
+        </script>
+        
+      
+      
+    
+  </head>
+  
+  
+  <body>
+    
+      
+        
+          
+          
+            
+              <div class="bk-root" id="15385bcc-77f2-4cc5-ae5c-a5d811671f9b" data-root-id="4252"></div>
+            
+          
+        
+      
+      
+        <script type="application/json" id="4454">
+          {"012edacf-6dbb-47dc-a14d-ad58f66e8901":{"roots":{"references":[{"attributes":{},"id":"4259","type":"CategoricalScale"},{"attributes":{"axis":{"id":"4263"},"grid_line_color":null,"ticker":null},"id":"4265","type":"Grid"},{"attributes":{},"id":"4261","type":"LinearScale"},{"attributes":{"factors":["G.Horjus","G.Sinclair","A.Teague-Neeld","S.Garbin","H.Housby","N.Allen","S.Wood","C.Thwaites","J.Harten","K.Austin","T.Dwan","L.Potgieter","S.Wallace","M.Kumwenda"],"range_padding":0.1},"id":"4255","type":"FactorRange"},{"attributes":{"fill_color":{"field":"color"},"line_color":{"field":"color"},"top":{"field":"counts"},"width":{"value":0.6},"x":{"field":"players"}},"id":"4274","type":"VBar"},{"attributes":{"axis":{"id":"4266"},"dimension":1,"ticker":null},"id":"4269","type":"Grid"},{"attributes":{"source":{"id":"4251"}},"id":"4277","type":"CDSView"},{"attributes":{},"id":"4280","type":"CategoricalTickFormatter"},{"attributes":{"callback":null,"tooltips":[["Player","@fullNames"],["Team","@squadNames"],["Ratio of Points from Super:Standard Shots","@counts"]]},"id":"4270","type":"HoverTool"},{"attributes":{"axis_label":"Points from Super Shots / Points from Standard Shots","formatter":{"id":"4282"},"ticker":{"id":"4267"}},"id":"4266","type":"LinearAxis"},{"attributes":{"formatter":{"id":"4280"},"major_label_orientation":1,"ticker":{"id":"4264"}},"id":"4263","type":"CategoricalAxis"},{"attributes":{"align":"center","text":"Relative Differential in Points from Super vs. Standard Shots"},"id":"4253","type":"Title"},{"attributes":{"data_source":{"id":"4251"},"glyph":{"id":"4274"},"hover_glyph":null,"muted_glyph":null,"nonselection_glyph":{"id":"4275"},"selection_glyph":null,"view":{"id":"4277"}},"id":"4276","type":"GlyphRenderer"},{"attributes":{},"id":"4282","type":"BasicTickFormatter"},{"attributes":{},"id":"4284","type":"Selection"},{"attributes":{"below":[{"id":"4263"}],"center":[{"id":"4265"},{"id":"4269"}],"left":[{"id":"4266"}],"plot_height":400,"plot_width":800,"renderers":[{"id":"4276"}],"title":{"id":"4253"},"toolbar":{"id":"4271"},"toolbar_location":null,"x_range":{"id":"4255"},"x_scale":{"id":"4259"},"y_range":{"id":"4257"},"y_scale":{"id":"4261"}},"id":"4252","subtype":"Figure","type":"Plot"},{"attributes":{},"id":"4264","type":"CategoricalTicker"},{"attributes":{"start":0},"id":"4257","type":"DataRange1d"},{"attributes":{"data":{"color":["#e54078","#494b4a","#00953b","#0082cd","#0082cd","#494b4a","#fdb61c","#00a68e","#f57921","#f57921","#4b2c69","#e54078","#0082cd","#00a68e"],"counts":[1.4,1.2,0.8888888888888888,0.8,0.6666666666666666,0.6666666666666666,0.5,0.4444444444444444,0.42105263157894735,0.14285714285714285,0.14285714285714285,0.12903225806451613,0.06896551724137931,0.0425531914893617],"fullNames":["Georgie Horjus","Gabrielle Sinclair","Alice Teague-Neeld","Sophie Garbin","Helen Housby","Nyah Allen","Steph Wood","Caitlin Thwaites","Jo Harten","Kiera Austin","Tippah Dwan","Lenize Potgieter","Sam Wallace","Mwai Kumwenda"],"players":["G.Horjus","G.Sinclair","A.Teague-Neeld","S.Garbin","H.Housby","N.Allen","S.Wood","C.Thwaites","J.Harten","K.Austin","T.Dwan","L.Potgieter","S.Wallace","M.Kumwenda"],"squadNames":["Thunderbirds","Magpies","Fever","Swifts","Swifts","Magpies","Lightning","Vixens","GIANTS","GIANTS","Firebirds","Thunderbirds","Swifts","Vixens"]},"selected":{"id":"4284"},"selection_policy":{"id":"4283"}},"id":"4251","type":"ColumnDataSource"},{"attributes":{},"id":"4267","type":"BasicTicker"},{"attributes":{"active_drag":"auto","active_inspect":"auto","active_multi":null,"active_scroll":"auto","active_tap":"auto","tools":[{"id":"4270"}]},"id":"4271","type":"Toolbar"},{"attributes":{},"id":"4283","type":"UnionRenderers"},{"attributes":{"fill_alpha":{"value":0.1},"fill_color":{"field":"color"},"line_alpha":{"value":0.1},"line_color":{"field":"color"},"top":{"field":"counts"},"width":{"value":0.6},"x":{"field":"players"}},"id":"4275","type":"VBar"}],"root_ids":["4252"]},"title":"Bokeh Application","version":"2.1.1"}}
+        </script>
+        <script type="text/javascript">
+          (function() {
+            var fn = function() {
+              Bokeh.safely(function() {
+                (function(root) {
+                  function embed_document(root) {
+                    
+                  var docs_json = document.getElementById('4454').textContent;
+                  var render_items = [{"docid":"012edacf-6dbb-47dc-a14d-ad58f66e8901","root_ids":["4252"],"roots":{"4252":"15385bcc-77f2-4cc5-ae5c-a5d811671f9b"}}];
+                  root.Bokeh.embed.embed_items(docs_json, render_items);
+                
+                  }
+                  if (root.Bokeh !== undefined) {
+                    embed_document(root);
+                  } else {
+                    var attempts = 0;
+                    var timer = setInterval(function(root) {
+                      if (root.Bokeh !== undefined) {
+                        clearInterval(timer);
+                        embed_document(root);
+                      } else {
+                        attempts++;
+                        if (attempts > 100) {
+                          clearInterval(timer);
+                          console.log("Bokeh: ERROR: Unable to run BokehJS code because BokehJS library is missing");
+                        }
+                      }
+                    }, 10, root)
+                  }
+                })(window);
+              });
+            };
+            if (document.readyState != "loading") fn();
+            else document.addEventListener("DOMContentLoaded", fn);
+          })();
+        </script>
+    
+  </body>
+  
+</html>
