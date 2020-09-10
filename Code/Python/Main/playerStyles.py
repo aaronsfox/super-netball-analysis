@@ -438,11 +438,11 @@ ax.plot([0,1], [0,0], color = 'k', lw = 2)
 ax.plot([0,0.5], [0,1], color = 'k', lw = 2)
 ax.plot([0.5,1], [1,0], color = 'k', lw = 2)
 
-#We'll set the top point as being cluster 1, the bottom left as
-#cluster 2, and the bottom right as cluster 3. This means that 
-#the bottom left to top of the triangle is 0-1 for cluster 1,
+#We'll set the top point as being cluster 3, the bottom left as
+#cluster 2, and the bottom right as cluster 2. This means that 
+#the bottom left to top of the triangle is 0-1 for cluster 3,
 #the bottom right to bottom left is 0-1 for cluster 2, and the
-#top to bottom right is 0-1 for cluster 3
+#top to bottom right is 0-1 for cluster 1
 
 #Calculate the player points (XY)
 xyPoints = np.zeros([len(plotPlayers),2])
@@ -450,12 +450,12 @@ for pp in range(0,len(plotPlayers)):
     
     #Get current cluster data
     c1 = fuzzyData[0,pp]
-    # c2 = fuzzyData[1,pp]
+    #c2 = fuzzyData[1,pp]
     c3 = fuzzyData[2,pp]
     
     #Calculate x and y position for plot and append to array
-    xyPoints[pp,0] = c3 + (c1/2)
-    xyPoints[pp,1] = c1
+    xyPoints[pp,0] = c1 + (c3/2)
+    xyPoints[pp,1] = c3
     
 #Add xy points
 ax.scatter(xyPoints[:,0], xyPoints[:,1],
@@ -499,8 +499,8 @@ for pp in range(0,len(plotPlayers)):
     c3 = fuzzyData[2,pp]
     
     #Calculate x and y position for plot and append to array
-    xyPoints[pp,0] = c3 + (c1/2)
-    xyPoints[pp,1] = c1
+    xyPoints[pp,0] = c1 + (c3/2)
+    xyPoints[pp,1] = c3
 
 #Add colour column
 #Set colour dictionary
@@ -518,16 +518,50 @@ plotTeams = df_clusterData['squadName'].values
 plotColours = list()
 for tt in range(0,len(plotTeams)):
     plotColours.append(colourDict[plotTeams[tt]])
+    
+#Get fuzziness data in column list for dataframe. 
+#Round and convert to /100 and add a % for presentation
+fData = list()
+for ff in range(nClusters):
+    fData.append(list(np.transpose(fuzzyData[ff,:]*100)))
+    fData[ff] = ['{:.1f}'.format(x) for x in fData[ff]]
+    fData[ff] = [ii + '%' for ii in fData[ff]]
+    
+#Get paths to local and online images
+localImagePaths = list()
+onlineImagePaths = list()
+for pp in range(0,len(plotPlayers)):
+    #Check if file exists
+    imageFile = os.getcwd()+'\\Images\\'+plotPlayers[pp]+'_cropped.png'
+    if os.path.isfile(imageFile):
+        localImagePaths.append(imageFile)
+        onlineImagePaths.append('https://aaronsfox.github.io/graphics/ssn-2020/player-images/'+plotPlayers[pp]+'_cropped.png')
+    else:
+        ##### TODO: develop a 'blank' image to use
+        localImagePaths.append('None')
+        onlineImagePaths.append('None')
+        
+#Get the scale factor to make images the appropriate circle size
+circleSize = 0.025
+img = Image.open(localImagePaths[0]).convert('RGB')
+w,h = img.size
+scaleFac = circleSize/h
 
 #Put data into dataframe
 # df = pd.DataFrame(list(zip(plotPlayers, plotColours, xVal, yVal)), 
 #                columns = ['playerName', 'plotColour', 'x', 'y'])
-df = pd.DataFrame(list(zip(plotPlayers, xyPoints[:,0], xyPoints[:,1], plotColours)), 
-               columns = ['playerName', 'x', 'y', 'teamColour'])
+df = pd.DataFrame(list(zip(plotPlayers, xyPoints[:,0], xyPoints[:,1],
+                           plotTeams, plotColours,
+                           fData[0], fData[1], fData[2],
+                           onlineImagePaths)), 
+               columns = ['playerName', 'x', 'y',
+                          'teamName','teamColour',
+                          'fuzz1', 'fuzz2', 'fuzz3',
+                          'url'])
 
 #Create bokeh figure
-from bokeh.layouts import column
-from bokeh.plotting import figure, output_file, show
+from bokeh.plotting import figure, show
+from bokeh.models import FactorRange, ColumnDataSource, Legend, HoverTool
 # from bokeh.transform import jitter
 #Create figure
 p = figure(plot_width = 700, plot_height = 500)
@@ -541,8 +575,8 @@ p.line([0, 0.5, 1, 0], [0, 1, 0, 0],
 
 #Add circles
 p.circle(x = 'x', y = 'y',
-         #radius = 0.1/2,
-         size = 10,
+         radius = circleSize/2,
+         #size = 10,
          # line_color = 'plotColour',
          line_color = 'teamColour',
          fill_color = 'white',
@@ -550,8 +584,36 @@ p.circle(x = 'x', y = 'y',
          line_width = 1.5,
          source = df)
 
+#Add hover functionality
+##### TODO: consider naming...
+##### Scorer isn't accurate, as there are players with this who aren't shooters...
+p.add_tools(HoverTool(tooltips=[('Player', '@playerName'),
+                                ('Team', '@teamName'),
+                                ('Ball Magnet', '@fuzz3'),
+                                ('Defensive Lock', '@fuzz2'),
+                                ('Scorer', '@fuzz1')]))
+
+#Add images
+#Create source object
+source = ColumnDataSource(dict(
+    url = onlineImagePaths,
+    playerName = list(df['playerName']),
+    xData = np.array(df['x']),
+    yData = np.array(df['y'])
+))
+#Create image set
+imagePlot = ImageURL(url = 'url',
+                     x = 'xData', y = 'yData',
+                     h = h*scaleFac,
+                     w = w*scaleFac,
+                     anchor = 'center')
+#Add images to plot
+p.add_glyph(source, imagePlot)  
+
 #Show plot
 show(p)
+
+##### Images work - but scaling is off; need to make that 'default' image...
 
 ##### Above approach for plotting points works well enough
 ##### TODO: add hovertools, add images, consider team specific,
