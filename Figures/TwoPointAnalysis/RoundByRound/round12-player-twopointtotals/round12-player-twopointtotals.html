@@ -1,0 +1,85 @@
+
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+  
+  <head>
+    
+      <meta charset="utf-8">
+      <title>Bokeh Plot</title>
+      
+      
+        
+          
+        
+        
+          
+        <script type="text/javascript" src="https://cdn.bokeh.org/bokeh/release/bokeh-2.1.1.min.js" integrity="sha384-kLr4fYcqcSpbuI95brIH3vnnYCquzzSxHPU6XGQCIkQRGJwhg0StNbj1eegrHs12" crossorigin="anonymous"></script>
+        <script type="text/javascript">
+            Bokeh.set_log_level("info");
+        </script>
+        
+      
+      
+    
+  </head>
+  
+  
+  <body>
+    
+      
+        
+          
+          
+            
+              <div class="bk-root" id="7dc7ffdf-0bed-451d-8169-668af41dfb83" data-root-id="3844"></div>
+            
+          
+        
+      
+      
+        <script type="application/json" id="4046">
+          {"c7d48aec-6ef2-4a7e-83be-1323553cd4ad":{"roots":{"references":[{"attributes":{"source":{"id":"3843"}},"id":"3869","type":"CDSView"},{"attributes":{"factors":["S.Wallace","S.Garbin","S.Wood","T.Dwan","A.Teague-Neeld","K.Austin","G.Horjus","C.Thwaites","M.Kumwenda","G.Sinclair","J.Harten","J.Fowler","N.Allen","R.Aiken"],"range_padding":0.1},"id":"3847","type":"FactorRange"},{"attributes":{"data":{"color":["#0082cd","#0082cd","#fdb61c","#4b2c69","#00953b","#f57921","#e54078","#00a68e","#00a68e","#494b4a","#f57921","#00953b","#494b4a","#4b2c69"],"counts":[20,10,10,10,8,8,6,4,4,4,4,2,2,2],"fullNames":["Sam Wallace","Sophie Garbin","Steph Wood","Tippah Dwan","Alice Teague-Neeld","Kiera Austin","Georgie Horjus","Caitlin Thwaites","Mwai Kumwenda","Gabrielle Sinclair","Jo Harten","Jhaniele Fowler","Nyah Allen","Romelda Aiken"],"players":["S.Wallace","S.Garbin","S.Wood","T.Dwan","A.Teague-Neeld","K.Austin","G.Horjus","C.Thwaites","M.Kumwenda","G.Sinclair","J.Harten","J.Fowler","N.Allen","R.Aiken"],"squadNames":["Swifts","Swifts","Lightning","Firebirds","Fever","GIANTS","Thunderbirds","Vixens","Vixens","Magpies","GIANTS","Fever","Magpies","Firebirds"]},"selected":{"id":"3876"},"selection_policy":{"id":"3875"}},"id":"3843","type":"ColumnDataSource"},{"attributes":{},"id":"3872","type":"CategoricalTickFormatter"},{"attributes":{"align":"center","text":"Total Points from Super Shots"},"id":"3845","type":"Title"},{"attributes":{},"id":"3859","type":"BasicTicker"},{"attributes":{"below":[{"id":"3855"}],"center":[{"id":"3857"},{"id":"3861"}],"left":[{"id":"3858"}],"plot_height":400,"plot_width":800,"renderers":[{"id":"3868"}],"title":{"id":"3845"},"toolbar":{"id":"3863"},"toolbar_location":null,"x_range":{"id":"3847"},"x_scale":{"id":"3851"},"y_range":{"id":"3849"},"y_scale":{"id":"3853"}},"id":"3844","subtype":"Figure","type":"Plot"},{"attributes":{},"id":"3853","type":"LinearScale"},{"attributes":{},"id":"3874","type":"BasicTickFormatter"},{"attributes":{"axis":{"id":"3855"},"grid_line_color":null,"ticker":null},"id":"3857","type":"Grid"},{"attributes":{},"id":"3875","type":"UnionRenderers"},{"attributes":{"active_drag":"auto","active_inspect":"auto","active_multi":null,"active_scroll":"auto","active_tap":"auto","tools":[{"id":"3862"}]},"id":"3863","type":"Toolbar"},{"attributes":{"data_source":{"id":"3843"},"glyph":{"id":"3866"},"hover_glyph":null,"muted_glyph":null,"nonselection_glyph":{"id":"3867"},"selection_glyph":null,"view":{"id":"3869"}},"id":"3868","type":"GlyphRenderer"},{"attributes":{},"id":"3876","type":"Selection"},{"attributes":{"start":0},"id":"3849","type":"DataRange1d"},{"attributes":{"axis_label":"Total Points","formatter":{"id":"3874"},"ticker":{"id":"3859"}},"id":"3858","type":"LinearAxis"},{"attributes":{},"id":"3856","type":"CategoricalTicker"},{"attributes":{"formatter":{"id":"3872"},"major_label_orientation":1,"ticker":{"id":"3856"}},"id":"3855","type":"CategoricalAxis"},{"attributes":{},"id":"3851","type":"CategoricalScale"},{"attributes":{"axis":{"id":"3858"},"dimension":1,"ticker":null},"id":"3861","type":"Grid"},{"attributes":{"fill_color":{"field":"color"},"line_color":{"field":"color"},"top":{"field":"counts"},"width":{"value":0.6},"x":{"field":"players"}},"id":"3866","type":"VBar"},{"attributes":{"callback":null,"tooltips":[["Player","@fullNames"],["Team","@squadNames"],["Total Points from Super Shots","@counts"]]},"id":"3862","type":"HoverTool"},{"attributes":{"fill_alpha":{"value":0.1},"fill_color":{"field":"color"},"line_alpha":{"value":0.1},"line_color":{"field":"color"},"top":{"field":"counts"},"width":{"value":0.6},"x":{"field":"players"}},"id":"3867","type":"VBar"}],"root_ids":["3844"]},"title":"Bokeh Application","version":"2.1.1"}}
+        </script>
+        <script type="text/javascript">
+          (function() {
+            var fn = function() {
+              Bokeh.safely(function() {
+                (function(root) {
+                  function embed_document(root) {
+                    
+                  var docs_json = document.getElementById('4046').textContent;
+                  var render_items = [{"docid":"c7d48aec-6ef2-4a7e-83be-1323553cd4ad","root_ids":["3844"],"roots":{"3844":"7dc7ffdf-0bed-451d-8169-668af41dfb83"}}];
+                  root.Bokeh.embed.embed_items(docs_json, render_items);
+                
+                  }
+                  if (root.Bokeh !== undefined) {
+                    embed_document(root);
+                  } else {
+                    var attempts = 0;
+                    var timer = setInterval(function(root) {
+                      if (root.Bokeh !== undefined) {
+                        clearInterval(timer);
+                        embed_document(root);
+                      } else {
+                        attempts++;
+                        if (attempts > 100) {
+                          clearInterval(timer);
+                          console.log("Bokeh: ERROR: Unable to run BokehJS code because BokehJS library is missing");
+                        }
+                      }
+                    }, 10, root)
+                  }
+                })(window);
+              });
+            };
+            if (document.readyState != "loading") fn();
+            else document.addEventListener("DOMContentLoaded", fn);
+          })();
+        </script>
+    
+  </body>
+  
+</html>
