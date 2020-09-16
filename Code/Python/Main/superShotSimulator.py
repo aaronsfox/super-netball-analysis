@@ -520,71 +520,105 @@ df_teamSuperProps.to_csv('actualSuperShotProportion_upToRound'+str(maxRound)+'.c
 
 # %% Test a heatmap
 
-#Convert a test teams data into a grid array for heatmap
-tt = 0
+#Set-up axes to plot on
+whichAx = [[0,0], [0,1],
+           [1,0], [1,1],
+           [2,0], [2,1],
+           [3,0], [3,1]]
 
-##### TODO: test bokeh stacked bar? Team colour palettes...
+#Create figure to plot on
+fig, ax = plt.subplots(figsize=(18, 9), nrows = 4, ncols = 2)
 
-#Extract current teams data
-df_currTeamSims = df_superSimResults.loc[(df_superSimResults['squadNickname'] == teamList[tt]),]
+#Loop through teams and plot heat grid of their points
+for tt in range(0,len(teamList)):
 
-#Get the number of simulations ran for the current teams shots
-nTeamSims = int(len(df_currTeamSims)/len(superShotProps))
-
-#Initialise array to store data in
-simArray = np.zeros([len(superShotProps)-1,nTeamSims])
-
-#Loop through the proportions
-for pp in range(0,len(propCats)):
+    ##### TODO: test bokeh stacked bar? Team colour palettes...
     
-    #Extract the dataframe of the current proportion
-    df_currProp = df_currTeamSims.iloc[pp*nTeamSims:(pp*nTeamSims)+nTeamSims]
+    #Extract current teams data
+    df_currTeamSims = df_superSimResults.loc[(df_superSimResults['squadNickname'] == teamList[tt]),]
     
-    #Extract the score
-    scoreVals = df_currProp['totalPts'].values
+    #Get the number of simulations ran for the current teams shots
+    nTeamSims = int(len(df_currTeamSims)/len(superShotProps))
     
-    #Sort the values from lowest to highest
-    scoreVals.sort()
+    #Initialise array to store data in
+    simArray = np.zeros([len(superShotProps)-1,nTeamSims])
     
-    #Place in array (in reverse order)
-    simArray[(pp+1)*-1,:] = scoreVals
-
-#Convert sim to a dataframe for plotting
-df_simArray = pd.DataFrame(simArray)
-#Set the index using the prop categories
-propCats.sort()
-df_simArray.set_index(propCats[::-1], inplace = True)
-
-#Plot heatmap
-fig, ax = plt.subplots(figsize=(12, 3))
-sns.heatmap(df_simArray, cmap="RdYlGn", annot = False, linewidths = 0, ax = ax)
-
-#Add horizontal separators via horizontal line
-lineWidth = 2
-for ii in range(simArray.shape[0]+1):
-    ax.axhline(ii, color = 'white', lw = lineWidth)
-
-#Outline the actual proportion for the team
-topLine = len(df_simArray) - math.ceil(teamSuperProps[tt]*10) - 1
-bottomLine = len(df_simArray) - math.floor(teamSuperProps[tt]*10) - 1
-ax.add_patch(Rectangle(xy = (0-10, bottomLine), 
-                       width = nTeamSims*2, height = 1, 
-                       fill = False,  
-                       edgecolor = 'black', 
-                       lw = lineWidth,
-                       zorder = 4))
+    #Loop through the proportions
+    for pp in range(0,len(propCats)):
+        
+        #Extract the dataframe of the current proportion
+        df_currProp = df_currTeamSims.iloc[pp*nTeamSims:(pp*nTeamSims)+nTeamSims]
+        
+        #Extract the score
+        scoreVals = df_currProp['totalPts'].values
+        
+        #Sort the values from lowest to highest
+        scoreVals.sort()
+        
+        #Place in array (in reverse order)
+        simArray[(pp+1)*-1,:] = scoreVals
     
-#Remove x-axis
-ax.get_xaxis().set_ticks([])
-
-#Add x-axis label
-plt.xlabel('Rebel Power 5 Simulations (n = '+locale.format_string("%d", nTeamSims, grouping=True)+')')
-
-#Add y-axis label
-plt.ylabel('Super Shot Proportion')
-
-#Add colourbar label
-ax.collections[0].colorbar.set_label('Goals Scored')
+    #Convert sim to a dataframe for plotting
+    df_simArray = pd.DataFrame(simArray)
+    #Set the index using the prop categories
+    propCats.sort()
+    df_simArray.set_index(propCats[::-1], inplace = True)
+    
+    #Plot heatmap
+    sns.heatmap(df_simArray, cmap="RdYlGn", annot = False,
+                linewidths = 0, ax = ax[whichAx[tt][0],whichAx[tt][1]])
+    
+    #Add horizontal separators via horizontal line
+    lineWidth = 2
+    for ii in range(simArray.shape[0]+1):
+        ax[whichAx[tt][0],whichAx[tt][1]].axhline(ii, color = 'white', lw = lineWidth)
+    
+    #Outline the actual proportion for the team
+    topLine = len(df_simArray) - math.ceil(teamSuperProps[tt]*10) - 1
+    bottomLine = len(df_simArray) - math.floor(teamSuperProps[tt]*10) - 1
+    ax[whichAx[tt][0],whichAx[tt][1]].add_patch(Rectangle(xy = (0-10, bottomLine), 
+                                                          width = nTeamSims*2, height = 1, 
+                                                          fill = False,  
+                                                          edgecolor = 'black', 
+                                                          lw = lineWidth,
+                                                          zorder = 4))
+        
+    #Remove x-axis
+    ax[whichAx[tt][0],whichAx[tt][1]].get_xaxis().set_ticks([])
+    
+    #Add x-axis label
+    if whichAx[tt][0] == 3:
+        ax[whichAx[tt][0],whichAx[tt][1]].set_xlabel('Rebel Power 5 Simulations (n = '+locale.format_string("%d", nTeamSims, grouping=True)+')')
+    
+    #Set y-ticks
+    ax[whichAx[tt][0],whichAx[tt][1]].set_yticks([0.5, 1.5, 2.5, 3.5, 4.5,
+                                                  5.5, 6.5, 7.5, 8.5, 9.5])
+    
+    #Set y-tick labels
+    ax[whichAx[tt][0],whichAx[tt][1]].set_yticklabels(list(df_simArray.index),
+                                                      fontsize = 8)
+    
+    #Add y-axis label
+    if whichAx[tt][1] == 0:
+        ax[whichAx[tt][0],whichAx[tt][1]].set_ylabel('Super Shot Proportion')
+    
+    #Add colourbar label
+    ax[whichAx[tt][0],whichAx[tt][1]].collections[0].colorbar.set_label('Goals Scored')
+    
+    #Add title
+    ax[whichAx[tt][0],whichAx[tt][1]].set_title(teamList[tt],
+                                                fontweight = 'bold',
+                                                fontsize = 12)
+    
+    #Print the max score for each team and it's proportion
+    maxScore = df_simArray.max().max() #get max
+    maxProps = df_simArray[df_simArray.eq(maxScore).any(1)].index #get proportions
+    if len(maxProps) > 1:
+        #Connect the strings
+        maxProps = ' & '.join(maxProps)
+    else:
+        maxProps = maxProps[0]
+    print(teamList[tt]+' max score of '+str(maxScore)+' using '+maxProps+' proportion.') #print result
     
 #Set tight plot layout to fill frame
 plt.tight_layout()

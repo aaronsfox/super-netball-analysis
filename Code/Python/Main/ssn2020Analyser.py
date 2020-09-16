@@ -139,7 +139,7 @@ bokehOptions = dict(tools = ['wheel_zoom,box_zoom'])
 os.chdir('..\\..\\Figures\\TwoPointAnalysis\\RoundByRound')
 
 #Set round to plot
-round2Plot = 11
+round2Plot = 12
 
 #Total one vs. two point shots
 figHelper.totalPointsOneVsTwo(round2Plot = round2Plot, matchInfo = matchInfo,
@@ -162,7 +162,7 @@ figHelper.teamShotRatiosInnerVsOuter(round2Plot = round2Plot, matchInfo = matchI
 # %% Individual player two-point scoring
 
 #Set round to plot
-round2Plot = 11
+round2Plot = 12
 
 #Total two-point score
 figHelper.playerTwoPointTotals(round2Plot = round2Plot, df_scoreFlow = df_scoreFlow,
@@ -380,7 +380,7 @@ playerPlusMinusOffPer15 = list()
 analysePlayer = list()
 analyseSquad = list()
 minPlayerDurationOn = 15
-minPlayerDurationOff = 10
+minPlayerDurationOff = 15
 perDivider = 15
 for pp in range(0,len(uniquePlayers)):
     
