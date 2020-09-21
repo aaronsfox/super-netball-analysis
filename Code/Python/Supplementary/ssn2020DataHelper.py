@@ -19,6 +19,7 @@ import pandas as pd
 pd.options.mode.chained_assignment = None #turn of pandas chained warnings
 import json
 import re
+import numpy as np
 
 # %% getMatchData
 
@@ -58,7 +59,9 @@ def getMatchData(jsonFileList = None, df_squadLists = None,
                   'shortDisplayName': [], 'squadId': []}
     
     #Score flow data
-    scoreFlowData = {'roundNo': [], 'matchNo': [],
+    scoreFlowData = {'roundNo': [], 'matchNo': [], 'homeScore': [], 'awayScore': [],
+                     'preShotAhead': [], 'postShotAhead': [],
+                     'preShotMargin': [], 'postShotMargin': [],
                      'period': [], 'periodSeconds': [], 'periodCategory': [], 'matchSeconds': [],
                      'playerId': [],'squadId': [], 'scoreName': [], 'shotOutcome': [], 'scorePoints': [],
                      'distanceCode': [], 'positionCode': [], 'shotCircle': []}
@@ -216,7 +219,45 @@ def getMatchData(jsonFileList = None, df_squadLists = None,
                 scoreFlowData['shotOutcome'].append(False)
             else:
                 scoreFlowData['shotOutcome'].append(True)
-        
+            #Get game score and margin
+            if ss == 0:
+                #Set starting details
+                currHomeScore = 0
+                currAwayScore = 0
+                preShotMargin = 0
+                preShotAhead = np.nan
+            else:
+                #Get curr length of score flow data and subsequent index to look up
+                nInd = len(scoreFlowData['preShotAhead']) - 1
+                #Set starting details
+                currHomeScore = scoreFlowData['homeScore'][nInd]
+                currAwayScore = scoreFlowData['awayScore'][nInd]
+                preShotMargin = scoreFlowData['postShotMargin'][nInd]
+                preShotAhead = scoreFlowData['postShotAhead'][nInd]            
+            #Check who scored and add to tally
+            if data['scoreFlow']['score'][ss]['squadId'][0] == matchInfo['homeSquadId'][ff]:
+                #Add to home score
+                currHomeScore = currHomeScore + data['scoreFlow']['score'][ss]['scorepoints'][0]
+            elif data['scoreFlow']['score'][ss]['squadId'][0] == matchInfo['awaySquadId'][ff]:
+                #Add to away score
+                currAwayScore = currAwayScore + data['scoreFlow']['score'][ss]['scorepoints'][0]
+            #Check who is now in front
+            if currHomeScore > currAwayScore:
+                postShotAhead = matchInfo['homeSquadId'][ff]
+            elif currAwayScore > currHomeScore:
+                postShotAhead = matchInfo['awaySquadId'][ff]
+            else:
+                postShotAhead = np.nan
+            #Calculate margin (home score up = positive)
+            postShotMargin = currHomeScore - currAwayScore
+            #Append to dictionary
+            scoreFlowData['homeScore'].append(currHomeScore)
+            scoreFlowData['awayScore'].append(currAwayScore)
+            scoreFlowData['preShotAhead'].append(preShotAhead)
+            scoreFlowData['postShotAhead'].append(postShotAhead)
+            scoreFlowData['preShotMargin'].append(preShotMargin)
+            scoreFlowData['postShotMargin'].append(postShotMargin)
+            
         #Extract substitution data
         for ss in range(0,len(data['playerSubs']['player'])):
             #Get current round and match number from match data

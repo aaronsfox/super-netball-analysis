@@ -139,7 +139,7 @@ bokehOptions = dict(tools = ['wheel_zoom,box_zoom'])
 os.chdir('..\\..\\Figures\\TwoPointAnalysis\\RoundByRound')
 
 #Set round to plot
-round2Plot = 12
+round2Plot = 13
 
 #Total one vs. two point shots
 figHelper.totalPointsOneVsTwo(round2Plot = round2Plot, matchInfo = matchInfo,
@@ -162,7 +162,7 @@ figHelper.teamShotRatiosInnerVsOuter(round2Plot = round2Plot, matchInfo = matchI
 # %% Individual player two-point scoring
 
 #Set round to plot
-round2Plot = 12
+round2Plot = 13
 
 #Total two-point score
 figHelper.playerTwoPointTotals(round2Plot = round2Plot, df_scoreFlow = df_scoreFlow,
@@ -241,6 +241,107 @@ for tt in range(0,len(squadIds)):
     
     #Print results
     print(currTeamName+': '+str(round(currProp,2))+'%')
+    
+# %% Create some clutch shooting-based numbers
+
+# This analysis defines the 'clutch' period as the final 5 minutes of the match
+# when the margin is less than 5.
+#
+# We also only include players who have taken > 5 'clutch' shots
+#
+# 'Go ahead' shots are counted as those that could tie or put their team in front
+
+#First, look at go ahead shots in the 'clutch' period.
+#This considers both the number and success rate
+
+#Extract shots from scoreflow that meet the 'clutch' criteria
+df_clutchScore = df_scoreFlow.loc[(df_scoreFlow['period'] == 4) &
+                                  (df_scoreFlow['periodSeconds'] > 60*(15-5)) &
+                                  (df_scoreFlow['preShotMargin'].between(-5,5)),]
+
+#Get number of clutch shots per player
+clutchShootersNo = list(zip(*np.unique(df_clutchScore['playerId'],
+                                       return_counts=True)))
+
+#Identify shooters that meet the criteria
+clutchShooters = list()
+for cc in range(0,len(clutchShootersNo)):
+    if clutchShootersNo[cc][1] > 5:
+        clutchShooters.append(clutchShootersNo[cc][0])
+        
+#Create dictionary to store data in
+clutchData = {'displayName': [], 'squadId': [],
+              'nClutchShots': [], 'nClutchStandard': [], 'nClutchSuper': [],
+              'nGoAheadTotal': [], 'nGoAheadStandard': [], 'nGoAheadSuper': [],
+              'totalAccuracy': [], 'standardAccuracy': [], 'superAccuracy': [],
+              'goAheadAccuracy': []}
+
+#Loop through players and count clutch shooting numbers
+for pp in range(0,len(clutchShooters)):
+    
+    #Extract current players name & squad
+    currPlayer = df_playerInfo['displayName'][df_playerInfo.index[df_playerInfo['playerId'] == clutchShooters[pp]][0]]
+    currSquad = df_playerInfo['squadId'][df_playerInfo.index[df_playerInfo['playerId'] == clutchShooters[pp]][0]]
+    
+    #Extract current players dataframe
+    df_currClutch = df_clutchScore.loc[(df_clutchScore['playerId'] == clutchShooters[pp]),]
+    
+    #Calculate some basic shot number metrics
+    nClutchShots = len(df_currClutch)
+    nClutchStandard = len(df_currClutch.loc[(df_currClutch['shotCircle'] == 'innerCircle'),])
+    nClutchSuper = len(df_currClutch.loc[(df_currClutch['shotCircle'] == 'outerCircle'),])
+    nGoAheadStandard = len(df_currClutch.loc[(df_currClutch['preShotAhead'] != currSquad) &
+                                             (df_currClutch['shotCircle'] == 'innerCircle') &
+                                             (df_currClutch['preShotMargin'].between(-1,1))])
+    nGoAheadSuper = len(df_currClutch.loc[(df_currClutch['preShotAhead'] != currSquad) &
+                                          (df_currClutch['shotCircle'] == 'outerCircle') &
+                                          (df_currClutch['preShotMargin'].between(-2,2))])
+    nGoAheadTotal = nGoAheadStandard + nGoAheadSuper
+    
+    #Calculate total shot accuracy
+    totalAccuracy = sum(df_currClutch['shotOutcome']) / nClutchShots
+    
+    #Calculate standard vs. super shot accuracy
+    if nClutchStandard > 0:
+        standardAccuracy = sum(df_currClutch.loc[(df_currClutch['shotCircle'] == 'innerCircle'),
+                                                 ['shotOutcome']]['shotOutcome']) / nClutchStandard
+    else:
+        standardAccuracy = np.nan
+    if nClutchSuper > 0:            
+        superAccuracy = sum(df_currClutch.loc[(df_currClutch['shotCircle'] == 'outerCircle'),
+                                              ['shotOutcome']]['shotOutcome']) / nClutchSuper
+    else:
+        superAccuracy = np.nan
+    
+    #Calculate go ahead shot accuracy
+    if nGoAheadTotal > 0:
+        goAheadAccuracy = (sum(df_currClutch.loc[(df_currClutch['preShotAhead'] != currSquad) &
+                                                 (df_currClutch['shotCircle'] == 'innerCircle') &
+                                                 (df_currClutch['preShotMargin'].between(-1,1)),
+                                                 ['shotOutcome']]['shotOutcome']) + \
+                           sum(df_currClutch.loc[(df_currClutch['preShotAhead'] != currSquad) &
+                                                 (df_currClutch['shotCircle'] == 'outerCircle') &
+                                                 (df_currClutch['preShotMargin'].between(-2,2)),
+                                                 ['shotOutcome']]['shotOutcome'])) / nGoAheadTotal
+    else:
+        goAheadAccuracy = np.nan
+        
+    #Append to dictionary
+    clutchData['displayName'].append(currPlayer)
+    clutchData['squadId'].append(currSquad)
+    clutchData['nClutchShots'].append(nClutchShots)
+    clutchData['nClutchStandard'].append(nClutchStandard)
+    clutchData['nClutchSuper'].append(nClutchSuper)
+    clutchData['nGoAheadTotal'].append(nGoAheadTotal)
+    clutchData['nGoAheadStandard'].append(nGoAheadStandard)
+    clutchData['nGoAheadSuper'].append(nGoAheadSuper)
+    clutchData['totalAccuracy'].append(totalAccuracy)
+    clutchData['standardAccuracy'].append(standardAccuracy)
+    clutchData['superAccuracy'].append(superAccuracy)
+    clutchData['goAheadAccuracy'].append(goAheadAccuracy)
+    
+#Convert clutch data to dataframe
+df_clutchData = pd.DataFrame.from_dict(clutchData)    
 
 # %% Plus/minus figures
 
