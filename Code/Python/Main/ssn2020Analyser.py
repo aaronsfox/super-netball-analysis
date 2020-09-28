@@ -139,7 +139,7 @@ bokehOptions = dict(tools = ['wheel_zoom,box_zoom'])
 os.chdir('..\\..\\Figures\\TwoPointAnalysis\\RoundByRound')
 
 #Set round to plot
-round2Plot = 13
+round2Plot = 14
 
 #Total one vs. two point shots
 figHelper.totalPointsOneVsTwo(round2Plot = round2Plot, matchInfo = matchInfo,
@@ -162,7 +162,7 @@ figHelper.teamShotRatiosInnerVsOuter(round2Plot = round2Plot, matchInfo = matchI
 # %% Individual player two-point scoring
 
 #Set round to plot
-round2Plot = 13
+round2Plot = 14
 
 #Total two-point score
 figHelper.playerTwoPointTotals(round2Plot = round2Plot, df_scoreFlow = df_scoreFlow,
@@ -403,7 +403,7 @@ lineUpDuration = list()
 lineUpPlusMinus = list()
 analyseLineUps = list()
 squadLineUps = list()
-minLineUpDuration= 15
+minLineUpDuration = 15
 for uu in range(0,len(uniqueLineUps)):
     #Get a separated dataframe
     df_currLineUp = df_lineUp.loc[(df_lineUp['combinedLineUpName'] == uniqueLineUps[uu]),]
@@ -688,6 +688,172 @@ df_playerStatsMetricsDefensive.sort_values('playerName', inplace = True)
 os.chdir('..\\playerStats')
 df_playerStatsMetricsAttacking.to_csv('individualPlayerStats_Attacking.csv', index = False)
 df_playerStatsMetricsDefensive.to_csv('individualPlayerStats_Defensive.csv', index = False)
+
+# %% Time in front calculator
+
+#Create dictionary to store basic home and away numbers in
+timeInFront = {'homeInFront': [], 'awayInFront': [], 'timeTied': []}
+
+#Loop through matches
+for mm in range(0,len(df_matchInfo)):
+    
+    #Set starting variables for home and away seconds in front
+    homeInFront = 0
+    awayInFront = 0
+    
+    #Get current match info
+    roundNo = df_matchInfo['roundNo'][mm]
+    matchNo = df_matchInfo['matchNo'][mm]
+    
+    #Get total match seconds
+    totalMatchSeconds = sum(df_matchInfo['periodSeconds'][mm])
+    
+    #Get home and away squad ID for current match
+    homeId = df_matchInfo['homeSquadId'][mm]
+    awayId = df_matchInfo['awaySquadId'][mm]
+    
+    #Extract current match
+    df_currMatch = df_scoreFlow.loc[(df_scoreFlow['roundNo'] == roundNo) &
+                                    (df_scoreFlow['matchNo'] == matchNo),]
+    
+    #Reindex score flow dataframe
+    df_currMatch.reset_index(drop = True, inplace = True)
+    
+    #Loop through score flow points
+    for pp in range(0,len(df_currMatch)):
+        
+        #Check for first score and don't calculate as nobody is in front
+        if pp > 0:
+            
+            #Check the pre shot margin
+            preMargin = df_currMatch['preShotMargin'][pp]
+            
+            #If margin is > 1, home has been in front
+            if preMargin > 1:
+                
+                #Calculate seconds this margin has been present
+                timeMargin = df_currMatch['matchSeconds'][pp] - df_currMatch['matchSeconds'][pp-1]
+                
+                #Add to home margin time
+                homeInFront = homeInFront + timeMargin
+                
+            elif preMargin < 1:
+                
+                #Calculate seconds this margin has been present
+                timeMargin = df_currMatch['matchSeconds'][pp] - df_currMatch['matchSeconds'][pp-1]
+                
+                #Add to away margin time
+                awayInFront = awayInFront + timeMargin
+                
+    #Do one more addition for the period between the last score and match end
+    if df_currMatch['preShotMargin'][len(df_currMatch)-1] > 0:
+        
+        #Calculate seconds this margin was present
+        timeMargin = totalMatchSeconds - df_currMatch['matchSeconds'][len(df_currMatch)-1]
+        
+        #Add to home margin time
+        homeInFront = homeInFront + timeMargin
+        
+    elif df_currMatch['preShotMargin'][len(df_currMatch)-1] < 0:
+        
+        #Calculate seconds this margin was present
+        timeMargin = totalMatchSeconds - df_currMatch['matchSeconds'][len(df_currMatch)-1]
+        
+        #Add to away margin time
+        awayInFront = awayInFront + timeMargin
+        
+    #Calculate time tied
+    timeTied = totalMatchSeconds - (homeInFront + awayInFront)
+    
+    #Add to data dictionary
+    timeInFront['homeInFront'].append(homeInFront)  
+    timeInFront['awayInFront'].append(awayInFront)
+    timeInFront['timeTied'].append(timeTied)
+    
+#Convert the home/away team data to squad ID's
+
+#Set up dictionary to store data in
+squadInFront = {'squadId': [], 'timeInFront': [], 'timeBehind': [],
+                'timeTied': [], 'totalMatchTime': [],
+                'proportionInFront': [], 'proportionBehind': [],
+                'proportionTied': []}
+
+#Loop through squads
+for ss in range(0,len(squadIds)):
+    
+    #Set variable for current time in front and behind
+    currInFront = 0
+    currBehind = 0
+    
+    #Set variable for time tied
+    currTied = 0
+    
+    #Set variable for total match time
+    matchTime = 0
+    
+    #Extract current squads home match info
+    df_currHome = df_matchInfo.loc[(df_matchInfo['homeSquadId'] == squadIds[ss]),]
+    
+    #Add to total match time from this squads home games
+    matchTime = matchTime + sum([sum(i) for i in zip(*list(df_currHome['periodSeconds']))])
+    
+    #Get the index values of the current 
+    matchRows = np.array(df_currHome.index)
+    
+    #Extract the home and time tied for these matches for in front, away for behind
+    currInFront = currInFront + sum(np.array(timeInFront['homeInFront'])[matchRows])
+    currBehind = currBehind + sum(np.array(timeInFront['awayInFront'])[matchRows])
+    currTied = currTied + sum(np.array(timeInFront['timeTied'])[matchRows])
+    
+    #Extract current squads awway match info
+    df_currAway = df_matchInfo.loc[(df_matchInfo['awaySquadId'] == squadIds[ss]),]
+    
+    #Add to total match time from this squads home games
+    matchTime = matchTime + sum([sum(i) for i in zip(*list(df_currAway['periodSeconds']))])
+    
+    #Get the index values of the current 
+    matchRows = np.array(df_currAway.index)
+    
+    #Extract the away and time tied for these matches, home for behind
+    currInFront = currInFront + sum(np.array(timeInFront['awayInFront'])[matchRows])
+    currBehind = currBehind + sum(np.array(timeInFront['homeInFront'])[matchRows])
+    currTied = currTied + sum(np.array(timeInFront['timeTied'])[matchRows])
+    
+    #Calculate proportions
+    currProportionInFront = currInFront / matchTime
+    currProportionBehind = currBehind / matchTime
+    currProportionTied = currTied / matchTime
+    
+    #Append to dictionary
+    squadInFront['squadId'].append(squadIds[ss])
+    squadInFront['timeInFront'].append(currInFront)
+    squadInFront['timeBehind'].append(currBehind)
+    squadInFront['timeTied'].append(currTied)
+    squadInFront['totalMatchTime'].append(matchTime)
+    squadInFront['proportionInFront'].append(currProportionInFront)
+    squadInFront['proportionBehind'].append(currProportionBehind)
+    squadInFront['proportionTied'].append(currProportionTied)
+    
+#Convert dictionary to dataframe
+df_squadInFront = pd.DataFrame.from_dict(squadInFront)
+
+#Print output
+print('Proportions in front, behind and tied:')
+for ss in range(0,len(squadIds)):
+    
+    #Get current squad nickname
+    currSquadName = teamInfo['squadNickname'][teamInfo['squadId'].index(squadIds[ss])]
+    
+    #Get current data for this team
+    lead = df_squadInFront['proportionInFront'][squadInFront['squadId'].index(squadIds[ss])]
+    behind = df_squadInFront['proportionBehind'][squadInFront['squadId'].index(squadIds[ss])]
+    tied = df_squadInFront['proportionTied'][squadInFront['squadId'].index(squadIds[ss])]
+    
+    #Print out
+    print(currSquadName+':',
+          round(lead*100,1),'% in front /',
+          round(behind*100,1),'% behind /',
+          round(tied*100,1),'% tied')
 
 # %% Calculate some basic substitution statistics
 
