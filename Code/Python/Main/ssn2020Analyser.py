@@ -689,7 +689,7 @@ os.chdir('..\\playerStats')
 df_playerStatsMetricsAttacking.to_csv('individualPlayerStats_Attacking.csv', index = False)
 df_playerStatsMetricsDefensive.to_csv('individualPlayerStats_Defensive.csv', index = False)
 
-# %% Time in front calculator
+# %% Time in front data
 
 #Create dictionary to store basic home and away numbers in
 timeInFront = {'homeInFront': [], 'awayInFront': [], 'timeTied': []}
@@ -854,7 +854,381 @@ for ss in range(0,len(squadIds)):
           round(lead*100,1),'% in front /',
           round(behind*100,1),'% behind /',
           round(tied*100,1),'% tied')
+    
+#Calculate and print time in front in each quarter
+#NOTE: this only prints, rather than stores data anywhere
+for qq in range(0,4):
+    
+    #Create dictionary to store basic home and away numbers in
+    timeInFrontQ = {'homeInFront': [], 'awayInFront': [], 'timeTied': []}
+    
+    #Loop through matches
+    for mm in range(0,len(df_matchInfo)):
+        
+        #Set starting variables for home and away seconds in front
+        homeInFront = 0
+        awayInFront = 0
+        
+        #Get current match info
+        roundNo = df_matchInfo['roundNo'][mm]
+        matchNo = df_matchInfo['matchNo'][mm]
+        
+        #Get total match seconds
+        totalMatchSeconds = df_matchInfo['periodSeconds'][mm][qq]
+        
+        #Get home and away squad ID for current match
+        homeId = df_matchInfo['homeSquadId'][mm]
+        awayId = df_matchInfo['awaySquadId'][mm]
+        
+        #Extract current match
+        df_currMatch = df_scoreFlow.loc[(df_scoreFlow['roundNo'] == roundNo) &
+                                        (df_scoreFlow['matchNo'] == matchNo) &
+                                        (df_scoreFlow['period'] == qq+1),]
+        
+        #Reindex score flow dataframe
+        df_currMatch.reset_index(drop = True, inplace = True)
+        
+        #Loop through score flow points
+        for pp in range(0,len(df_currMatch)):
+            
+            #Check for first score and don't calculate as nobody is in front
+            if pp > 0:
+                
+                #Check the pre shot margin
+                preMargin = df_currMatch['preShotMargin'][pp]
+                
+                #If margin is > 1, home has been in front
+                if preMargin > 1:
+                    
+                    #Calculate seconds this margin has been present
+                    timeMargin = df_currMatch['matchSeconds'][pp] - df_currMatch['matchSeconds'][pp-1]
+                    
+                    #Add to home margin time
+                    homeInFront = homeInFront + timeMargin
+                    
+                elif preMargin < 1:
+                    
+                    #Calculate seconds this margin has been present
+                    timeMargin = df_currMatch['matchSeconds'][pp] - df_currMatch['matchSeconds'][pp-1]
+                    
+                    #Add to away margin time
+                    awayInFront = awayInFront + timeMargin
+                    
+        #Do one more addition for the period between the last score and match end
+        if df_currMatch['preShotMargin'][len(df_currMatch)-1] > 0:
+            
+            #Calculate seconds this margin was present
+            timeMargin = totalMatchSeconds - df_currMatch['periodSeconds'][len(df_currMatch)-1]
+            
+            #Add to home margin time
+            homeInFront = homeInFront + timeMargin
+            
+        elif df_currMatch['preShotMargin'][len(df_currMatch)-1] < 0:
+            
+            #Calculate seconds this margin was present
+            timeMargin = totalMatchSeconds - df_currMatch['periodSeconds'][len(df_currMatch)-1]
+            
+            #Add to away margin time
+            awayInFront = awayInFront + timeMargin
+            
+        #Calculate time tied
+        timeTied = totalMatchSeconds - (homeInFront + awayInFront)
+        
+        #Add to data dictionary
+        timeInFrontQ['homeInFront'].append(homeInFront)  
+        timeInFrontQ['awayInFront'].append(awayInFront)
+        timeInFrontQ['timeTied'].append(timeTied)
+    
+    #Print starting header
+    print('% Time in front for quarter '+str(qq+1)+':')
+    
+    #Loop through squads
+    for ss in range(0,len(squadIds)):
+        
+        #Set variable for current time in front and behind
+        currInFront = 0
+        currBehind = 0
+        
+        #Set variable for time tied
+        currTied = 0
+        
+        #Set variable for total match time
+        matchTime = 0
+        
+        #Extract current squads home match info
+        df_currHome = df_matchInfo.loc[(df_matchInfo['homeSquadId'] == squadIds[ss]),]
+        
+        #Add to total match time from this squads home games
+        matchTime = matchTime + [sum(i) for i in zip(*list(df_currHome['periodSeconds']))][qq]
+        
+        #Get the index values of the current 
+        matchRows = np.array(df_currHome.index)
+        
+        #Extract the home and time tied for these matches for in front, away for behind
+        currInFront = currInFront + sum(np.array(timeInFrontQ['homeInFront'])[matchRows])
+        currBehind = currBehind + sum(np.array(timeInFrontQ['awayInFront'])[matchRows])
+        currTied = currTied + sum(np.array(timeInFrontQ['timeTied'])[matchRows])
+        
+        #Extract current squads awway match info
+        df_currAway = df_matchInfo.loc[(df_matchInfo['awaySquadId'] == squadIds[ss]),]
+        
+        #Add to total match time from this squads home games
+        matchTime = matchTime + [sum(i) for i in zip(*list(df_currAway['periodSeconds']))][qq]
+        
+        #Get the index values of the current 
+        matchRows = np.array(df_currAway.index)
+        
+        #Extract the away and time tied for these matches, home for behind
+        currInFront = currInFront + sum(np.array(timeInFrontQ['awayInFront'])[matchRows])
+        currBehind = currBehind + sum(np.array(timeInFrontQ['homeInFront'])[matchRows])
+        currTied = currTied + sum(np.array(timeInFrontQ['timeTied'])[matchRows])
+        
+        #Calculate proportions
+        currProportionInFront = currInFront / matchTime
+        currProportionBehind = currBehind / matchTime
+        currProportionTied = currTied / matchTime
+        
+        #Get current squad nickname
+        currSquadName = teamInfo['squadNickname'][teamInfo['squadId'].index(squadIds[ss])]
+        
+        #Print results
+        print(currSquadName+':',
+              round(currProportionInFront*100,1),'% in front /',
+              round(currProportionBehind*100,1),'% behind /',
+              round(currProportionTied*100,1),'% tied')
+        
+# %% Match-up comparisons
 
+# This section looks to extract data from specific match-ups for comparison
+# This was driven by the Vixens looking for info on their finals opponents, and
+# currently focuses on that - but could equally be applied to other match-ups
+
+#Set the two teams of interest
+squadId1 = 804
+squadId2 = 8117
+
+#Get the squad names
+squadName1 = teamInfo['squadNickname'][teamInfo['squadId'].index(squadId1)]
+squadName2 = teamInfo['squadNickname'][teamInfo['squadId'].index(squadId2)]
+
+#Get the match ID's and round/match number where these teams played
+#There should be two matches for each combination in the regular season
+df_currCombo = df_matchInfo.loc[(df_matchInfo['homeSquadId'].isin([squadId1,squadId2])) &
+                                (df_matchInfo['awaySquadId'].isin([squadId1,squadId2])),]
+df_currCombo.reset_index(drop = True, inplace = True)
+
+#Loop through the two matches and print out some comparative data
+for mm in range(0,len(df_currCombo)):
+    
+    #Current match ID
+    matchId = df_currCombo['id'][mm]
+    
+    #Extract the team statistics for the current match
+    df_currStats = df_teamStatsData.loc[(df_teamStatsData['matchId'] == matchId),]
+    
+    #Get match totals for each team
+    df_currTotals = df_currStats.groupby('squadId').sum()
+    
+    #Print out summary stats for current game
+    print(' ')
+    print('Summary total stats for game',
+          str(mm+1),
+          'of',
+          squadName1,
+          'vs.',
+          squadName2)
+    
+    #Print statistics
+    #Final score
+    print('Final Score:',
+          squadName1,
+          str(df_currTotals['goal_from_zone1'][squadId1] + df_currTotals['goal_from_zone2'][squadId1]*2),
+          '/',
+          squadName2,
+          str(df_currTotals['goal_from_zone1'][squadId2] + df_currTotals['goal_from_zone2'][squadId2]*2))
+    #Standard shot makes
+    print('Standard Shot Makes:',
+          squadName1,
+          str(df_currTotals['goal_from_zone1'][squadId1]),
+          '/',
+          squadName2,
+          str(df_currTotals['goal_from_zone1'][squadId2]))    
+    #Standard shot attempts
+    print('Standard Shot Attempts:',
+          squadName1,
+          str(df_currTotals['attempt_from_zone1'][squadId1]),
+          '/',
+          squadName2,
+          str(df_currTotals['attempt_from_zone1'][squadId2]))
+    #Super shot makes
+    print('Super Shot Makes:',
+          squadName1,
+          str(df_currTotals['goal_from_zone2'][squadId1]),
+          '/',
+          squadName2,
+          str(df_currTotals['goal_from_zone2'][squadId2]))    
+    #Super shot attempts
+    print('Super Shot Attempts:',
+          squadName1,
+          str(df_currTotals['attempt_from_zone2'][squadId1]),
+          '/',
+          squadName2,
+          str(df_currTotals['attempt_from_zone2'][squadId2]))
+    #Standard shot percentage
+    per1 = round(df_currTotals['goal_from_zone1'][squadId1] / df_currTotals['attempt_from_zone1'][squadId1] * 100,1)
+    per2 = round(df_currTotals['goal_from_zone1'][squadId2] / df_currTotals['attempt_from_zone1'][squadId2] * 100,1)
+    print('Standard shot shooting %:',
+          squadName1,
+          str(per1),
+          '/',
+          squadName2,
+          str(per2))
+    #Super shot percentage
+    per1 = round(df_currTotals['goal_from_zone2'][squadId1] / df_currTotals['attempt_from_zone2'][squadId1] * 100,1)
+    per2 = round(df_currTotals['goal_from_zone2'][squadId2] / df_currTotals['attempt_from_zone2'][squadId2] * 100,1)
+    print('Super shot shooting %:',
+          squadName1,
+          str(per1),
+          '/',
+          squadName2,
+          str(per2))
+    #Goals from centre pass
+    print('Goals from centre pass:',
+          squadName1,
+          str(df_currTotals['goalsFromCentrePass'][squadId1]),
+          '/',
+          squadName2,
+          str(df_currTotals['goalsFromCentrePass'][squadId2]))
+    #Goals from gain
+    print('Goals from gains:',
+          squadName1,
+          str(df_currTotals['goalsFromGain'][squadId1]),
+          '/',
+          squadName2,
+          str(df_currTotals['goalsFromGain'][squadId2]))
+    #Goals from turnovers
+    print('Goals from turnovers:',
+          squadName1,
+          str(df_currTotals['goalsFromTurnovers'][squadId1]),
+          '/',
+          squadName2,
+          str(df_currTotals['goalsFromTurnovers'][squadId2]))
+    #Circle feeds
+    print('Circle feeds:',
+          squadName1,
+          str(df_currTotals['feeds'][squadId1]),
+          '/',
+          squadName2,
+          str(df_currTotals['feeds'][squadId2]))
+    #Circle feeds with attempts
+    print('Circle feeds with shot attempts:',
+          squadName1,
+          str(df_currTotals['feedWithAttempt'][squadId1]),
+          '/',
+          squadName2,
+          str(df_currTotals['feedWithAttempt'][squadId2]))
+    #Deflections with gain
+    print('Deflections with gain:',
+          squadName1,
+          str(df_currTotals['deflectionWithGain'][squadId1]),
+          '/',
+          squadName2,
+          str(df_currTotals['deflectionWithGain'][squadId2]))
+    #Deflections with no gain
+    print('Deflections with no gain:',
+          squadName1,
+          str(df_currTotals['deflectionWithNoGain'][squadId1]),
+          '/',
+          squadName2,
+          str(df_currTotals['deflectionWithNoGain'][squadId2]))
+    #General play turnovers
+    print('General play turnovers:',
+          squadName1,
+          str(df_currTotals['generalPlayTurnovers'][squadId1]),
+          '/',
+          squadName2,
+          str(df_currTotals['generalPlayTurnovers'][squadId2]))
+    #Bad hands
+    print('Bad hands:',
+          squadName1,
+          str(df_currTotals['badHands'][squadId1]),
+          '/',
+          squadName2,
+          str(df_currTotals['badHands'][squadId2]))
+    #Bad passes
+    print('Bad passes:',
+          squadName1,
+          str(df_currTotals['badPasses'][squadId1]),
+          '/',
+          squadName2,
+          str(df_currTotals['badPasses'][squadId2]))
+    #Intercepts
+    print('Intercepts:',
+          squadName1,
+          str(df_currTotals['intercepts'][squadId1]),
+          '/',
+          squadName2,
+          str(df_currTotals['intercepts'][squadId2]))
+    #Contact penalties
+    print('Contact penalties:',
+          squadName1,
+          str(df_currTotals['contactPenalties'][squadId1]),
+          '/',
+          squadName2,
+          str(df_currTotals['contactPenalties'][squadId2]))
+    #Obstruction penalties
+    print('Obstruction penalties:',
+          squadName1,
+          str(df_currTotals['obstructionPenalties'][squadId1]),
+          '/',
+          squadName2,
+          str(df_currTotals['obstructionPenalties'][squadId2]))
+    
+#Extract the line-up data for the current match
+#NOTE: Wil only work for two matches
+df_lineUp1 = df_lineUp.loc[(df_lineUp['roundNo'] == df_currCombo['roundNo'][0]) &
+                           (df_lineUp['matchNo'] == df_currCombo['matchNo'][0]),]
+df_lineUp2 = df_lineUp.loc[(df_lineUp['roundNo'] == df_currCombo['roundNo'][1]) &
+                           (df_lineUp['matchNo'] == df_currCombo['matchNo'][1]),]
+
+#Combine and clean dataframe
+df_lineUpCombo = pd.concat([df_lineUp1,df_lineUp2])
+df_lineUpCombo.reset_index(drop = True, inplace = True)
+df_lineUpCombo.drop(['lineUpId','lineUpName'], inplace = True, axis = 1)
+
+#Get some sums for line up data
+df_lineUpSums = df_lineUpCombo.groupby(['roundNo',
+                                        'squadId',
+                                        'combinedLineUpName'])[['durationSeconds',
+                                                                'pointsFor',
+                                                                'pointsAgainst',
+                                                                'plusMinus']].sum(['durationSeconds'])
+
+#Check out score flow data from each game
+#Loop through games
+for mm in range(0,len(df_currCombo)):
+    
+    #Current round and match no
+    roundNo = df_currCombo['roundNo'][mm]
+    matchNo = df_currCombo['matchNo'][mm]
+    
+    #Extract score flow data for current match
+    df_currScore = df_scoreFlow.loc[(df_scoreFlow['roundNo'] == roundNo) &
+                                    (df_scoreFlow['matchNo'] == matchNo),]
+    
+    #Group by players and sum scoring data to see who were most effective scorers
+    df_scoreSums = df_currScore.groupby(['squadId','playerId','scoreName'])[['scorePoints']].sum()
+    df_scoreSums.reset_index(drop = False, inplace = True)                         
+    
+    #Print out data
+    print(' ')
+    print('Scoring summary from game '+str(mm+1))
+    for pp in range(0,len(df_scoreSums)):
+        #Get player name
+        currName = playerInfo['displayName'][playerInfo['playerId'].index(df_scoreSums['playerId'][pp])]
+        #Print out current data
+        print(currName+' '+df_scoreSums['scoreName'][pp]+' Total: '+str(df_scoreSums['scorePoints'][pp]))
+                                   
 # %% Calculate some basic substitution statistics
 
 #### SEE DATA HELPER FUNCTION...
