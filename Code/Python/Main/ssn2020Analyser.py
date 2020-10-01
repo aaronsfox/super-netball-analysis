@@ -241,7 +241,176 @@ for tt in range(0,len(squadIds)):
     
     #Print results
     print(currTeamName+': '+str(round(currProp,2))+'%')
+
+#Calculate the average score for each team from both super and standard
+#shots in power 5 periods
+
+#Print heading
+print('Average score in Rebel Power 5 period:')
+
+#Loop through squads
+for tt in range(0,len(squadIds)):
     
+    #Get the current squads total points in Power 5 periods
+    totalPts = df_scoreFlow.loc[(df_scoreFlow['squadId'] == squadIds[tt]) &
+                                (df_scoreFlow['periodCategory'] == 'twoPoint'),
+                                ['scorePoints']].sum()[0]
+    
+    #Divide the total points by the number of rounds and 4 quarters
+    nRounds = max(df_scoreFlow['roundNo'])
+    avgPts = totalPts / nRounds / 4
+    
+    #Get the current team name
+    currTeamName = df_teamInfo.squadName[df_teamInfo['squadId'] == squadIds[tt]].reset_index()['squadName'][0]
+    
+    #Print results
+    print(currTeamName+': '+str(round(avgPts,2))+' per period')
+
+#Contrast scoring rate per minute in standard vs. Rebel Power 5
+#Note that values above 1 indicate elevated scoring rate
+#Also note that this just uses 10 vs. 5 mins rather than actual seconds here
+
+#Print heading
+print('Relative scoring rate in Power 5 vs. standard period:')
+
+#Loop through squads
+for tt in range(0,len(squadIds)):
+    
+    #Get the current squads total points in Power 5 periods
+    totalPtsPower = df_scoreFlow.loc[(df_scoreFlow['squadId'] == squadIds[tt]) &
+                                     (df_scoreFlow['periodCategory'] == 'twoPoint'),
+                                     ['scorePoints']].sum()[0]
+    
+    #Calculate power 5 scoring rate per minute
+    nRounds = max(df_scoreFlow['roundNo'])
+    powerRate = totalPtsPower / (nRounds * 5 * 4)
+    
+    #Get the current squads total points in standard period
+    totalPtsStandard = df_scoreFlow.loc[(df_scoreFlow['squadId'] == squadIds[tt]) &
+                                     (df_scoreFlow['periodCategory'] == 'standard'),
+                                     ['scorePoints']].sum()[0]
+    
+    #Calculate power 5 scoring rate per minute
+    standardRate = totalPtsStandard / (nRounds * 10 * 4)
+    
+    #Get the relative rate for Power 5 vs. standard
+    relRate = powerRate / standardRate
+    
+    #Get the current team name
+    currTeamName = df_teamInfo.squadName[df_teamInfo['squadId'] == squadIds[tt]].reset_index()['squadName'][0]
+    
+    #Print results
+    print(currTeamName+': '+str(round(relRate,2)))
+
+#Calculate the number of super shot attempts vs. standard attempts
+#Do this for the standard and Power 5 periods
+
+#Print heading
+print('Number of close vs. long-range shots in different periods:')
+
+#Loop through squads
+for tt in range(0,len(squadIds)):
+    
+    #Get the current squads long and close shots in the power 5 period
+    totalLongPower = len(df_scoreFlow.loc[(df_scoreFlow['squadId'] == squadIds[tt]) &
+                                          (df_scoreFlow['periodCategory'] == 'twoPoint') &
+                                          (df_scoreFlow['shotCircle'] == 'outerCircle'),])
+    totalClosePower = len(df_scoreFlow.loc[(df_scoreFlow['squadId'] == squadIds[tt]) &
+                                           (df_scoreFlow['periodCategory'] == 'twoPoint') &
+                                           (df_scoreFlow['shotCircle'] == 'innerCircle'),])
+    
+    #Get the current squads long and close shots in the standard period
+    totalLongStandard = len(df_scoreFlow.loc[(df_scoreFlow['squadId'] == squadIds[tt]) &
+                                             (df_scoreFlow['periodCategory'] == 'standard') &
+                                              (df_scoreFlow['shotCircle'] == 'outerCircle'),])
+    totalCloseStandard = len(df_scoreFlow.loc[(df_scoreFlow['squadId'] == squadIds[tt]) &
+                                              (df_scoreFlow['periodCategory'] == 'standard') &
+                                              (df_scoreFlow['shotCircle'] == 'innerCircle'),])
+    
+    #Get the current team name
+    currTeamName = df_teamInfo.squadName[df_teamInfo['squadId'] == squadIds[tt]].reset_index()['squadName'][0]
+    
+    #Print results
+    print(currTeamName+': '+str(totalCloseStandard)+' vs. '+str(totalLongStandard)+' inner vs. outer circle shots, respectively, in standard scoring period')
+    print(currTeamName+': '+str(totalClosePower)+' vs. '+str(totalLongPower)+' inner vs. outer circle shots, respectively, in Power 5 period')
+
+#Calculate average success of super shots for each team
+
+#Print heading
+print('Team shooting percentage for Super Shots:')
+
+#Loop through squads
+for tt in range(0,len(squadIds)):
+    
+    #Get the current squads total made and missed super shots
+    totalMade = len(df_scoreFlow.loc[(df_scoreFlow['squadId'] == squadIds[tt]) &
+                                     (df_scoreFlow['periodCategory'] == 'twoPoint') &
+                                     (df_scoreFlow['shotCircle'] == 'outerCircle') &
+                                     (df_scoreFlow['shotOutcome'] == True),])
+    totalMissed = len(df_scoreFlow.loc[(df_scoreFlow['squadId'] == squadIds[tt]) &
+                                       (df_scoreFlow['periodCategory'] == 'twoPoint') &
+                                       (df_scoreFlow['shotCircle'] == 'outerCircle') &
+                                       (df_scoreFlow['shotOutcome'] == False),])
+    
+    #Calculate shooting percentage
+    shootingPer = totalMade / (totalMade + totalMissed) * 100
+
+    #Get the current team name
+    currTeamName = df_teamInfo.squadName[df_teamInfo['squadId'] == squadIds[tt]].reset_index()['squadName'][0]
+    
+    #Print results
+    print(currTeamName+': '+str(round(shootingPer,2))+'%')
+
+#Calculate some player related numbers
+
+#Extract the super shots into their own dataframe
+df_superShots = df_scoreFlow.loc[(df_scoreFlow['periodCategory'] == 'twoPoint') &
+                                 (df_scoreFlow['shotCircle'] == 'outerCircle'),]
+
+#Group by player ID and shot outcome to get some summary stats
+df_superPlayerCounts = df_superShots.groupby(['playerId','shotOutcome'])[['scoreName']].count()
+
+#Get the unique player ID's who took super shots
+superShotPlayers = list()
+for pp in range(0,len(df_superPlayerCounts.index)):
+    superShotPlayers.append(df_superPlayerCounts.index[pp][0])
+superShotPlayers = list(set(superShotPlayers))
+
+#Create dictionary for players, and counts of makes and misses
+superCounts = {'playerId': [], 'playerName': [], 'made': [], 'missed': [],
+               'total': [], 'shootingPer': []}
+
+#Loop through and extract data from count dataframe
+for pp in range(0,len(superShotPlayers)):
+    
+    #Get current player name and append id and name to dictionary
+    currPlayerName = df_playerInfo.displayName[df_playerInfo['playerId'] == superShotPlayers[pp]].reset_index()['displayName'][0]
+    superCounts['playerId'].append(superShotPlayers[pp])
+    superCounts['playerName'].append(currPlayerName)
+    
+    #Get True and False counts for current player
+    #Check for made values for current player ID    
+    try:
+        made = df_superPlayerCounts.loc[(superShotPlayers[pp], True), 'scoreName']
+    except KeyError:
+        #Set made to 0
+        made = 0
+    #Check for miss values for current player ID    
+    try:
+        missed = df_superPlayerCounts.loc[(superShotPlayers[pp], False), 'scoreName']
+    except KeyError:
+        #Set made to 0
+        missed = 0
+        
+    #Append values to dictionary
+    superCounts['made'].append(made)
+    superCounts['missed'].append(missed)
+    superCounts['total'].append(made+missed)
+    superCounts['shootingPer'].append(made/(made+missed)*100)
+
+#Convert to dataframe
+df_superCounts = pd.DataFrame.from_dict(superCounts)
+
 # %% Create some clutch shooting-based numbers
 
 # This analysis defines the 'clutch' period as the final 5 minutes of the match
