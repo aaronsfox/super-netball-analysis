@@ -1174,7 +1174,7 @@ for qq in range(0,4):
 
 #Set the two teams of interest
 squadId1 = 804
-squadId2 = 8117
+squadId2 = 810
 
 #Get the squad names
 squadName1 = teamInfo['squadNickname'][teamInfo['squadId'].index(squadId1)]
