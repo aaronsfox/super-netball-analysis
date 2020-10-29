@@ -52,8 +52,6 @@ import ssn2020DataHelper as dataHelper
 
 # %% Load in match data
 
-#### TODO: simplify data outputs for cleaner function...
-
 #Navigate to data directory
 os.chdir('..\\..\\..\\Data\\SuperNetball2020')
 
@@ -518,7 +516,7 @@ df_teamSuperProps.to_csv('actualSuperShotProportion_upToRound'+str(maxRound)+'.c
 
 # %% Visualise results
 
-# %% Test a heatmap
+# %% Create an all teams heatmap
 
 #Set-up axes to plot on
 whichAx = [[0,0], [0,1],
@@ -623,6 +621,109 @@ for tt in range(0,len(teamList)):
 #Set tight plot layout to fill frame
 plt.tight_layout()
 plt.show()
+
+#Navigate to figures directory
+os.chdir('..\\Figures')
+
+#Save all teams figure
+plt.savefig('SuperShotSimulations_HeatMap_AllTeams.pdf')
+plt.savefig('SuperShotSimulations_HeatMap_AllTeams.png', format = 'png', dpi = 300)
+
+#Close figure
+plt.close()
+
+# %% Create individual team heatmaps
+
+#Loop through teams and plot heat grid of their points
+for tt in range(0,len(teamList)):
+    
+    #Create figure to plot on
+    fig, ax = plt.subplots(figsize=(9, 3), nrows = 1, ncols = 1)
+
+    #Extract current teams data
+    df_currTeamSims = df_superSimResults.loc[(df_superSimResults['squadNickname'] == teamList[tt]),]
+    
+    #Get the number of simulations ran for the current teams shots
+    nTeamSims = int(len(df_currTeamSims)/len(superShotProps))
+    
+    #Initialise array to store data in
+    simArray = np.zeros([len(superShotProps)-1,nTeamSims])
+    
+    #Loop through the proportions
+    for pp in range(0,len(propCats)):
+        
+        #Extract the dataframe of the current proportion
+        df_currProp = df_currTeamSims.iloc[pp*nTeamSims:(pp*nTeamSims)+nTeamSims]
+        
+        #Extract the score
+        scoreVals = df_currProp['totalPts'].values
+        
+        #Sort the values from lowest to highest
+        scoreVals.sort()
+        
+        #Place in array (in reverse order)
+        simArray[(pp+1)*-1,:] = scoreVals
+    
+    #Convert sim to a dataframe for plotting
+    df_simArray = pd.DataFrame(simArray)
+    #Set the index using the prop categories
+    propCats.sort()
+    df_simArray.set_index(propCats[::-1], inplace = True)
+    
+    #Plot heatmap
+    sns.heatmap(df_simArray, cmap="RdYlGn", annot = False,
+                linewidths = 0, ax = ax)
+    
+    #Add horizontal separators via horizontal line
+    lineWidth = 2
+    for ii in range(simArray.shape[0]+1):
+        ax.axhline(ii, color = 'white', lw = lineWidth)
+    
+    #Outline the actual proportion for the team
+    topLine = len(df_simArray) - math.ceil(teamSuperProps[tt]*10) - 1
+    bottomLine = len(df_simArray) - math.floor(teamSuperProps[tt]*10) - 1
+    ax.add_patch(Rectangle(xy = (0-10, bottomLine), 
+                    width = nTeamSims*2, height = 1, 
+                    fill = False,  
+                    edgecolor = 'black', 
+                    lw = lineWidth,
+                    zorder = 4))
+        
+    #Remove x-axis
+    ax.get_xaxis().set_ticks([])
+    
+    #Add x-axis label
+    ax.set_xlabel('Rebel Power 5 Simulations (n = '+locale.format_string("%d", nTeamSims, grouping=True)+')')
+    
+    #Set y-ticks
+    ax.set_yticks([0.5, 1.5, 2.5, 3.5, 4.5,
+                   5.5, 6.5, 7.5, 8.5, 9.5])
+    
+    #Set y-tick labels
+    ax.set_yticklabels(list(df_simArray.index),
+                       fontsize = 10)
+    
+    #Add y-axis label
+    ax.set_ylabel('Super Shot Proportion')
+    
+    #Add colourbar label
+    ax.collections[0].colorbar.set_label('Goals Scored')
+    
+    #Add title
+    ax.set_title(teamList[tt],
+                 fontweight = 'bold',
+                 fontsize = 12)
+
+    #Set tight plot layout to fill frame
+    plt.tight_layout()
+    plt.show()
+    
+    #Save team figure
+    plt.savefig('SuperShotSimulations_HeatMap_'+teamList[tt]+'.pdf')
+    plt.savefig('SuperShotSimulations_HeatMap_'+teamList[tt]+'.png', format = 'png', dpi = 300)
+    
+    #Close figure
+    plt.close()
 
 # %%
    
