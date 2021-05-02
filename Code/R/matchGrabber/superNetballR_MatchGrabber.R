@@ -15,7 +15,8 @@ library(jsonlite)
 #2017 competition ID = 10083 (10084 finals)
 #2018 competition ID = 10393 (10394 finals)
 #2019 competition ID = 10724 (10725 finals)
-#2020 competition ID = 11108
+#2020 competition ID = 11108 (11109 finals)
+#2021 competition ID = 11391 ### check this...
 
 #Set 2020 competition ID
 compID = "11108"
