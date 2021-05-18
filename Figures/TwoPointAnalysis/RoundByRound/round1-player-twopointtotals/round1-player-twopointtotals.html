@@ -1,0 +1,85 @@
+
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+  
+  <head>
+    
+      <meta charset="utf-8">
+      <title>Bokeh Plot</title>
+      
+      
+        
+          
+        
+        
+          
+        <script type="text/javascript" src="https://cdn.bokeh.org/bokeh/release/bokeh-2.1.1.min.js" integrity="sha384-kLr4fYcqcSpbuI95brIH3vnnYCquzzSxHPU6XGQCIkQRGJwhg0StNbj1eegrHs12" crossorigin="anonymous"></script>
+        <script type="text/javascript">
+            Bokeh.set_log_level("info");
+        </script>
+        
+      
+      
+    
+  </head>
+  
+  
+  <body>
+    
+      
+        
+          
+          
+            
+              <div class="bk-root" id="5cc2d45f-2acc-4348-a35c-da1f0e9325ea" data-root-id="3844"></div>
+            
+          
+        
+      
+      
+        <script type="application/json" id="4046">
+          {"a21d54d7-db94-40ff-90ec-f240e171cd34":{"roots":{"references":[{"attributes":{"callback":null,"tooltips":[["Player","@fullNames"],["Team","@squadNames"],["Total Points from Super Shots","@counts"]]},"id":"3862","type":"HoverTool"},{"attributes":{"axis":{"id":"3855"},"grid_line_color":null,"ticker":null},"id":"3857","type":"Grid"},{"attributes":{"start":0},"id":"3849","type":"DataRange1d"},{"attributes":{},"id":"3851","type":"CategoricalScale"},{"attributes":{"formatter":{"id":"3874"},"major_label_orientation":1,"ticker":{"id":"3856"}},"id":"3855","type":"CategoricalAxis"},{"attributes":{},"id":"3876","type":"UnionRenderers"},{"attributes":{"align":"center","text":"Total Points from Super Shots"},"id":"3845","type":"Title"},{"attributes":{},"id":"3875","type":"Selection"},{"attributes":{},"id":"3859","type":"BasicTicker"},{"attributes":{},"id":"3872","type":"BasicTickFormatter"},{"attributes":{"active_drag":"auto","active_inspect":"auto","active_multi":null,"active_scroll":"auto","active_tap":"auto","tools":[{"id":"3862"}]},"id":"3863","type":"Toolbar"},{"attributes":{"below":[{"id":"3855"}],"center":[{"id":"3857"},{"id":"3861"}],"left":[{"id":"3858"}],"plot_height":400,"plot_width":800,"renderers":[{"id":"3868"}],"title":{"id":"3845"},"toolbar":{"id":"3863"},"toolbar_location":null,"x_range":{"id":"3847"},"x_scale":{"id":"3851"},"y_range":{"id":"3849"},"y_scale":{"id":"3853"}},"id":"3844","subtype":"Figure","type":"Plot"},{"attributes":{"data_source":{"id":"3843"},"glyph":{"id":"3866"},"hover_glyph":null,"muted_glyph":null,"nonselection_glyph":{"id":"3867"},"selection_glyph":null,"view":{"id":"3869"}},"id":"3868","type":"GlyphRenderer"},{"attributes":{"factors":["S.Gooden","G.Sinclair","J.Harten","S.Dwyer","H.Housby","T.Dwan","G.Bueta","A.Teague-Neeld","K.Stanton","S.Wood","M.Kumwenda","R.Barkmeyer","S.Glasgow","C.Koenen","K.McCollin","K.Austin"],"range_padding":0.1},"id":"3847","type":"FactorRange"},{"attributes":{"fill_alpha":{"value":0.1},"fill_color":{"field":"color"},"line_alpha":{"value":0.1},"line_color":{"field":"color"},"top":{"field":"counts"},"width":{"value":0.6},"x":{"field":"players"}},"id":"3867","type":"VBar"},{"attributes":{"fill_color":{"field":"color"},"line_color":{"field":"color"},"top":{"field":"counts"},"width":{"value":0.6},"x":{"field":"players"}},"id":"3866","type":"VBar"},{"attributes":{"data":{"color":["#e54078","#494b4a","#f57921","#f57921","#0082cd","#4b2c69","#4b2c69","#00953b","#00a68e","#fdb61c","#00a68e","#00a68e","#00953b","#fdb61c","#494b4a","#f57921"],"counts":[10,8,8,8,6,6,6,4,4,4,2,2,2,2,2,2],"fullNames":["Samantha Gooden","Gabrielle Sinclair","Jo Harten","Sophie Dwyer","Helen Housby","Tippah Dwan","Gretel Bueta","Alice Teague-Neeld","Kaylia Stanton","Steph Wood","Mwai Kumwenda","Ruby Barkmeyer","Sasha Glasgow","Cara Koenen","Kalifa McCollin","Kiera Austin"],"players":["S.Gooden","G.Sinclair","J.Harten","S.Dwyer","H.Housby","T.Dwan","G.Bueta","A.Teague-Neeld","K.Stanton","S.Wood","M.Kumwenda","R.Barkmeyer","S.Glasgow","C.Koenen","K.McCollin","K.Austin"],"squadNames":["Thunderbirds","Magpies","GIANTS","GIANTS","Swifts","Firebirds","Firebirds","Fever","Vixens","Lightning","Vixens","Vixens","Fever","Lightning","Magpies","GIANTS"]},"selected":{"id":"3875"},"selection_policy":{"id":"3876"}},"id":"3843","type":"ColumnDataSource"},{"attributes":{"axis":{"id":"3858"},"dimension":1,"ticker":null},"id":"3861","type":"Grid"},{"attributes":{},"id":"3853","type":"LinearScale"},{"attributes":{"axis_label":"Total Points","formatter":{"id":"3872"},"ticker":{"id":"3859"}},"id":"3858","type":"LinearAxis"},{"attributes":{},"id":"3856","type":"CategoricalTicker"},{"attributes":{"source":{"id":"3843"}},"id":"3869","type":"CDSView"},{"attributes":{},"id":"3874","type":"CategoricalTickFormatter"}],"root_ids":["3844"]},"title":"Bokeh Application","version":"2.1.1"}}
+        </script>
+        <script type="text/javascript">
+          (function() {
+            var fn = function() {
+              Bokeh.safely(function() {
+                (function(root) {
+                  function embed_document(root) {
+                    
+                  var docs_json = document.getElementById('4046').textContent;
+                  var render_items = [{"docid":"a21d54d7-db94-40ff-90ec-f240e171cd34","root_ids":["3844"],"roots":{"3844":"5cc2d45f-2acc-4348-a35c-da1f0e9325ea"}}];
+                  root.Bokeh.embed.embed_items(docs_json, render_items);
+                
+                  }
+                  if (root.Bokeh !== undefined) {
+                    embed_document(root);
+                  } else {
+                    var attempts = 0;
+                    var timer = setInterval(function(root) {
+                      if (root.Bokeh !== undefined) {
+                        clearInterval(timer);
+                        embed_document(root);
+                      } else {
+                        attempts++;
+                        if (attempts > 100) {
+                          clearInterval(timer);
+                          console.log("Bokeh: ERROR: Unable to run BokehJS code because BokehJS library is missing");
+                        }
+                      }
+                    }, 10, root)
+                  }
+                })(window);
+              });
+            };
+            if (document.readyState != "loading") fn();
+            else document.addEventListener("DOMContentLoaded", fn);
+          })();
+        </script>
+    
+  </body>
+  
+</html>
