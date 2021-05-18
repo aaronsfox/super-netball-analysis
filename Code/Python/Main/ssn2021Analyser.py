@@ -750,7 +750,8 @@ playerStatsGrab = ['centrePassReceives', 'contactPenalties',
                    'interceptPassThrown', 'intercepts', 'obstructionPenalties',
                    'penalties', 'pickups',
                    # 'possessions',
-                   'rebounds']
+                   'rebounds',
+                   'goalAttempts', 'goals']
 #Convert list to dictionary to store data in
 playerStatsDictTotal = {'playerId': [], 'playerName': [], 'squadName': [], 'durationMins': [],
                         'centrePassReceives': [], 'contactPenalties': [], 
@@ -762,7 +763,8 @@ playerStatsDictTotal = {'playerId': [], 'playerName': [], 'squadName': [], 'dura
                         'interceptPassThrown': [], 'intercepts': [], 'obstructionPenalties': [],
                         'penalties': [], 'pickups': [],
                         # 'possessions': [],
-                        'rebounds': []}
+                        'rebounds': [],
+                        'goalAttempts': [], 'goals': []}
 playerStatsDictPer = {'playerId': [], 'playerName': [], 'squadName': [], 'durationMins': [],
                       'centrePassReceives': [], 'contactPenalties': [], 
                       'deflectionWithGain': [], 'deflectionWithNoGain': [],
@@ -773,7 +775,8 @@ playerStatsDictPer = {'playerId': [], 'playerName': [], 'squadName': [], 'durati
                       'interceptPassThrown': [], 'intercepts': [], 'obstructionPenalties': [],
                       'penalties': [], 'pickups': [],
                       # 'possessions': [],
-                      'rebounds': []}
+                      'rebounds': [],
+                      'goalAttempts': [], 'goals': []}
 
 #Loop through players and extract statistics
 for pp in range(0,len(playerStatList)):
