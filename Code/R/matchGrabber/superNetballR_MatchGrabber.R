@@ -19,18 +19,23 @@ library(jsonlite)
 #2021 competition ID = 11391
 
 #Set 2021 competition ID
+year = "2021"
 compID = "11391"
 
 #Set round to grab
-getRound = 3 ##### Change this for whichever round is desired
-
-#Loop through the four matches and save as .json
-for (mm in 1:4) {
-  #Download match
-  matchData <- downloadMatch(compID,getRound,mm)
-  #Save as .json
-  write_json(matchData,paste("../../../Data/SuperNetball2021/r",getRound,"_g",mm,"_SSN2020.json",sep=""))
+for (rr in 1:5) { #####getRound = 4 ##### Change this for whichever round is desired
+  
+  getRound = rr
+  
+  #Loop through the four matches and save as .json
+  for (mm in 1:4) {
+    #Download match
+    matchData <- downloadMatch(compID,getRound,mm)
+    #Save as .json
+    write_json(matchData,paste("../../../Data/SuperNetball",year,"/r",getRound,"_g",mm,"_SSN",year,".json",sep=""))
+    
+  }
 }
-
+  
 ##### TODO: set as relevant loop when comp complete
 #NOTE: an error 'please install xml2 package' will occur with invalid match numbers
