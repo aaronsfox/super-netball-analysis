@@ -25,6 +25,8 @@ import scipy.stats as stats
 import random
 import seaborn as sns
 import matplotlib.pyplot as plt
+import matplotlib.patches as patches
+from matplotlib.offsetbox import OffsetImage, AnnotationBbox
 import os
 # from bokeh.plotting import figure, output_file, save
 # from bokeh.layouts import gridplot
@@ -60,6 +62,9 @@ import ssn2021DataHelper as dataHelper
 #Navigate to data directory
 os.chdir('..\\..\\..\\Data\\SuperNetball2021')
 
+#Set images directory
+imgDir = os.getcwd()+'\\..\..\\Images'
+
 #Identify list of .json files
 jsonFileList = list()
 for file in os.listdir(os.getcwd()):
@@ -79,7 +84,7 @@ dataImport = dataHelper.getMatchData(jsonFileList = jsonFileList,
                                      exportTeamData = True, exportPlayerData = True,
                                      exportMatchData = True, exportScoreData = True,
                                      exportLineUpData = True, exportPlayerStatsData = True,
-                                     exportTeamStatsData = True)
+                                     exportTeamStatsData = True, exportSubstitutionData = True)
 
 #Unpack the imported data
 teamInfo = dataImport['teamInfo']
@@ -98,6 +103,7 @@ df_lineUp = dataImport['df_lineUp']
 df_individualLineUp = dataImport['df_individualLineUp']
 df_playerStatsData = dataImport['df_playerStatsData']
 df_teamStatsData = dataImport['df_teamStatsData']
+df_substitutionData = dataImport['df_substitutionData']
 
 # %% Plots to consider...
 
@@ -881,6 +887,22 @@ os.chdir('..\\playerStats')
 df_playerStatsMetricsAttacking.to_csv('individualPlayerStats_Attacking.csv', index = False)
 df_playerStatsMetricsDefensive.to_csv('individualPlayerStats_Defensive.csv', index = False)
 
+#Normalise the super shot dataframe variables
+madePer15 = []
+for pp in range(len(df_superCounts)):
+    #Get current shooters ID
+    currPlayerId = df_superCounts['playerId'][pp]
+    #Get their duration in mins from the stats dataframe
+    durMins = df_playerStatsMetricsAll.loc[df_playerStatsMetricsAll['playerId'] == currPlayerId,
+                                           ['durationMins']].values.flatten()[0]
+    #Calculate the per factor
+    perFac = perDivider / durMins
+    #Calculate makes per min divider
+    madePer15.append(df_superCounts['made'][pp] * perFac)
+    
+#Add to dataframe
+df_superCounts['madePer15'] = madePer15
+
 # %% Time in front data
 
 #Create dictionary to store basic home and away numbers in
@@ -1423,7 +1445,644 @@ for mm in range(0,len(df_currCombo)):
                                    
 # %% Calculate some basic substitution statistics
 
-#### SEE DATA HELPER FUNCTION...
+
+##### Somewhat incomplete at the moment...
+
+##### TODO: swapping positions vs. substitutions...
+
+#Check total number of substitutions by team
+#Both in play and at quarter breaks
+#Store these in lists to create a dataframe and plot out of
+situation = []
+squadNickname = []
+noSubs = []
+subRate = []
+#Print heading
+print('Total number of substitutions by teams (in play):')
+
+#Loop through squads
+for tt in range(len(teamInfo['squadId'])):
+    
+    #Get current squad ID
+    currSquadId = teamInfo['squadId'][tt]
+    
+    #Get current squad name
+    currSquadName = teamInfo['squadNickname'][tt]
+    
+    #Get the current squads total points
+    totalSubs = len(df_substitutionData.loc[(df_substitutionData['squadId'] == currSquadId) &
+                                            (df_substitutionData['fromPos'] == 'S') &
+                                            (~df_substitutionData['normSubTime'].isin([1.0,2.0,3.0,4.0])) &
+                                            (df_substitutionData['period'].isin([1,2,3,4])),
+                                            ])
+    
+    #Get the total number of games played
+    totalGames = len(df_substitutionData['roundNo'].unique())
+    
+    #Calculate subs per game
+    perSubs = totalSubs/totalGames
+    
+    #Store in lists
+    situation.append('In-Game')
+    squadNickname.append(currSquadName)
+    noSubs.append(totalSubs)
+    subRate.append(perSubs)
+    
+    #Print results
+    print(currSquadName+': '+str(totalSubs)+' Total Subs In-Game ('+str(round(perSubs,2))+' per game)')
+    
+#Print heading
+print('\nTotal number of substitutions by teams (at breaks):')
+
+#Loop through squads
+for tt in range(len(teamInfo['squadId'])):
+    
+    #Get current squad ID
+    currSquadId = teamInfo['squadId'][tt]
+    
+    #Get current squad name
+    currSquadName = teamInfo['squadNickname'][tt]
+    
+    #Get the current squads total points
+    totalSubs = len(df_substitutionData.loc[(df_substitutionData['squadId'] == currSquadId) &
+                                            (df_substitutionData['fromPos'] == 'S') &
+                                            (df_substitutionData['normSubTime'].isin([1.0,2.0,3.0,4.0])) &
+                                            (df_substitutionData['period'].isin([1,2,3,4])),
+                                            ])
+    
+    #Get the total number of games played
+    totalGames = len(df_substitutionData['roundNo'].unique())
+    
+    #Calculate subs per game
+    perSubs = totalSubs/totalGames
+    
+    #Store in lists
+    situation.append('At-Breaks')
+    squadNickname.append(currSquadName)
+    noSubs.append(totalSubs)
+    subRate.append(perSubs)
+    
+    #Print results
+    print(currSquadName+': '+str(totalSubs)+' Total Subs at breaks ('+str(round(perSubs,2))+' per game)')
+    
+#Convert to dataframe
+df_subCountSummary = pd.DataFrame(list(zip(situation, squadNickname, noSubs, subRate)),
+                                  columns =['situation', 'squadNickname', 'noSubs', 'subRate']) 
+    
+##### TODO: the above probably underestimates break subs, given it doesn't take
+##### into account positional swaps
+
+
+
+#Get a summary of player substitution counts
+#Break it down by court to bench, bench to court, positional swaps
+playerId = []
+playerName = []
+subSquadName = []
+courtToBench = []
+benchToCourt = []
+positionalSwap = []
+totalSubs = []
+
+#Get unique player substition IDs
+uniquePlayerSubs = df_substitutionData['playerId'].unique()
+
+#Loop through the players
+for pp in range(len(uniquePlayerSubs)):
+    
+    #Get current players name
+    currPlayerId = uniquePlayerSubs[pp]
+    currPlayerName = df_playerInfo.loc[df_playerInfo['playerId'] == currPlayerId,
+                                       ['displayName']].values.flatten()[0]
+    currSquadId = df_playerInfo.loc[df_playerInfo['playerId'] == currPlayerId,
+                                    ['squadId']].values.flatten()[0]
+    
+    #Get counts of each category
+    #Court to bench
+    c2b = len(df_substitutionData.loc[(df_substitutionData['playerId'] == currPlayerId) &
+                                      (df_substitutionData['toPos'] == 'S'),])
+    #Bench to court
+    b2c = len(df_substitutionData.loc[(df_substitutionData['playerId'] == currPlayerId) &
+                                      (df_substitutionData['fromPos'] == 'S'),])
+    #Positional swaps
+    ps = len(df_substitutionData.loc[(df_substitutionData['playerId'] == currPlayerId) &
+                                     (df_substitutionData['fromPos'] != 'S') &
+                                     (df_substitutionData['toPos'] != 'S'),])
+    
+    #Append to lists
+    playerId.append(currPlayerId)
+    playerName.append(currPlayerName)
+    subSquadName.append(currSquadId)
+    courtToBench.append(c2b)
+    benchToCourt.append(b2c)
+    positionalSwap.append(ps)
+    totalSubs.append(c2b+b2c+ps)
+    
+#Convert to dataframe
+df_playerFreqSubs = pd.DataFrame(list(zip(playerId, playerName, subSquadName,
+                                          courtToBench, benchToCourt, positionalSwap, totalSubs)),
+                                  columns = ['playerId', 'displayName', 'squadId',
+                                            'courtToBench', 'benchToCourt', 'positionalSwap', 'totalSubs'])
+# df_playerFreqSubs.sort_values('totalSubs', ascending = False).to_csv('playerSubCountSummary.csv',
+#                                                                      index = False)
+
+
+
+#Calculate some team summaries
+#This will summarise frequencies of different substitution types for each team
+#Substitutions made within quarters, at breaks etc.
+
+#Create lists to store data in
+period = []
+benchToCourt = []
+positionalSwap = []
+subSquadId = []
+situation = []
+
+#Loop through squads
+for tt in range(len(teamInfo['squadId'])):
+    
+    #Loop through periods
+    for qq in range(0,4):
+        
+        #Extract substitutions for current period, excluding at break subs
+        df_currSubs = df_substitutionData.loc[(df_substitutionData['squadId'] == teamInfo['squadId'][tt]) &
+                                              (~df_substitutionData['normSubTime'].isin([1.0,2.0,3.0,4.0])) &
+                                              (df_substitutionData['period'] == qq+1),]
+        
+        #Extract the number of bench substitutions
+        b2c = len(df_currSubs.loc[df_currSubs['fromPos'] == 'S',])
+        
+        #Extract positional swaps
+        ps =  len(df_currSubs.loc[(df_currSubs['fromPos'] != 'S') &
+                                  (df_currSubs['toPos'] != 'S'),])
+        
+        #Append to lists
+        period.append(qq + 1)
+        benchToCourt.append(b2c)
+        positionalSwap.append(ps)
+        subSquadId.append(teamInfo['squadId'][tt])
+        situation.append('In-Game')
+        
+        #Extract substitutions for current period at breaks
+        if qq > 0: #only if after first period
+            df_currSubs = df_substitutionData.loc[(df_substitutionData['squadId'] == teamInfo['squadId'][tt]) &
+                                                  (df_substitutionData['normSubTime'] == qq),]
+            
+            #Extract the number of bench substitutions
+            b2c = len(df_currSubs.loc[df_currSubs['fromPos'] == 'S',])
+            
+            #Extract positional swaps
+            ps =  len(df_currSubs.loc[(df_currSubs['fromPos'] != 'S') &
+                                      (df_currSubs['toPos'] != 'S'),])
+            
+            #Append to lists
+            period.append(qq)
+            benchToCourt.append(b2c)
+            positionalSwap.append(ps)
+            subSquadId.append(teamInfo['squadId'][tt])
+            situation.append('At-Breaks')
+            
+#Convert to dataframe
+df_teamFreqSubs = pd.DataFrame(list(zip(subSquadId, period, situation,
+                                        benchToCourt, positionalSwap)),
+                               columns = ['squadId', 'period', 'situation',
+                                          'benchToCourt', 'positionalSwap'])
+
+#Add squad nickname column
+subSquadNickname = []
+for ss in range(len(df_teamFreqSubs)):
+    subSquadNickname.append(
+        df_teamInfo.loc[df_teamInfo['squadId'] == df_teamFreqSubs['squadId'][ss],['squadNickname']].values.flatten()[0]
+        )
+df_teamFreqSubs['squadNickname'] = subSquadNickname
+    
+
+
+#Visualise team sub frequencies
+# fig, ax = plt.subplots(nrows = 2, ncols = 2, figsize = (10,7))
+
+fig, ax = plt.subplots(figsize = (7,5))
+
+#Loop through squads
+for tt in range(len(list(colourDict.keys()))):
+    
+    #Get current team
+    currTeamName = list(colourDict.keys())[tt]
+    
+    #Extract their data for in-game subs
+    df_currSubs = df_teamFreqSubs.loc[(df_teamFreqSubs['squadNickname'] == currTeamName) &
+                                      (df_teamFreqSubs['situation'] == 'In-Game'),]
+    
+    #Plot data
+    ax.plot(df_currSubs['period'].values,
+            df_currSubs['benchToCourt'].values,
+            c = list(colourDict.values())[tt],
+            marker = 'o')
+
+
+### Facet grid for this? Best visualisation???
+
+    
+    
+
+#Visualise sub rate comparison
+fig, ax = plt.subplots(figsize = (7,5))
+sns.barplot(x = 'subRate', y = 'squadNickname', hue = 'situation',
+            data = df_subCountSummary, hue_order = ['In-Game', 'At-Breaks'],
+            order = list(colourDict.keys()),
+            palette = ['#ee255c', '#000000'])
+#Make bars skinny
+#Add lollipop point too
+newWidth = 0.1
+for pp in range(len(ax.patches)):
+    #Collect details
+    currWidth = ax.patches[pp].get_height()
+    diff = currWidth - newWidth
+    #Set width
+    ax.patches[pp].set_height(newWidth)
+    #Recentre bar
+    if pp < len(teamInfo['squadId']):
+        ax.patches[pp].set_y(ax.patches[pp].get_y() + diff * .75)
+    else:
+        ax.patches[pp].set_y(ax.patches[pp].get_y() + diff * .25)
+    #Add lollipop point
+    #Get the x,y coordinate to plot
+    xPt,yPt = ax.patches[pp].get_width(),ax.patches[pp].get_y()
+    #Plot the point
+    if pp < len(teamInfo['squadId']):
+        plt.scatter(xPt, yPt+(newWidth/2),
+                    color = '#ee255c', s = 50, zorder = 4)
+    else:
+        plt.scatter(xPt, yPt+(newWidth/2),
+                    color = '#000000', s = 50, zorder = 4)
+        
+#Clean up axes border lines
+ax.set_ylabel('')
+ax.set_xlabel('Substitution Rate (subs/min)')
+ax.spines['top'].set_visible(False)
+ax.spines['left'].set_visible(False)
+ax.spines['right'].set_visible(False)
+
+#Add vertical lines
+for vv in list(np.linspace(0,10,6)):
+    ax.axvline(vv, linestyle = ':', linewidth = 1,
+               color = 'lightgrey', zorder = 0)
+    
+#Fix up legend
+ax.legend_.set_title('')
+plt.legend(facecolor = 'white', framealpha = 0.75)
+
+#Replace y-axis ticks with images
+for tt in range(len(ax.get_yticklabels())):
+    #Get current team name
+    currTeam = ax.get_yticklabels()[tt].get_text()
+    #Get position
+    currPos = ax.get_yticklabels()[tt].get_position()
+    #Load image
+    teamLogo = plt.imread(imgDir+'\\'+currTeam+'_small.png')
+    #Figure out zoom factor
+    #Target height of 40
+    zoomFac = 40 / teamLogo.shape[1]
+    #Create offset image
+    imOffset = OffsetImage(teamLogo, zoom = zoomFac)
+    #Create annotation box
+    annBox = AnnotationBbox(imOffset, (currPos[0],currPos[1]),
+                            xybox = (-25, 0), frameon = False,
+                            xycoords = 'data', boxcoords = 'offset points',
+                            pad = 0)
+    #Add the image
+    ax.add_artist(annBox)
+    
+#Clear out the y-ticks now
+ax.set_yticks([])
+
+
+
+
+#Set up an order squad ID list
+squadId = []
+for tt in range(len(list(colourDict.keys()))):
+    #Get current squad ID
+    currSquadId = df_teamInfo.loc[df_teamInfo['squadNickname'] == list(colourDict.keys())[tt],['squadId']].to_numpy().flatten()[0]
+    #Append to list
+    squadId.append(currSquadId)
+    
+#### TODO: shift to fig helper eventually...
+
+#Create palette from colour dict values
+colourPal = list(colourDict.values())
+
+# #Plot a histogram of normalised sub time to determine details of when they
+# #are occurring
+# num_bins = 50
+# fig, ax = plt.subplots(figsize = (6,5))
+# df_currSubs = df_substitutionData.loc[(df_substitutionData['fromPos'] == 'S') &
+#                                       (~df_substitutionData['normSubTime'].isin([1.0,2.0,3.0,4.0])),
+#                                       ]
+# plt.hist(df_currSubs['normSubTime'], num_bins, facecolor='blue', alpha=0.5)
+# plt.show()
+
+#Overlapping density ridge plot
+#Example: https://seaborn.pydata.org/examples/kde_ridgeplot.html
+
+#Add team name to substitutions dataframe
+#Also add positional grouping variable to dataframe
+subTeam = []
+posGroup = []
+for ss in range(len(df_substitutionData)):
+    #Get the team
+    subTeam.append(df_teamInfo.loc[df_teamInfo['squadId'] == df_substitutionData['squadId'][ss],
+                                   ['squadNickname']].values.flatten()[0])
+    #Get the positional grouping
+    subTo = df_substitutionData['toPos'][ss]
+    if subTo == 'S':
+        posGroup.append('Bench')
+    elif subTo == 'GS' or subTo == 'GA':
+        posGroup.append('Shooter')
+    elif subTo == 'GK' or subTo == 'GD':
+        posGroup.append('Defender')
+    elif subTo == 'WD' or subTo == 'C' or subTo == 'WA':
+        posGroup.append('Mid-Courter') 
+df_substitutionData['squadNickname'] = subTeam
+df_substitutionData['toGroup'] = posGroup
+
+
+#Create distribution plots of team substitution patterns
+
+#Create plots
+fig, ax = plt.subplots(nrows = len(squadId), ncols = 1, figsize = (10,8))
+
+#Loop through teams and axes
+for tt in range(len(squadId)):
+    
+    #Plot the distribution in two parts
+    #Limit to non quarter break substitutions
+    #Remove extra time subs as this skews some data for teams who have played extra time
+    #First line
+    g1 = sns.kdeplot(data = df_substitutionData.loc[(df_substitutionData['squadId'] == squadId[tt]) &
+                                                    (df_substitutionData['fromPos'] == 'S') &
+                                                    (~df_substitutionData['normSubTime'].isin([1.0,2.0,3.0,4.0])) &
+                                                    (df_substitutionData['period'].isin([1,2,3,4])),
+                                                    ],
+                     x = 'normSubTime',
+                     bw_adjust = 0.15, cut = 0, fill = False, alpha = 0.75,
+                     linewidth = 1.5, color = list(colourDict.values())[tt],
+                     ax = ax[tt])
+    #Then fill
+    g2 = sns.kdeplot(data = df_substitutionData.loc[(df_substitutionData['squadId'] == squadId[tt]) &
+                                                    (df_substitutionData['fromPos'] == 'S') &
+                                                    (~df_substitutionData['normSubTime'].isin([1.0,2.0,3.0,4.0])) &
+                                                    (df_substitutionData['period'].isin([1,2,3,4])),
+                                                    ],
+                     x = 'normSubTime',
+                     bw_adjust = 0.15, cut = 0, fill = True, alpha = 0.75,
+                     linewidth = 1.5, color = list(colourDict.values())[tt],
+                     ax = ax[tt])
+    #X-axes line
+    ax[tt].axhline(y = 0, lw = 2, clip_on = False, color = list(colourDict.values())[tt])
+    
+    #Scale every axes to a proportion of max value
+    #Add vertical axes lines for quarter breaks
+    #Add shaded area for super shot period
+
+    #Set x-axes limits
+    ax[tt].set_xlim([0,4.01])
+    
+    #Get maximum value of density plot
+    #Get the axes children and grab the first line worth of xy data
+    x,y = ax[tt].lines[0].get_data()
+    #Find the maximum y value
+    maxY = np.max(y)
+    #Set y limit to this value
+    ax[tt].set_ylim([0,maxY*1.02])
+    
+    #Add the axes vertical lines for quarter breaks
+    for xx in range(1,5):
+        #Add the vertical line
+        ax[tt].axvline(x = xx, color = 'k',
+                       linestyle = '--', linewidth = 0.5)
+        #Add the quarter annotation using the max Y value and quarter point
+        # currAx.annotate('Q'+str(xx), (xx-0.01, maxY*0.895), ha = 'right')
+        ax[tt].text(xx/4.01, 0.87, 'Q'+str(xx), ha = 'right',
+                    transform = ax[tt].transAxes)
+        #Add shaded area for super shot period
+        rectPatch = patches.Rectangle((xx-(1/3),0), 1/3, maxY*1.5,
+                                      facecolor = 'grey', alpha = 0.25,
+                                      linewidth = 0, zorder = 0)
+        ax[tt].add_patch(rectPatch)
+        
+    #Add the annotated team label
+    ax[tt].text(0, 0.2, list(colourDict.keys())[tt], fontweight = 'bold',
+                color = list(colourDict.values())[tt], ha = 'left', va = 'center',
+                transform = ax[tt].transAxes)
+    
+    #Remove axes details that don't play well with spacing
+    ax[tt].set_title('')
+    ax[tt].set_yticks([])
+    ax[tt].set_xticks([])
+    ax[tt].set_ylabel('')
+    ax[tt].set_xlabel('')
+    ax[tt].spines['top'].set_visible(False)
+    ax[tt].spines['bottom'].set_visible(False)
+    ax[tt].spines['left'].set_visible(False)
+    ax[tt].spines['right'].set_visible(False)
+    
+#Tight layout
+plt.tight_layout()
+
+
+
+
+#Create individual team plots using positional groupings as subplots
+for tt in range(len(squadId)):
+
+    #Create plots
+    fig, ax = plt.subplots(nrows = 4, ncols = 1, figsize = (10,4))
+    
+    #Loop through options
+    groupedPosOptions = [None, 'Shooter', 'Mid-Courter', 'Defender']
+    for gg in range(len(groupedPosOptions)):
+        
+        if gg == 0:
+            
+            #First line - whole teams worth of data
+            g1 = sns.kdeplot(data = df_substitutionData.loc[(df_substitutionData['squadId'] == squadId[tt]) &
+                                                            (df_substitutionData['fromPos'] == 'S') &
+                                                            (~df_substitutionData['normSubTime'].isin([1.0,2.0,3.0,4.0])) &
+                                                            (df_substitutionData['period'].isin([1,2,3,4])),
+                                                            ],
+                             x = 'normSubTime',
+                             bw_adjust = 0.15, cut = 0, fill = False, alpha = 0.75,
+                             linewidth = 1.5, color = list(colourDict.values())[tt],
+                             ax = ax[gg])
+            #Fill whole team data
+            g2 = sns.kdeplot(data = df_substitutionData.loc[(df_substitutionData['squadId'] == squadId[tt]) &
+                                                            (df_substitutionData['fromPos'] == 'S') &
+                                                            (~df_substitutionData['normSubTime'].isin([1.0,2.0,3.0,4.0])) &
+                                                            (df_substitutionData['period'].isin([1,2,3,4])),
+                                                            ],
+                             x = 'normSubTime',
+                             bw_adjust = 0.15, cut = 0, fill = True, alpha = 0.75,
+                             linewidth = 0, color = list(colourDict.values())[tt],
+                             ax = ax[gg])
+        else:
+            
+            #Plot the data stacked
+            #Line
+            g3 = sns.kdeplot(data = df_substitutionData.loc[(df_substitutionData['squadId'] == squadId[tt]) &
+                                                            (df_substitutionData['fromPos'] == 'S') &
+                                                            (~df_substitutionData['normSubTime'].isin([1.0,2.0,3.0,4.0])) &
+                                                            (df_substitutionData['period'].isin([1,2,3,4])),
+                                                            ],
+                         x = 'normSubTime', hue = 'toGroup', multiple = 'stack',
+                         hue_order = ['Shooter', 'Mid-Courter', 'Defender'],
+                         bw_adjust = 0.15, cut = 0, fill = False, alpha = 0.75,
+                         linewidth = 1.5, palette = [list(colourDict.values())[tt]]*3,
+                         ax = ax[gg])
+            
+            #Remove unwanted lines for current axes
+            #Get data of line that is desired
+            #Also check for the max of this density plot group
+            #Loop through lines - list is reversed
+            keepLine = []
+            groupMaxY = 0
+            for pp in range(len(ax[gg].lines)):
+                if pp == gg-1:
+                    keepLine.append(True)
+                else:
+                    keepLine.append(False)
+            keepLine = keepLine[::-1]
+            for line in range(len(ax[gg].lines)):
+                if keepLine[line]:
+                    #Keep the line by removing but getting data
+                    ax[gg].lines[line].set_lw(0)
+                    #Get the data
+                    xDat,yDat = ax[gg].lines[line].get_data()
+                    #Check max
+                    if np.max(yDat) > groupMaxY:
+                        groupMaxY = np.max(yDat)
+                else:
+                    #Remove the line
+                    ax[gg].lines[line].set_lw(0)
+                    #Get the data
+                    x,y = ax[gg].lines[line].get_data()
+                    #Check max
+                    if np.max(y) > groupMaxY:
+                        groupMaxY = np.max(y)
+                    
+            #Plot the original line based on the data
+            #Can now fill underneath
+            ax[gg].plot(xDat, yDat, linewidth = 1.5, color = list(colourDict.values())[tt])
+            ax[gg].fill_between(xDat, yDat, where = y > 0 , interpolate = True,
+                                color = list(colourDict.values())[tt], alpha = 0.75)
+            
+            #Turn off legend
+            ax[gg].legend_.set_visible(False)
+        
+        #Scale every axes to a proportion of max value
+        #Add vertical axes lines for quarter breaks
+        #Add shaded area for super shot period
+    
+        #Set x-axes limits
+        ax[gg].set_xlim([0,4.01])
+        
+        #Get maximum value of density plot
+        #Get the axes children and grab the first line worth of xy data
+        if gg == 0:
+            x,y = ax[gg].lines[0].get_data()
+            #Find the maximum y value
+            maxY = np.max(y)
+            #Set y limit to this value
+            ax[gg].set_ylim([0,maxY*1.02])
+        else:
+            #Set limit to group max value
+            ax[gg].set_ylim([0,groupMaxY*1.02])
+        
+        #X-axes line
+        ax[gg].axhline(y = 0, lw = 2, clip_on = False, color = list(colourDict.values())[tt])
+        
+        #Add the axes vertical lines for quarter breaks
+        for xx in range(1,5):
+            #Add the vertical line
+            ax[gg].axvline(x = xx, color = 'k',
+                           linestyle = '--', linewidth = 0.5)
+            #Add the quarter annotation using the max Y value and quarter point
+            ax[gg].text(xx/4.01, 0.87, 'Q'+str(xx), ha = 'right',
+                        transform = ax[gg].transAxes)
+            #Add shaded area for super shot period
+            rectPatch = patches.Rectangle((xx-(1/3),0), 1/3, maxY*1.5,
+                                          facecolor = 'grey', alpha = 0.25,
+                                          linewidth = 0, zorder = 0)
+            ax[gg].add_patch(rectPatch)
+            
+        #Add the annotated team label
+        if gg == 0:
+            ax[gg].text(0, 0.2, 'All Positions', fontweight = 'bold',
+                        color = list(colourDict.values())[tt], ha = 'left', va = 'center',
+                        transform = ax[gg].transAxes)
+        else:
+            ax[gg].text(0, 0.2, groupedPosOptions[gg], fontweight = 'bold',
+                        color = list(colourDict.values())[tt], ha = 'left', va = 'center',
+                        transform = ax[gg].transAxes)            
+        
+        #Remove axes details that don't play well with spacing
+        ax[gg].set_title('')
+        ax[gg].set_yticks([])
+        ax[gg].set_xticks([])
+        ax[gg].set_ylabel('')
+        ax[gg].set_xlabel('')
+        ax[gg].spines['top'].set_visible(False)
+        ax[gg].spines['bottom'].set_visible(False)
+        ax[gg].spines['left'].set_visible(False)
+        ax[gg].spines['right'].set_visible(False)
+            
+    #Add figure title
+    fig.suptitle(list(colourDict.keys())[tt], ha = 'center',
+                 fontsize = 14, fontweight = 'bold',
+                 color = list(colourDict.values())[tt])
+    
+    #Tight layout
+    plt.tight_layout()
+
+
+### TODO: save figures
+
+
+####
+
+
+
+
+
+
+
+##### old below in this section...
+
+#Loop through squads and see if any differences
+colourDict = {'Fever': '#00953b',
+          'Firebirds': '#4b2c69',
+          'GIANTS': '#f57921',
+          'Lightning': '#fdb61c',
+          'Magpies': '#494b4a',
+          'Swifts': '#0082cd',
+          'Thunderbirds': '#e54078',
+          'Vixens': '#00a68e'}
+
+for tt in range(0,len(squadIds)):    
+    
+    #Get current team name
+    currTeamName = df_teamInfo.squadNickname[df_teamInfo['squadId'] == squadIds[tt]].reset_index()['squadNickname'][0]
+    currColour = colourDict[currTeamName]
+    
+    #Plot histogram
+    num_bins = 40
+    plt.figure()
+    df_currSubs = df_substitutionData.loc[(df_substitutionData['squadId'] == squadIds[tt]) &
+                                          (df_substitutionData['fromPos'] == 'S')]
+    plt.hist(df_currSubs['normSubTime'], num_bins, facecolor = currColour, alpha=0.5)
+    plt.title(currTeamName)
+    plt.show()
     
 # %% Super shot period score simulator
 
