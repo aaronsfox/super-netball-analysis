@@ -417,6 +417,77 @@ for pp in range(0,len(superShotPlayers)):
 #Convert to dataframe
 df_superCounts = pd.DataFrame.from_dict(superCounts)
 
+# %% Analyse player contribution to total scoring
+
+#Create team list variable
+teamList = list(colourDict.keys())
+
+#Extract each teams total and player goal numberd
+
+#Create list to store total goals
+totalGoals = []
+
+#Create a dictionary to store player results
+playerGoals = {'playerId': [], 'squadNickname': [], 'teamGoals': [],
+               'playerGoals': [], 'playerGoalsStandard': [], 'playerGoalsSuper': [],
+               'playerPer': [], 'playerPerStandard': [], 'playerPerSuper': []}
+
+#Loop through teams
+for tt in range(len(teamList)):
+    
+    #Get current squad ID
+    currSquadId = df_teamInfo.loc[df_teamInfo['squadNickname'] == teamList[tt],
+                                  ['squadId']].values.flatten()[0]
+    
+    #Get total score and append to list
+    tg = np.sum(df_scoreFlow.loc[df_scoreFlow['squadId'] == currSquadId,
+                                 ['scorePoints']].to_numpy().flatten())
+    totalGoals.append(tg)
+    
+    #Extract current teams scores
+    df_currScores = df_scoreFlow.loc[df_scoreFlow['squadId'] == currSquadId,]
+    
+    #Extract unique player list
+    uniqueScorers = list(df_currScores['playerId'].unique())
+    
+    #Loop through players
+    for pp in range(len(uniqueScorers)):
+        
+        #Get current players total score
+        pg = np.sum(df_currScores.loc[df_currScores['playerId'] == uniqueScorers[pp],
+                                      ['scorePoints']].to_numpy().flatten())
+        
+        #Calculate percentage (rounded)
+        playerPer = np.round(pg/tg * 100)
+        
+        #Get current players standard and Super Shot score
+        pgStandard = np.sum(df_currScores.loc[(df_currScores['playerId'] == uniqueScorers[pp]) &
+                                              (df_currScores['scoreName'] == 'goal'),
+                                              ['scorePoints']].to_numpy().flatten())
+        pgSuper = np.sum(df_currScores.loc[(df_currScores['playerId'] == uniqueScorers[pp]) &
+                                           (df_currScores['scoreName'] == '2pt Goal'),
+                                           ['scorePoints']].to_numpy().flatten())
+        
+        #Calculate standard and Super propotions
+        playerPerStandard = np.round(pgStandard/tg * 100)
+        playerPerSuper = np.round(pgSuper/tg * 100)
+        
+        #If greater than 5 percent, keep
+        if playerPer >= 5:
+            #Store in dictionary
+            playerGoals['playerId'].append(uniqueScorers[pp])
+            playerGoals['squadNickname'].append(teamList[tt])
+            playerGoals['playerGoals'].append(pg)
+            playerGoals['playerGoalsStandard'].append(pgStandard)
+            playerGoals['playerGoalsSuper'].append(pgSuper)
+            playerGoals['teamGoals'].append(tg)
+            playerGoals['playerPer'].append(playerPer)
+            playerGoals['playerPerStandard'].append(playerPerStandard)
+            playerGoals['playerPerSuper'].append(playerPerSuper)
+    
+#Convert to dataframe
+df_playerGoals = pd.DataFrame.from_dict(playerGoals)
+
 # %% Create some clutch shooting-based numbers
 
 # This analysis defines the 'clutch' period as the final 5 minutes of the match
