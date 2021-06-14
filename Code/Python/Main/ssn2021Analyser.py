@@ -44,6 +44,7 @@ rcParams['font.weight'] = 'bold'
 rcParams['axes.labelsize'] = 12
 rcParams['axes.titlesize'] = 16
 rcParams['axes.linewidth'] = 1.5
+rcParams['hatch.linewidth'] = 1.5
 rcParams['axes.labelweight'] = 'bold'
 rcParams['legend.fontsize'] = 10
 rcParams['xtick.major.width'] = 1.5
@@ -416,77 +417,6 @@ for pp in range(0,len(superShotPlayers)):
 
 #Convert to dataframe
 df_superCounts = pd.DataFrame.from_dict(superCounts)
-
-# %% Analyse player contribution to total scoring
-
-#Create team list variable
-teamList = list(colourDict.keys())
-
-#Extract each teams total and player goal numberd
-
-#Create list to store total goals
-totalGoals = []
-
-#Create a dictionary to store player results
-playerGoals = {'playerId': [], 'squadNickname': [], 'teamGoals': [],
-               'playerGoals': [], 'playerGoalsStandard': [], 'playerGoalsSuper': [],
-               'playerPer': [], 'playerPerStandard': [], 'playerPerSuper': []}
-
-#Loop through teams
-for tt in range(len(teamList)):
-    
-    #Get current squad ID
-    currSquadId = df_teamInfo.loc[df_teamInfo['squadNickname'] == teamList[tt],
-                                  ['squadId']].values.flatten()[0]
-    
-    #Get total score and append to list
-    tg = np.sum(df_scoreFlow.loc[df_scoreFlow['squadId'] == currSquadId,
-                                 ['scorePoints']].to_numpy().flatten())
-    totalGoals.append(tg)
-    
-    #Extract current teams scores
-    df_currScores = df_scoreFlow.loc[df_scoreFlow['squadId'] == currSquadId,]
-    
-    #Extract unique player list
-    uniqueScorers = list(df_currScores['playerId'].unique())
-    
-    #Loop through players
-    for pp in range(len(uniqueScorers)):
-        
-        #Get current players total score
-        pg = np.sum(df_currScores.loc[df_currScores['playerId'] == uniqueScorers[pp],
-                                      ['scorePoints']].to_numpy().flatten())
-        
-        #Calculate percentage (rounded)
-        playerPer = np.round(pg/tg * 100)
-        
-        #Get current players standard and Super Shot score
-        pgStandard = np.sum(df_currScores.loc[(df_currScores['playerId'] == uniqueScorers[pp]) &
-                                              (df_currScores['scoreName'] == 'goal'),
-                                              ['scorePoints']].to_numpy().flatten())
-        pgSuper = np.sum(df_currScores.loc[(df_currScores['playerId'] == uniqueScorers[pp]) &
-                                           (df_currScores['scoreName'] == '2pt Goal'),
-                                           ['scorePoints']].to_numpy().flatten())
-        
-        #Calculate standard and Super propotions
-        playerPerStandard = np.round(pgStandard/tg * 100)
-        playerPerSuper = np.round(pgSuper/tg * 100)
-        
-        #If greater than 5 percent, keep
-        if playerPer >= 5:
-            #Store in dictionary
-            playerGoals['playerId'].append(uniqueScorers[pp])
-            playerGoals['squadNickname'].append(teamList[tt])
-            playerGoals['playerGoals'].append(pg)
-            playerGoals['playerGoalsStandard'].append(pgStandard)
-            playerGoals['playerGoalsSuper'].append(pgSuper)
-            playerGoals['teamGoals'].append(tg)
-            playerGoals['playerPer'].append(playerPer)
-            playerGoals['playerPerStandard'].append(playerPerStandard)
-            playerGoals['playerPerSuper'].append(playerPerSuper)
-    
-#Convert to dataframe
-df_playerGoals = pd.DataFrame.from_dict(playerGoals)
 
 # %% Create some clutch shooting-based numbers
 
@@ -973,6 +903,267 @@ for pp in range(len(df_superCounts)):
     
 #Add to dataframe
 df_superCounts['madePer15'] = madePer15
+
+# %% Analyse player contribution to total scoring
+
+#Create team list variable
+teamList = list(colourDict.keys())
+
+#Get current round number
+upToRound = df_scoreFlow['roundNo'].max()
+
+#Extract each teams total and player goal numberd
+
+#Create list to store total goals
+totalGoals = []
+
+#Create a dictionary to store player results
+playerGoals = {'playerId': [], 'squadNickname': [], 'teamGoals': [],
+               'playerGoals': [], 'playerGoalsStandard': [], 'playerGoalsSuper': [],
+               'playerPer': [], 'playerPerStandard': [], 'playerPerSuper': []}
+
+#Loop through teams
+for tt in range(len(teamList)):
+    
+    #Get current squad ID
+    currSquadId = df_teamInfo.loc[df_teamInfo['squadNickname'] == teamList[tt],
+                                  ['squadId']].values.flatten()[0]
+    
+    #Get total score and append to list
+    tg = np.sum(df_scoreFlow.loc[df_scoreFlow['squadId'] == currSquadId,
+                                 ['scorePoints']].to_numpy().flatten())
+    totalGoals.append(tg)
+    
+    #Extract current teams scores
+    df_currScores = df_scoreFlow.loc[df_scoreFlow['squadId'] == currSquadId,]
+    
+    #Extract unique player list
+    uniqueScorers = list(df_currScores['playerId'].unique())
+    
+    #Loop through players
+    for pp in range(len(uniqueScorers)):
+        
+        #Get current players total score
+        pg = np.sum(df_currScores.loc[df_currScores['playerId'] == uniqueScorers[pp],
+                                      ['scorePoints']].to_numpy().flatten())
+        
+        #Calculate percentage (rounded)
+        playerPer = np.round(pg/tg * 100)
+        
+        #Get current players standard and Super Shot score
+        pgStandard = np.sum(df_currScores.loc[(df_currScores['playerId'] == uniqueScorers[pp]) &
+                                              (df_currScores['scoreName'] == 'goal'),
+                                              ['scorePoints']].to_numpy().flatten())
+        pgSuper = np.sum(df_currScores.loc[(df_currScores['playerId'] == uniqueScorers[pp]) &
+                                           (df_currScores['scoreName'] == '2pt Goal'),
+                                           ['scorePoints']].to_numpy().flatten())
+        
+        #Calculate standard and Super propotions
+        playerPerStandard = np.round(pgStandard/tg * 100)
+        playerPerSuper = np.round(pgSuper/tg * 100)
+        
+        #If greater than 5 percent, keep
+        if playerPer >= 5:
+            #Store in dictionary
+            playerGoals['playerId'].append(uniqueScorers[pp])
+            playerGoals['squadNickname'].append(teamList[tt])
+            playerGoals['playerGoals'].append(pg)
+            playerGoals['playerGoalsStandard'].append(pgStandard)
+            playerGoals['playerGoalsSuper'].append(pgSuper)
+            playerGoals['teamGoals'].append(tg)
+            playerGoals['playerPer'].append(playerPer)
+            playerGoals['playerPerStandard'].append(playerPerStandard)
+            playerGoals['playerPerSuper'].append(playerPerSuper)
+    
+#Convert to dataframe
+df_playerGoals = pd.DataFrame.from_dict(playerGoals)
+
+#Loop through ID's and get their playing duration
+shooterDurationSeconds = []
+shooterList = list(df_playerGoals['playerId'])
+for pp in range(0,len(shooterList)):
+    #Get duration from lineup data
+    shooterDurationSeconds.append(df_individualLineUp.loc[(df_individualLineUp['playerId'] == shooterList[pp]) &
+                                                          (df_individualLineUp['playerPosition'] != 'S'),
+                                                          ['durationSeconds']]['durationSeconds'].sum())
+df_playerGoals['durationSeconds'] = shooterDurationSeconds
+
+#Normalise as per 15 minutes
+df_playerGoals['goalsPer15'] = df_playerGoals['playerGoals'] / (df_playerGoals['durationSeconds'] / 60) * 15
+
+#Get the count for each team to guide the subplot
+nPerTeam = df_playerGoals.groupby(['squadNickname']).count()['playerId'].max()
+
+#Create the figure
+fig, ax = plt.subplots(nrows = nPerTeam, ncols = len(teamList),
+                       figsize = (15,8))
+
+#Loop through teams to plot
+for tt in range(len(teamList)):
+    
+    #Extract current teams data
+    df_currTeam = df_playerGoals.loc[df_playerGoals['squadNickname'] == teamList[tt],
+                                     ].sort_values('playerPer',
+                                                   ascending = False).reset_index(drop = True)
+    
+    #Loop through max number of shooters per team
+    for pp in range(nPerTeam):
+        
+        #Add team name to top axes
+        if pp == 0:
+            ax[pp,tt].set_title(teamList[tt],
+                                fontweight = 'bold',
+                                pad = 10)
+        
+        #Check if there's a need to plot
+        if pp <= len(df_currTeam)-1:
+            
+            #Set up axes
+            #Axes limits
+            ax[pp,tt].set_xlim([0,10])
+            ax[pp,tt].set_ylim([0,10])
+            #Ticks
+            ax[pp,tt].set_xticks(np.linspace(0,10,11))
+            ax[pp,tt].set_yticks(np.linspace(0,10,11))
+            ax[pp,tt].set_xticklabels([])
+            ax[pp,tt].set_yticklabels([])
+            ax[pp,tt].tick_params(axis = 'x', which = 'both',
+                                  bottom = False, top = False)
+            ax[pp,tt].tick_params(axis = 'y', which = 'both',
+                                  left = False, right = False)
+            #Gridlines
+            ax[pp,tt].grid(color = '#fffaf0', linewidth = 1.5)
+            #Face colour
+            ax[pp,tt].set_facecolor('#fffaf0')
+            
+            #Add player name
+            currPlayerId = df_currTeam['playerId'][pp]
+            currPlayerName = df_playerInfo.loc[df_playerInfo['playerId'] == currPlayerId,
+                                               ['displayName']].reset_index()['displayName'][0]
+            currPlayerPer = int(df_currTeam['playerPer'][pp])
+            ax[pp,tt].set_xlabel(f'{currPlayerName} ({currPlayerPer}%)',
+                                 labelpad = -4)
+            
+            #Add the Super Shot proportion
+            #This will sit underneath the standard shot layer, so combines the two
+            #Get the value
+            #There can be some rounding issues when both proportions are around the .5 mark (above & below),
+            #and this can make the visual wrong. Instead of using the super proportion value here, we just
+            #take the total
+            superVal = df_currTeam['playerPer'][pp]
+            # superVal = df_currTeam['playerPerSuper'][pp] + df_currTeam['playerPerStandard'][pp]
+            if superVal > 0:
+                #Figure out how many rows up this needs to go based on divisible by 10
+                roundValPlot = np.floor(superVal / 10)
+                #Identify the remainder to plot
+                remValPlot = superVal % 10
+                #Plot the rectangles
+                #First one (tens)
+                superRect1 = patches.Rectangle((0,0), 10, roundValPlot,
+                                               fill = True, alpha = 0.25,
+                                               color = colourDict[teamList[tt]],
+                                               hatch = '/////',
+                                               edgecolor = None)
+                ax[pp,tt].add_patch(superRect1)
+                #Second one (remainder)
+                superRect2 = patches.Rectangle((0,roundValPlot), remValPlot, 1,
+                                               fill = True, alpha = 0.25,
+                                               color = colourDict[teamList[tt]],
+                                               hatch = '/////',
+                                               edgecolor = None)
+                ax[pp,tt].add_patch(superRect2)
+            
+            #Add the standard shot proportion
+            #Get the value
+            standardVal = df_currTeam['playerPerStandard'][pp]
+            if standardVal > 0:
+                #Figure out how many rows up this needs to go based on divisible by 10
+                roundValPlot = np.floor(standardVal / 10)
+                #Identify the remainder to plot
+                remValPlot = standardVal % 10
+                #Plot the rectangles
+                #First one (tens)
+                standardRect1 = patches.Rectangle((0,0), 10, roundValPlot,
+                                                  fill = True, alpha = 1.00,
+                                                  color = colourDict[teamList[tt]],
+                                                  edgecolor = None)
+                ax[pp,tt].add_patch(standardRect1)
+                #Second one (remainder)
+                standardRect2 = patches.Rectangle((0,roundValPlot), remValPlot, 1,
+                                                  fill = True, alpha = 1.00,
+                                                  color = colourDict[teamList[tt]],
+                                                  edgecolor = None)
+                ax[pp,tt].add_patch(standardRect2)
+            
+        else: 
+            
+            #Hide the axes
+            ax[pp,tt].axis('off')
+        
+#Add overall figure title
+fig.suptitle(f'Proportion (%) of teams total score by individual players from standard (solid) and Super (hatch) shots through {int(upToRound)} rounds. Each tile represents 1% of total. Limited to players with > 5% of team score.')
+
+#Set figure colour
+fig.patch.set_facecolor('#fffaf0')
+
+#Set vertical and horizontal space between axes
+plt.tight_layout()
+plt.subplots_adjust(wspace = 0.4)
+
+### TODO: save figure...
+# fig.savefig('scoringContributions.png', format = 'png', dpi = 300)
+### TODO: shift to fighelper function..
+
+#Create bar figure for scoring rate
+fig, ax = plt.subplots(figsize = (6,9))
+
+#Get the player names for the axis labels
+#Also get teams for the colour
+xNames = []
+xTeams = []
+for xx in range(len(df_playerGoals)):
+    xNames.append(
+        df_playerInfo.loc[df_playerInfo['playerId'] == df_playerGoals['playerId'][xx],'displayName'].values.flatten()[0]
+        )
+    xTeams.append(
+        df_playerInfo.loc[df_playerInfo['playerId'] == df_playerGoals['playerId'][xx],'squadId'].values.flatten()[0]
+        )
+#Add to dataframe
+df_playerGoals['playerName'] = xNames
+df_playerGoals['squadId'] = xTeams
+ 
+#Plot the bar chart
+sns.barplot(x = 'goalsPer15', y = 'playerName',
+            data = df_playerGoals,
+            order = df_playerGoals.sort_values('goalsPer15', ascending = False)['playerName'].values.flatten(),
+            ax = ax)
+
+#Make each bar the team colour
+for pp in range(len(ax.patches)):
+    
+    #Get current patch
+    currBar = ax.patches[pp]
+    
+    #Get current team colour
+    currSquadId = df_playerGoals.sort_values('goalsPer15', ascending = False)['squadId'].values.flatten()[pp]
+    currTeamName = df_teamInfo.loc[df_teamInfo['squadId'] == currSquadId,['squadNickname']].values.flatten()[0]
+    
+    #Set bar colour
+    currBar.set_facecolor(colourDict[currTeamName])
+    
+#Set labels
+ax.set_xlabel('Goals Scored per 15 Mins Played')
+ax.set_ylabel('')
+
+#Tight layout
+plt.tight_layout()
+
+#Set figure colouring
+fig.patch.set_facecolor('#fffaf0')    
+ax.set_facecolor('#fffaf0')
+
+#### TODO: save figure
+# plt.savefig('goalsPer15.png', format = 'png', dpi = 300)
 
 # %% Time in front data
 
