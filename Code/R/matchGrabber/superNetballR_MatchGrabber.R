@@ -23,7 +23,7 @@ year = "2021"
 compID = "11391"
 
 #Set round to grab
-for (rr in 1:5) { #####getRound = 4 ##### Change this for whichever round is desired
+for (rr in 6:7) { #####getRound = 4 ##### Change this for whichever round is desired
   
   getRound = rr
   
