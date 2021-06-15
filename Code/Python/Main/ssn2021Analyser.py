@@ -1845,8 +1845,10 @@ df_playerFreqSubs = pd.DataFrame(list(zip(playerId, playerName, subSquadName,
                                           courtToBench, benchToCourt, positionalSwap, totalSubs)),
                                   columns = ['playerId', 'displayName', 'squadId',
                                             'courtToBench', 'benchToCourt', 'positionalSwap', 'totalSubs'])
-# df_playerFreqSubs.sort_values('totalSubs', ascending = False).to_csv('playerSubCountSummary.csv',
-#                                                                      index = False)
+
+#Sort by frequency
+df_playerFreqSubs.sort_values('totalSubs', ascending = False).to_csv('playerSubCountSummary.csv',
+                                                                      index = False)
 
 
 
@@ -1981,7 +1983,7 @@ for pp in range(len(ax.patches)):
         
 #Clean up axes border lines
 ax.set_ylabel('')
-ax.set_xlabel('Substitution Rate (subs/min)')
+ax.set_xlabel('Substitution Rate (subs/match)')
 ax.spines['top'].set_visible(False)
 ax.spines['left'].set_visible(False)
 ax.spines['right'].set_visible(False)
@@ -2018,6 +2020,18 @@ for tt in range(len(ax.get_yticklabels())):
     
 #Clear out the y-ticks now
 ax.set_yticks([])
+
+#Add figure title
+fig.suptitle('Substitutions per match by each team in-game (i.e. rolling) and at-breaks.',
+             fontweight = 'bold')
+
+# #Save figure
+# plt.savefig('teamSubstitutionRate.png', format = 'png', dpi = 300)
+# plt.savefig('teamSubstitutionRate.jpeg', format = 'jpeg', dpi = 300)
+
+#Close figure
+plt.close()
+
 
 
 
@@ -2126,7 +2140,7 @@ for tt in range(len(squadId)):
                        linestyle = '--', linewidth = 0.5)
         #Add the quarter annotation using the max Y value and quarter point
         # currAx.annotate('Q'+str(xx), (xx-0.01, maxY*0.895), ha = 'right')
-        ax[tt].text(xx/4.01, 0.87, 'Q'+str(xx), ha = 'right',
+        ax[tt].text(xx/4.01-0.005, 0.8, 'Q'+str(xx), ha = 'right',
                     transform = ax[tt].transAxes)
         #Add shaded area for super shot period
         rectPatch = patches.Rectangle((xx-(1/3),0), 1/3, maxY*1.5,
@@ -2134,10 +2148,26 @@ for tt in range(len(squadId)):
                                       linewidth = 0, zorder = 0)
         ax[tt].add_patch(rectPatch)
         
-    #Add the annotated team label
-    ax[tt].text(0, 0.2, list(colourDict.keys())[tt], fontweight = 'bold',
-                color = list(colourDict.values())[tt], ha = 'left', va = 'center',
-                transform = ax[tt].transAxes)
+    # #Add the annotated team label
+    # ax[tt].text(0, 0.2, list(colourDict.keys())[tt], fontweight = 'bold',
+    #             color = list(colourDict.values())[tt], ha = 'left', va = 'center',
+    #             transform = ax[tt].transAxes)
+    
+    #Set image for axes annotation    
+    #Load image
+    teamLogo = plt.imread(imgDir+'\\'+list(colourDict.keys())[tt]+'_small.png')
+    #Figure out zoom factor
+    #Target height of 40
+    zoomFac = 40 / teamLogo.shape[1]
+    #Create offset image
+    imOffset = OffsetImage(teamLogo, zoom = zoomFac)
+    #Create annotation box
+    annBox = AnnotationBbox(imOffset, (0.35,0.4),
+                            xybox = (-25, 0), frameon = False,
+                            xycoords = 'data', boxcoords = 'offset points',
+                            pad = 0)
+    #Add the image
+    ax[tt].add_artist(annBox)
     
     #Remove axes details that don't play well with spacing
     ax[tt].set_title('')
@@ -2149,18 +2179,31 @@ for tt in range(len(squadId)):
     ax[tt].spines['bottom'].set_visible(False)
     ax[tt].spines['left'].set_visible(False)
     ax[tt].spines['right'].set_visible(False)
-    
-#Tight layout
-plt.tight_layout()
 
+#Add figure title using text
+fig.text(0.1, 0.97, 'Distribution of rolling substitutions by team.',
+         fontsize = 14, fontweight = 'bold', ha = 'left', va = 'top')
+fig.text(0.1, 0.94, 'Higher peaks illustrate when teams more frequently use rolling substitutions.',
+         fontsize = 10, fontweight = 'normal', ha = 'left', va = 'top')
+fig.text(0.1, 0.92, 'Grey shaded area indicates Power 5 period.',
+         fontsize = 10, fontweight = 'normal', ha = 'left', va = 'top')
 
+# #Tight layout
+# plt.tight_layout()
+
+#Save figure
+plt.savefig('teamRollingSubsDistribution.png', format = 'png', dpi = 300)
+plt.savefig('teamRollingSubsDistribution.jpeg', format = 'jpeg', dpi = 300)
+
+#Close figure
+plt.close()
 
 
 #Create individual team plots using positional groupings as subplots
 for tt in range(len(squadId)):
 
     #Create plots
-    fig, ax = plt.subplots(nrows = 4, ncols = 1, figsize = (10,4))
+    fig, ax = plt.subplots(nrows = 4, ncols = 1, figsize = (10,5))
     
     #Loop through options
     groupedPosOptions = [None, 'Shooter', 'Mid-Courter', 'Defender']
@@ -2270,7 +2313,7 @@ for tt in range(len(squadId)):
             ax[gg].axvline(x = xx, color = 'k',
                            linestyle = '--', linewidth = 0.5)
             #Add the quarter annotation using the max Y value and quarter point
-            ax[gg].text(xx/4.01, 0.87, 'Q'+str(xx), ha = 'right',
+            ax[gg].text(xx/4.01-0.005, 0.82, 'Q'+str(xx), ha = 'right',
                         transform = ax[gg].transAxes)
             #Add shaded area for super shot period
             rectPatch = patches.Rectangle((xx-(1/3),0), 1/3, maxY*1.5,
@@ -2299,52 +2342,198 @@ for tt in range(len(squadId)):
         ax[gg].spines['left'].set_visible(False)
         ax[gg].spines['right'].set_visible(False)
             
-    #Add figure title
-    fig.suptitle(list(colourDict.keys())[tt], ha = 'center',
-                 fontsize = 14, fontweight = 'bold',
-                 color = list(colourDict.values())[tt])
     
-    #Tight layout
-    plt.tight_layout()
-
-
-### TODO: save figures
-
-
-####
-
-
-
-
-
-
-
-##### old below in this section...
-
-#Loop through squads and see if any differences
-colourDict = {'Fever': '#00953b',
-          'Firebirds': '#4b2c69',
-          'GIANTS': '#f57921',
-          'Lightning': '#fdb61c',
-          'Magpies': '#494b4a',
-          'Swifts': '#0082cd',
-          'Thunderbirds': '#e54078',
-          'Vixens': '#00a68e'}
-
-for tt in range(0,len(squadIds)):    
+    #Add figure title using text
+    fig.text(0.1, 0.99, 'Distribution of rolling substitutions by the '+list(colourDict.keys())[tt]+' across positional groupings.',
+             fontsize = 14, fontweight = 'bold', ha = 'left', va = 'top')
+    fig.text(0.1, 0.95, 'Higher peaks illustrate when teams more frequently use rolling substitutions.',
+             fontsize = 10, fontweight = 'normal', ha = 'left', va = 'top')
+    fig.text(0.1, 0.92, 'Grey shaded area indicates Power 5 period.',
+             fontsize = 10, fontweight = 'normal', ha = 'left', va = 'top')
     
-    #Get current team name
-    currTeamName = df_teamInfo.squadNickname[df_teamInfo['squadId'] == squadIds[tt]].reset_index()['squadNickname'][0]
-    currColour = colourDict[currTeamName]
+    # #Add figure title
+    # fig.suptitle(list(colourDict.keys())[tt], ha = 'center',
+    #              fontsize = 14, fontweight = 'bold',
+    #              color = list(colourDict.values())[tt])
     
-    #Plot histogram
-    num_bins = 40
-    plt.figure()
-    df_currSubs = df_substitutionData.loc[(df_substitutionData['squadId'] == squadIds[tt]) &
-                                          (df_substitutionData['fromPos'] == 'S')]
-    plt.hist(df_currSubs['normSubTime'], num_bins, facecolor = currColour, alpha=0.5)
-    plt.title(currTeamName)
-    plt.show()
+    # #Set image for axes annotation    
+    # #Load image
+    # teamLogo = plt.imread(imgDir+'\\'+list(colourDict.keys())[tt]+'_small.png')
+    # #Figure out zoom factor
+    # #Target height of 40
+    # zoomFac = 40 / teamLogo.shape[1]
+    # #Create offset image
+    # imOffset = OffsetImage(teamLogo, zoom = zoomFac)
+    # #Create annotation box
+    # annBox = AnnotationBbox(imOffset, (0.3,0.7),
+    #                         xybox = (-25, 0), frameon = False,
+    #                         xycoords = 'data', boxcoords = 'offset points',
+    #                         pad = 0)
+    # #Add the image
+    # ax[0].add_artist(annBox)
+    
+    # #Tight layout
+    # plt.tight_layout()
+    
+    # #Save figure
+    # plt.savefig(list(colourDict.keys())[tt]+'_RollingSubsDistribution.png', format = 'png', dpi = 300)
+    # plt.savefig(list(colourDict.keys())[tt]+'_RollingSubsDistribution.jpeg', format = 'jpeg', dpi = 300)
+    
+    #Close figure
+    plt.close()
+
+
+#Print & visualise rolling substitutions per round by teams
+
+#Get counts of rolling substitutions per round for each team
+df_groupedRdRollSubs = df_substitutionData.loc[(~df_substitutionData['normSubTime'].isin([1.0,2.0,3.0,4.0])) &
+                                           (df_substitutionData['fromPos'] == 'S')
+                                           ,].groupby(['squadNickname','roundNo'])
+df_groupedRdRollSubs_count =  df_groupedRdRollSubs.count().reset_index()
+
+#Get amx round and print out header
+maxRd = np.max(df_substitutionData['roundNo'])
+print('Number of rolling subs per round: ')
+#Loop through teams
+for tt in range(len(teamList)):
+    #Print current team name
+    print('\n'+teamList[tt])
+    #Loop through rounds
+    for rr in range(1,maxRd+1):
+        #Get subs for current round
+        #Check if there are any
+        if len(df_groupedRdRollSubs_count.loc[(df_groupedRdRollSubs_count['squadNickname'] == teamList[tt]) &
+                                              (df_groupedRdRollSubs_count['roundNo'] == rr)
+                                              ,['fromPos']]) == 0:
+            #No rolling subs made
+            nSubs = 0            
+        else:
+            #Get the values for the subs that round
+            nSubs = df_groupedRdRollSubs_count.loc[(df_groupedRdRollSubs_count['squadNickname'] == teamList[tt]) &
+                                                   (df_groupedRdRollSubs_count['roundNo'] == rr)
+                                                   ,['fromPos']].to_numpy().flatten()[0]
+        #Print out round value
+        print(f'Round {rr}: {nSubs}')
+      
+#Visualise number of rolling subs per round
+
+#Check in place for max y-limit
+maxYlim = 0
+
+#Set-up figure
+fig, ax = plt.subplots(nrows = 2, ncols = 4, figsize = (12,7))
+
+#Set up axes allocation
+whichAx = [[0,0], [0,1], [0,2], [0,3],
+           [1,0], [1,1], [1,2], [1,3]]
+
+#Loop through teams
+for tt in range(len(teamList)):
+    
+    #Get XY data for bar plot for current team
+    rdNo = []
+    nSubs = []
+    
+    #Loop through rounds
+    for rr in range(1,maxRd+1):
+        #Get subs for current round
+        rdNo.append(rr)
+        #Check if there are any
+        if len(df_groupedRdRollSubs_count.loc[(df_groupedRdRollSubs_count['squadNickname'] == teamList[tt]) &
+                                              (df_groupedRdRollSubs_count['roundNo'] == rr)
+                                              ,['fromPos']]) == 0:
+            #No rolling subs made
+            nSubs.append(0)            
+        else:
+            #Get the values for the subs that round
+            nSubs.append(df_groupedRdRollSubs_count.loc[(df_groupedRdRollSubs_count['squadNickname'] == teamList[tt]) &
+                                                        (df_groupedRdRollSubs_count['roundNo'] == rr)
+                                                        ,['fromPos']].to_numpy().flatten()[0])
+    
+    #Add bars
+    ax[whichAx[tt][0],whichAx[tt][1]].bar(rdNo, nSubs,
+                                          color = colourDict[teamList[tt]],
+                                          width = 0.2)
+    
+    #Add points & text
+    for rr in range(len(rdNo)):
+        if nSubs[rr] != 0:
+            #Add point
+            ax[whichAx[tt][0],whichAx[tt][1]].scatter(rdNo[rr], nSubs[rr],
+                                                      color = colourDict[teamList[tt]],
+                                                      marker = 'o', s = 100)
+            #Add text
+            ax[whichAx[tt][0],whichAx[tt][1]].text(float(rdNo[rr]), float(nSubs[rr]), str(nSubs[rr]),
+                                                   color = 'white', ha = 'center', va = 'center',
+                                                   fontsize = 8, fontweight = 'bold')
+            
+    #Set axes limits and ticks
+    #X-axes
+    ax[whichAx[tt][0],whichAx[tt][1]].set_xlim([0.5,7.5])
+    ax[whichAx[tt][0],whichAx[tt][1]].set_xticks(np.linspace(1,maxRd,maxRd))
+    ax[whichAx[tt][0],whichAx[tt][1]].set_xticklabels(['Round '+str(rdNo[ii]) for ii in range(len(rdNo))],
+                                                      rotation = 45, ha = 'center', va = 'top',
+                                                      fontsize = 8)
+    #Y-axes
+    #No ticks
+    ax[whichAx[tt][0],whichAx[tt][1]].set_yticks([])
+    
+    #Clean up axes labels, border lines & ticks
+    ax[whichAx[tt][0],whichAx[tt][1]].set_ylabel('')
+    ax[whichAx[tt][0],whichAx[tt][1]].set_xlabel('')
+    ax[whichAx[tt][0],whichAx[tt][1]].spines['top'].set_visible(False)
+    ax[whichAx[tt][0],whichAx[tt][1]].spines['left'].set_visible(False)
+    ax[whichAx[tt][0],whichAx[tt][1]].spines['right'].set_visible(False)
+    ax[whichAx[tt][0],whichAx[tt][1]].tick_params(axis = 'x', length = 0)
+    
+    #Check and reallocate y-limit if necessary
+    if ax[whichAx[tt][0],whichAx[tt][1]].get_ylim()[1] > maxYlim:
+        maxYlim = ax[whichAx[tt][0],whichAx[tt][1]].get_ylim()[1]
+
+#Loop through axes and reset y-limit to the maximum out there
+for tt in range(len(whichAx)):
+    ax[whichAx[tt][0],whichAx[tt][1]].set_ylim([0,maxYlim+2])
+
+#Set axes width and height spacing
+plt.subplots_adjust(wspace = 0.4)
+plt.subplots_adjust(hspace = 0.5)
+
+#Loop through axes and add team images
+for tt in range(len(whichAx)):
+    #Set image for axes annotation    
+    #Load image
+    teamLogo = plt.imread(imgDir+'\\'+teamList[tt]+'_small.png')
+    #Figure out zoom factor
+    #Target height of 40
+    zoomFac = 50 / teamLogo.shape[1]
+    #Create offset image
+    imOffset = OffsetImage(teamLogo, zoom = zoomFac)
+    #Create annotation box
+    xLoc = (ax[whichAx[tt][0],whichAx[tt][1]].get_xlim()[0] + ax[whichAx[tt][0],whichAx[tt][1]].get_xlim()[1]) / 2
+    yLoc = maxYlim + 2
+    annBox = AnnotationBbox(imOffset, (xLoc,yLoc),
+                            xybox = (0, 0), frameon = False,
+                            xycoords = 'data', boxcoords = 'offset points',
+                            pad = 0)
+    #Add the image
+    ax[whichAx[tt][0],whichAx[tt][1]].add_artist(annBox)
+    
+    
+#Add figure title
+fig.suptitle('Number of rolling substitutions per round by each team.',
+             fontsize = 14, fontweight = 'bold')
+
+# #Tight layout
+# plt.tight_layout()
+
+# #Save figure
+# plt.savefig('teamRollingSubsPerRound.png', format = 'png', dpi = 300)
+# plt.savefig('teamRollingSubsPerRound.jpeg', format = 'jpeg', dpi = 300)
+
+#Close figure
+plt.close()
+
+##### TODO: clean up stuff in this section above...
     
 # %% Super shot period score simulator
 
