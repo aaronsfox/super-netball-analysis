@@ -1710,7 +1710,10 @@ for mm in range(0,len(df_currCombo)):
 
 ##### Somewhat incomplete at the moment...
 
-##### TODO: swapping positions vs. substitutions...
+##### NOTE: there are different options for quantifying substitutions
+##### Champion simply considers 'every' swap a substitution, whereas I would
+##### consider just the player coming off the bench a sub. Both options are
+##### sort of coded below...
 
 #Check total number of substitutions by team
 #Both in play and at quarter breaks
@@ -1731,9 +1734,9 @@ for tt in range(len(teamInfo['squadId'])):
     #Get current squad name
     currSquadName = teamInfo['squadNickname'][tt]
     
-    #Get the current squads total points
+    #Get the current squads total subs 
     totalSubs = len(df_substitutionData.loc[(df_substitutionData['squadId'] == currSquadId) &
-                                            (df_substitutionData['fromPos'] == 'S') &
+                                            # (df_substitutionData['fromPos'] == 'S') &
                                             (~df_substitutionData['normSubTime'].isin([1.0,2.0,3.0,4.0])) &
                                             (df_substitutionData['period'].isin([1,2,3,4])),
                                             ])
@@ -1745,7 +1748,7 @@ for tt in range(len(teamInfo['squadId'])):
     perSubs = totalSubs/totalGames
     
     #Store in lists
-    situation.append('In-Game')
+    situation.append('Within-Quarter')
     squadNickname.append(currSquadName)
     noSubs.append(totalSubs)
     subRate.append(perSubs)
@@ -1767,7 +1770,7 @@ for tt in range(len(teamInfo['squadId'])):
     
     #Get the current squads total points
     totalSubs = len(df_substitutionData.loc[(df_substitutionData['squadId'] == currSquadId) &
-                                            (df_substitutionData['fromPos'] == 'S') &
+                                            # (df_substitutionData['fromPos'] == 'S') &
                                             (df_substitutionData['normSubTime'].isin([1.0,2.0,3.0,4.0])) &
                                             (df_substitutionData['period'].isin([1,2,3,4])),
                                             ])
@@ -1779,7 +1782,7 @@ for tt in range(len(teamInfo['squadId'])):
     perSubs = totalSubs/totalGames
     
     #Store in lists
-    situation.append('At-Breaks')
+    situation.append('Quarter Breaks')
     squadNickname.append(currSquadName)
     noSubs.append(totalSubs)
     subRate.append(perSubs)
@@ -1792,8 +1795,7 @@ df_subCountSummary = pd.DataFrame(list(zip(situation, squadNickname, noSubs, sub
                                   columns =['situation', 'squadNickname', 'noSubs', 'subRate']) 
     
 ##### TODO: the above probably underestimates break subs, given it doesn't take
-##### into account positional swaps
-
+##### into account positional swaps (it does now --- see note above)
 
 
 #Get a summary of player substitution counts
@@ -1859,7 +1861,9 @@ df_playerFreqSubs.sort_values('totalSubs', ascending = False).to_csv('playerSubC
 #Create lists to store data in
 period = []
 benchToCourt = []
+courtToBench = []
 positionalSwap = []
+totalChanges = []
 subSquadId = []
 situation = []
 
@@ -1877,16 +1881,24 @@ for tt in range(len(teamInfo['squadId'])):
         #Extract the number of bench substitutions
         b2c = len(df_currSubs.loc[df_currSubs['fromPos'] == 'S',])
         
+        #Extract number of subs to bench
+        c2b = len(df_currSubs.loc[df_currSubs['toPos'] == 'S',])
+        
         #Extract positional swaps
         ps =  len(df_currSubs.loc[(df_currSubs['fromPos'] != 'S') &
                                   (df_currSubs['toPos'] != 'S'),])
         
+        #Calculate total changes
+        tc = b2c + c2b + ps
+        
         #Append to lists
         period.append(qq + 1)
         benchToCourt.append(b2c)
+        courtToBench.append(c2b)
+        totalChanges.append(tc)
         positionalSwap.append(ps)
         subSquadId.append(teamInfo['squadId'][tt])
-        situation.append('In-Game')
+        situation.append('Within-Quarter')
         
         #Extract substitutions for current period at breaks
         if qq > 0: #only if after first period
@@ -1896,22 +1908,32 @@ for tt in range(len(teamInfo['squadId'])):
             #Extract the number of bench substitutions
             b2c = len(df_currSubs.loc[df_currSubs['fromPos'] == 'S',])
             
+            #Extract number of subs to bench
+            c2b = len(df_currSubs.loc[df_currSubs['toPos'] == 'S',])
+            
             #Extract positional swaps
             ps =  len(df_currSubs.loc[(df_currSubs['fromPos'] != 'S') &
                                       (df_currSubs['toPos'] != 'S'),])
             
+            #Calculate total changes
+            tc = b2c + c2b + ps
+            
             #Append to lists
             period.append(qq)
             benchToCourt.append(b2c)
+            courtToBench.append(c2b)
+            totalChanges.append(tc)
             positionalSwap.append(ps)
             subSquadId.append(teamInfo['squadId'][tt])
-            situation.append('At-Breaks')
+            situation.append('Quarter Breaks')
             
 #Convert to dataframe
 df_teamFreqSubs = pd.DataFrame(list(zip(subSquadId, period, situation,
-                                        benchToCourt, positionalSwap)),
+                                        benchToCourt, courtToBench, positionalSwap,
+                                        totalChanges)),
                                columns = ['squadId', 'period', 'situation',
-                                          'benchToCourt', 'positionalSwap'])
+                                          'benchToCourt', 'courtToBench', 'positionalSwap',
+                                          'totalChanges'])
 
 #Add squad nickname column
 subSquadNickname = []
@@ -1926,26 +1948,26 @@ df_teamFreqSubs['squadNickname'] = subSquadNickname
 #Visualise team sub frequencies
 # fig, ax = plt.subplots(nrows = 2, ncols = 2, figsize = (10,7))
 
-fig, ax = plt.subplots(figsize = (7,5))
+# fig, ax = plt.subplots(figsize = (7,5))
 
-#Loop through squads
-for tt in range(len(list(colourDict.keys()))):
+# #Loop through squads
+# for tt in range(len(list(colourDict.keys()))):
     
-    #Get current team
-    currTeamName = list(colourDict.keys())[tt]
+#     #Get current team
+#     currTeamName = list(colourDict.keys())[tt]
     
-    #Extract their data for in-game subs
-    df_currSubs = df_teamFreqSubs.loc[(df_teamFreqSubs['squadNickname'] == currTeamName) &
-                                      (df_teamFreqSubs['situation'] == 'In-Game'),]
+#     #Extract their data for in-game subs
+#     df_currSubs = df_teamFreqSubs.loc[(df_teamFreqSubs['squadNickname'] == currTeamName) &
+#                                       (df_teamFreqSubs['situation'] == 'In-Game'),]
     
-    #Plot data
-    ax.plot(df_currSubs['period'].values,
-            df_currSubs['benchToCourt'].values,
-            c = list(colourDict.values())[tt],
-            marker = 'o')
+#     #Plot data
+#     ax.plot(df_currSubs['period'].values,
+#             df_currSubs['benchToCourt'].values,
+#             c = list(colourDict.values())[tt],
+#             marker = 'o')
 
 
-### Facet grid for this? Best visualisation???
+# ### Facet grid for this? Best visualisation???
 
     
     
@@ -1953,7 +1975,7 @@ for tt in range(len(list(colourDict.keys()))):
 #Visualise sub rate comparison
 fig, ax = plt.subplots(figsize = (7,5))
 sns.barplot(x = 'subRate', y = 'squadNickname', hue = 'situation',
-            data = df_subCountSummary, hue_order = ['In-Game', 'At-Breaks'],
+            data = df_subCountSummary, hue_order = ['Within-Quarter', 'Quarter Breaks'],
             order = list(colourDict.keys()),
             palette = ['#ee255c', '#000000'])
 #Make bars skinny
@@ -1983,13 +2005,13 @@ for pp in range(len(ax.patches)):
         
 #Clean up axes border lines
 ax.set_ylabel('')
-ax.set_xlabel('Substitution Rate (subs/match)')
+ax.set_xlabel('Substitution Rate (changes/match)')
 ax.spines['top'].set_visible(False)
 ax.spines['left'].set_visible(False)
 ax.spines['right'].set_visible(False)
 
 #Add vertical lines
-for vv in list(np.linspace(0,10,6)):
+for vv in list(np.linspace(0,18,10)):
     ax.axvline(vv, linestyle = ':', linewidth = 1,
                color = 'lightgrey', zorder = 0)
     
@@ -2022,7 +2044,7 @@ for tt in range(len(ax.get_yticklabels())):
 ax.set_yticks([])
 
 #Add figure title
-fig.suptitle('Substitutions per match by each team in-game (i.e. rolling) and at-breaks.',
+fig.suptitle('Changes per match by each team during quarters versus at quarter breaks.',
              fontweight = 'bold')
 
 # #Save figure
@@ -2097,7 +2119,7 @@ for tt in range(len(squadId)):
     #Remove extra time subs as this skews some data for teams who have played extra time
     #First line
     g1 = sns.kdeplot(data = df_substitutionData.loc[(df_substitutionData['squadId'] == squadId[tt]) &
-                                                    (df_substitutionData['fromPos'] == 'S') &
+                                                    # (df_substitutionData['fromPos'] == 'S') &
                                                     (~df_substitutionData['normSubTime'].isin([1.0,2.0,3.0,4.0])) &
                                                     (df_substitutionData['period'].isin([1,2,3,4])),
                                                     ],
@@ -2107,7 +2129,7 @@ for tt in range(len(squadId)):
                      ax = ax[tt])
     #Then fill
     g2 = sns.kdeplot(data = df_substitutionData.loc[(df_substitutionData['squadId'] == squadId[tt]) &
-                                                    (df_substitutionData['fromPos'] == 'S') &
+                                                    # (df_substitutionData['fromPos'] == 'S') &
                                                     (~df_substitutionData['normSubTime'].isin([1.0,2.0,3.0,4.0])) &
                                                     (df_substitutionData['period'].isin([1,2,3,4])),
                                                     ],
@@ -2181,7 +2203,7 @@ for tt in range(len(squadId)):
     ax[tt].spines['right'].set_visible(False)
 
 #Add figure title using text
-fig.text(0.1, 0.97, 'Distribution of rolling substitutions by team.',
+fig.text(0.1, 0.97, 'Timing distribution of changes made by teams within quarters.',
          fontsize = 14, fontweight = 'bold', ha = 'left', va = 'top')
 fig.text(0.1, 0.94, 'Higher peaks illustrate when teams more frequently use rolling substitutions.',
          fontsize = 10, fontweight = 'normal', ha = 'left', va = 'top')
@@ -2191,9 +2213,9 @@ fig.text(0.1, 0.92, 'Grey shaded area indicates Power 5 period.',
 # #Tight layout
 # plt.tight_layout()
 
-#Save figure
-plt.savefig('teamRollingSubsDistribution.png', format = 'png', dpi = 300)
-plt.savefig('teamRollingSubsDistribution.jpeg', format = 'jpeg', dpi = 300)
+# #Save figure
+# plt.savefig('teamRollingSubsDistribution.png', format = 'png', dpi = 300)
+# plt.savefig('teamRollingSubsDistribution.jpeg', format = 'jpeg', dpi = 300)
 
 #Close figure
 plt.close()
@@ -2213,7 +2235,7 @@ for tt in range(len(squadId)):
             
             #First line - whole teams worth of data
             g1 = sns.kdeplot(data = df_substitutionData.loc[(df_substitutionData['squadId'] == squadId[tt]) &
-                                                            (df_substitutionData['fromPos'] == 'S') &
+                                                            # (df_substitutionData['fromPos'] == 'S') &
                                                             (~df_substitutionData['normSubTime'].isin([1.0,2.0,3.0,4.0])) &
                                                             (df_substitutionData['period'].isin([1,2,3,4])),
                                                             ],
@@ -2223,7 +2245,7 @@ for tt in range(len(squadId)):
                              ax = ax[gg])
             #Fill whole team data
             g2 = sns.kdeplot(data = df_substitutionData.loc[(df_substitutionData['squadId'] == squadId[tt]) &
-                                                            (df_substitutionData['fromPos'] == 'S') &
+                                                            # (df_substitutionData['fromPos'] == 'S') &
                                                             (~df_substitutionData['normSubTime'].isin([1.0,2.0,3.0,4.0])) &
                                                             (df_substitutionData['period'].isin([1,2,3,4])),
                                                             ],
@@ -2236,7 +2258,7 @@ for tt in range(len(squadId)):
             #Plot the data stacked
             #Line
             g3 = sns.kdeplot(data = df_substitutionData.loc[(df_substitutionData['squadId'] == squadId[tt]) &
-                                                            (df_substitutionData['fromPos'] == 'S') &
+                                                            # (df_substitutionData['fromPos'] == 'S') &
                                                             (~df_substitutionData['normSubTime'].isin([1.0,2.0,3.0,4.0])) &
                                                             (df_substitutionData['period'].isin([1,2,3,4])),
                                                             ],
@@ -2342,10 +2364,9 @@ for tt in range(len(squadId)):
         ax[gg].spines['left'].set_visible(False)
         ax[gg].spines['right'].set_visible(False)
             
-    
     #Add figure title using text
-    fig.text(0.1, 0.99, 'Distribution of rolling substitutions by the '+list(colourDict.keys())[tt]+' across positional groupings.',
-             fontsize = 14, fontweight = 'bold', ha = 'left', va = 'top')
+    fig.text(0.1, 0.99, 'Timing distribution of changes made by the '+list(colourDict.keys())[tt]+' within quarters across positional groupings.',
+             fontsize = 12, fontweight = 'bold', ha = 'left', va = 'top')
     fig.text(0.1, 0.95, 'Higher peaks illustrate when teams more frequently use rolling substitutions.',
              fontsize = 10, fontweight = 'normal', ha = 'left', va = 'top')
     fig.text(0.1, 0.92, 'Grey shaded area indicates Power 5 period.',
@@ -2375,9 +2396,9 @@ for tt in range(len(squadId)):
     # #Tight layout
     # plt.tight_layout()
     
-    # #Save figure
-    # plt.savefig(list(colourDict.keys())[tt]+'_RollingSubsDistribution.png', format = 'png', dpi = 300)
-    # plt.savefig(list(colourDict.keys())[tt]+'_RollingSubsDistribution.jpeg', format = 'jpeg', dpi = 300)
+    #Save figure
+    plt.savefig(list(colourDict.keys())[tt]+'_RollingSubsDistribution.png', format = 'png', dpi = 300)
+    plt.savefig(list(colourDict.keys())[tt]+'_RollingSubsDistribution.jpeg', format = 'jpeg', dpi = 300)
     
     #Close figure
     plt.close()
@@ -2387,13 +2408,14 @@ for tt in range(len(squadId)):
 
 #Get counts of rolling substitutions per round for each team
 df_groupedRdRollSubs = df_substitutionData.loc[(~df_substitutionData['normSubTime'].isin([1.0,2.0,3.0,4.0])) &
-                                           (df_substitutionData['fromPos'] == 'S')
-                                           ,].groupby(['squadNickname','roundNo'])
+                                            (df_substitutionData['fromPos'] == 'S')
+                                            ,].groupby(['squadNickname','roundNo'])
 df_groupedRdRollSubs_count =  df_groupedRdRollSubs.count().reset_index()
+df_groupedTotalChanges =  df_substitutionData.groupby(['squadNickname','roundNo']).count().reset_index()
 
 #Get amx round and print out header
 maxRd = np.max(df_substitutionData['roundNo'])
-print('Number of rolling subs per round: ')
+print('Number of total changes per round: ')
 #Loop through teams
 for tt in range(len(teamList)):
     #Print current team name
@@ -2402,16 +2424,16 @@ for tt in range(len(teamList)):
     for rr in range(1,maxRd+1):
         #Get subs for current round
         #Check if there are any
-        if len(df_groupedRdRollSubs_count.loc[(df_groupedRdRollSubs_count['squadNickname'] == teamList[tt]) &
-                                              (df_groupedRdRollSubs_count['roundNo'] == rr)
-                                              ,['fromPos']]) == 0:
+        if len(df_groupedTotalChanges.loc[(df_groupedTotalChanges['squadNickname'] == teamList[tt]) &
+                                          (df_groupedTotalChanges['roundNo'] == rr)
+                                          ,['fromPos']]) == 0:
             #No rolling subs made
             nSubs = 0            
         else:
             #Get the values for the subs that round
-            nSubs = df_groupedRdRollSubs_count.loc[(df_groupedRdRollSubs_count['squadNickname'] == teamList[tt]) &
-                                                   (df_groupedRdRollSubs_count['roundNo'] == rr)
-                                                   ,['fromPos']].to_numpy().flatten()[0]
+            nSubs = df_groupedTotalChanges.loc[(df_groupedTotalChanges['squadNickname'] == teamList[tt]) &
+                                               (df_groupedTotalChanges['roundNo'] == rr)
+                                               ,['fromPos']].to_numpy().flatten()[0]
         #Print out round value
         print(f'Round {rr}: {nSubs}')
       
@@ -2439,16 +2461,16 @@ for tt in range(len(teamList)):
         #Get subs for current round
         rdNo.append(rr)
         #Check if there are any
-        if len(df_groupedRdRollSubs_count.loc[(df_groupedRdRollSubs_count['squadNickname'] == teamList[tt]) &
-                                              (df_groupedRdRollSubs_count['roundNo'] == rr)
-                                              ,['fromPos']]) == 0:
+        if len(df_groupedTotalChanges.loc[(df_groupedTotalChanges['squadNickname'] == teamList[tt]) &
+                                          (df_groupedTotalChanges['roundNo'] == rr)
+                                          ,['fromPos']]) == 0:
             #No rolling subs made
             nSubs.append(0)            
         else:
             #Get the values for the subs that round
-            nSubs.append(df_groupedRdRollSubs_count.loc[(df_groupedRdRollSubs_count['squadNickname'] == teamList[tt]) &
-                                                        (df_groupedRdRollSubs_count['roundNo'] == rr)
-                                                        ,['fromPos']].to_numpy().flatten()[0])
+            nSubs.append(df_groupedTotalChanges.loc[(df_groupedTotalChanges['squadNickname'] == teamList[tt]) &
+                                                    (df_groupedTotalChanges['roundNo'] == rr)
+                                                    ,['fromPos']].to_numpy().flatten()[0])
     
     #Add bars
     ax[whichAx[tt][0],whichAx[tt][1]].bar(rdNo, nSubs,
@@ -2461,7 +2483,7 @@ for tt in range(len(teamList)):
             #Add point
             ax[whichAx[tt][0],whichAx[tt][1]].scatter(rdNo[rr], nSubs[rr],
                                                       color = colourDict[teamList[tt]],
-                                                      marker = 'o', s = 100)
+                                                      marker = 'o', s = 150)
             #Add text
             ax[whichAx[tt][0],whichAx[tt][1]].text(float(rdNo[rr]), float(nSubs[rr]), str(nSubs[rr]),
                                                    color = 'white', ha = 'center', va = 'center',
@@ -2520,15 +2542,15 @@ for tt in range(len(whichAx)):
     
     
 #Add figure title
-fig.suptitle('Number of rolling substitutions per round by each team.',
+fig.suptitle('Number of total changes per round by each team.',
              fontsize = 14, fontweight = 'bold')
 
 # #Tight layout
 # plt.tight_layout()
 
 # #Save figure
-# plt.savefig('teamRollingSubsPerRound.png', format = 'png', dpi = 300)
-# plt.savefig('teamRollingSubsPerRound.jpeg', format = 'jpeg', dpi = 300)
+# plt.savefig('teamChangesPerRound.png', format = 'png', dpi = 300)
+# plt.savefig('teamChangesPerRound.jpeg', format = 'jpeg', dpi = 300)
 
 #Close figure
 plt.close()
