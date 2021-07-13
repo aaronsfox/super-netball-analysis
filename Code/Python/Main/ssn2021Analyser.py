@@ -888,21 +888,21 @@ os.chdir('..\\playerStats')
 df_playerStatsMetricsAttacking.to_csv('individualPlayerStats_Attacking.csv', index = False)
 df_playerStatsMetricsDefensive.to_csv('individualPlayerStats_Defensive.csv', index = False)
 
-#Normalise the super shot dataframe variables
-madePer15 = []
-for pp in range(len(df_superCounts)):
-    #Get current shooters ID
-    currPlayerId = df_superCounts['playerId'][pp]
-    #Get their duration in mins from the stats dataframe
-    durMins = df_playerStatsMetricsAll.loc[df_playerStatsMetricsAll['playerId'] == currPlayerId,
-                                           ['durationMins']].values.flatten()[0]
-    #Calculate the per factor
-    perFac = perDivider / durMins
-    #Calculate makes per min divider
-    madePer15.append(df_superCounts['made'][pp] * perFac)
+# #Normalise the super shot dataframe variables
+# madePer15 = []
+# for pp in range(len(df_superCounts)):
+#     #Get current shooters ID
+#     currPlayerId = df_superCounts['playerId'][pp]
+#     #Get their duration in mins from the stats dataframe
+#     durMins = df_playerStatsMetricsAll.loc[df_playerStatsMetricsAll['playerId'] == currPlayerId,
+#                                             ['durationMins']].values.flatten()[0]
+#     #Calculate the per factor
+#     perFac = perDivider / durMins
+#     #Calculate makes per min divider
+#     madePer15.append(df_superCounts['made'][pp] * perFac)
     
-#Add to dataframe
-df_superCounts['madePer15'] = madePer15
+# #Add to dataframe
+# df_superCounts['madePer15'] = madePer15
 
 # %% Analyse player contribution to total scoring
 
