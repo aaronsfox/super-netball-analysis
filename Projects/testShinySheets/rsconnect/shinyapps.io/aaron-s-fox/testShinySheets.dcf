@@ -1,0 +1,13 @@
+name: testShinySheets
+title: testShinySheets
+username:
+account: aaron-s-fox
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 4394974
+bundleId: 4828820
+url: https://aaron-s-fox.shinyapps.io/testShinySheets/
+when: 1626517632.37249
+lastSyncTime: 1626517632.37249
+asMultiple: FALSE
+asStatic: FALSE
