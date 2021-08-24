@@ -141,7 +141,7 @@ def getMatchData(jsonFileList = None, df_squadLists = None,
     jsonFileList = sortedNicely(jsonFileList)
     
     #Loop through file list and extract data
-    # for ff in range(0,2):
+    # for ff in range(0,30):
     for ff in range(len(jsonFileList)):
         
         #Load the .json data
