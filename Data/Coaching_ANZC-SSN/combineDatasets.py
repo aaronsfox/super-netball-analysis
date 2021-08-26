@@ -18,8 +18,6 @@ import pandas as pd
 
 # %% Combine datasets
 
-##### TODO: need to wait for premiers for 
-
 #Import season win-loss
 winLoss = pd.read_csv('seasonWinLossSummaries.csv')
 
@@ -83,3 +81,4 @@ winLoss['competition'] = competitionList
 #Save dataset
 winLoss.to_csv('resultsFromTheTimeMachine.csv', index = False)
 
+# %% ----- End of combineDatasets.py -----
