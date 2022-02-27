@@ -1,0 +1,14 @@
+name: ladderpredictor
+title:
+username:
+account: aaron-s-fox
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 4388223
+bundleId: 4822085
+url: https://aaron-s-fox.shinyapps.io/ladderpredictor/
+when: 1626350217.17709
+lastSyncTime: 1626350217.17709
+asMultiple: FALSE
+asStatic: FALSE
+ignoredFiles: Images
