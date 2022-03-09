@@ -3,7 +3,7 @@
 #installed using:
 
 # library(remotes)
-
+# 
 # remotes::install_github("SteveLane/superNetballR")
 
 #Load appropriate packages
@@ -23,7 +23,7 @@ year = "2021"
 compID = "11391"
 
 #Set round to grab
-for (rr in 11:12) { #####getRound = 4 ##### Change this for whichever round is desired
+for (rr in 13:14) { #####getRound = 4 ##### Change this for whichever round is desired
   
   getRound = rr
   
